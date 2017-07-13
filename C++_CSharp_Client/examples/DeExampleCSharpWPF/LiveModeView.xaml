@@ -1,0 +1,21 @@
+﻿<Window x:Class="DeExampleCSharpWPF.LiveModeView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}"
+        Title="TestModeView" Height="300" Width="300" WindowStartupLocation="CenterScreen">
+    <DockPanel>
+        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
+            <TextBlock Text="FPS:" Margin="4,0,4,0" />
+            <TextBlock Text="{Binding Fps}" />
+            <TextBlock Margin="8,0,4,0" Text="Image Count:" />
+            <TextBlock Text="{Binding ImageCount}" />
+            <TextBlock Margin="8,0,4,0" Text="Seconds:" />
+            <TextBlock Text="{Binding TotalSeconds}" />
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal">
+            <TextBlock Margin="4,0,4,0" Text="Image loading time:" />
+            <TextBlock Text="{Binding Ilt}" />
+        </StackPanel>
+        <Image Name="image" />
+    </DockPanel>
+</Window>

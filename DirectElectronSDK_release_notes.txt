@@ -1,0 +1,19 @@
+Direct Electron Software Development Kit
+Release Date: Mar 2017
+Direct Electron, LP
+San Diego, CA
+
+Folder structure and overview: 
+
+/DirectElectronAPI_Server_Simulator/	contains the software simulator for any Direct Electron camera server. See readme.txt and the DirectElectronAPIServer_Overview.pdf document in its folder for details. 
+
+/MicroManager_Client/	contains the binary release of MicroManager plugin for the Direct Electron cmaeras. Check the readme.txt in its folder for installation steps. The client uses the DEClientLib library written in C++. The source code is released as open source. 
+
+/Python_Client/	contains the Python client library used for debugging and for other Python clients like Leginon to talk to the Direct Electron server. This client is platform independent. 
+
+/C++_CSharp_Client/ contains the C++ and C# example projects to talk to the Direct Electron server. 
+
+Operation system support: The API server runs on Windows systems (32bit or 64bit) only, but the clients are platform independent. The Python client and MicroManager client are tested on Windows system, but they could run on Mac or Linux systems.
+
+BEST PERFORMANCE: 
+For best performance, we recommend using 64bit library in the client and if running on the same machine as the DE API server, DE library will automatically switch from TCP/IP to memory map for faster image transfer. 

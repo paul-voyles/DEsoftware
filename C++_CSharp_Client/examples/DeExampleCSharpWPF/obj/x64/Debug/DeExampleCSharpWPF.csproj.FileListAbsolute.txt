@@ -1,0 +1,1 @@
+C:\direct_electron\DirectElectronSDK\DirectElectronSDK_2016_02\DirectElectronSDK\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.exe.config
