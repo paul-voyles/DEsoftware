@@ -19,9 +19,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+<<<<<<< HEAD
   <ItemGroup>
     <ClInclude Include="..\..\include\DeInterface.Win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+=======
+>>>>>>> origin/master
 </Project>
