@@ -183,12 +183,17 @@ namespace DeExampleCSharpWPF
 
             byte[] imageBytes = new byte[stride * height];
             BitmapSource temp = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
+
+            // write in tif format
             FileStream stream = new FileStream("../new.tif", FileMode.Create);
             TiffBitmapEncoder encoder = new TiffBitmapEncoder();
             TextBlock myTextBlock = new TextBlock();
             encoder.Compression = TiffCompressOption.Zip;
             encoder.Frames.Add(BitmapFrame.Create(temp));
             encoder.Save(stream);
+
+            // write in HDF5 (.h5) format
+
             return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
         }
         /// <summary>
