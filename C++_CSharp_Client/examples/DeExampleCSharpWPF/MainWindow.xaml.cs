@@ -176,24 +176,48 @@ namespace DeExampleCSharpWPF
             }
             double gain = UInt16.MaxValue / Math.Max(max - min, 1);
             UInt16[] image16 = new UInt16[length];
+            // load data into image16, 1D array for 2D image
             for (int i = 0; i < length; i++)
                 image16[i] = (ushort)((image[i] - min) * gain);
 
             byte[] imageBytes = new byte[stride * height];
+            BitmapSource temp = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
+            FileStream stream = new FileStream("D:/2017/Pixelated Camera/DirectElectronSDK/C++_CSharp_Client/examples/DeExampleWin32/new.tif", FileMode.Create);
+            TiffBitmapEncoder encoder = new TiffBitmapEncoder();
+            TextBlock myTextBlock = new TextBlock();
+            encoder.Compression = TiffCompressOption.Zip;
+            encoder.Frames.Add(BitmapFrame.Create(temp));
+            encoder.Save(stream);
             return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
         }
+        /// <summary>
+        /// capture single image from server
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
 
         private void btnGetImage_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 ImageView imageView = new ImageView();
-                imageView.image.Source = GetImage();
+                imageView.image.Source = GetImage();    //return a BitmapSource
                 imageView.Show();
             }
             catch (Exception exc)
             {
                 MessageBox.Show(exc.Message);
+            }
+        }
+
+        public static void SaveClipboardImageToFile(string filePath)
+        {
+            var image = Clipboard.GetImage();
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                BitmapEncoder encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(image));
+                encoder.Save(fileStream);
             }
         }
 
