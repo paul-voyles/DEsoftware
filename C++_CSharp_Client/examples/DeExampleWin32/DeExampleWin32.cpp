@@ -1,7 +1,7 @@
 #include <iostream>
 #include <time.h>
-
-#include "..\..\..\DeInterface.Win32\DeInterface.Win32.h"
+//#include <DeInterface.Win32.h>
+#include "C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\include\DeInterface.Win32.h"
 
 bool chooseCamera(DeInterfaceWin32 *server)
 {
@@ -32,7 +32,7 @@ void showProperties(DeInterfaceWin32 *server)
 {
 	std::vector<std::string> properties;
 	if (!server->getProperties(properties)) {
-		std::cerr << "Error getting properties" << std::endl;
+	//	std::cerr << "Error getting properties" << std::endl;
 		return;
 	}
 
@@ -69,7 +69,7 @@ void getImage(DeInterfaceWin32 *server)
 	double secondsPassed;
 
 	if (!server->getImage(imgBuffer, xsize * ysize * sizeof(unsigned short))) {
-		std::cerr << "Unable to get image" << std::cerr;
+		std::cerr << "Unable to get image\n";
 	} else {
 		secondsPassed = (clock() - startTime) / (double)CLOCKS_PER_SEC;
 		std::cout << "Image grabbed successfully in " << secondsPassed << " seconds!" << std::endl;
@@ -117,6 +117,7 @@ int main(int argc, char* argv[])
 	// connect to the server
 	if (!cameraServer.connect("127.0.0.1", 48880, 48879)) {
 		std::cerr << "Unable to connect to camera server" << std::endl;
+		std::cout << "Unable to connect to camera server" << std::endl;
 		return -1;
 	}
 
