@@ -20,6 +20,7 @@ using System.IO.MemoryMappedFiles;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Net;
+using HDF5DotNet;
 
 namespace DeExampleCSharpWPF
 {
@@ -182,7 +183,7 @@ namespace DeExampleCSharpWPF
 
             byte[] imageBytes = new byte[stride * height];
             BitmapSource temp = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
-            FileStream stream = new FileStream("D:/2017/Pixelated Camera/DirectElectronSDK/C++_CSharp_Client/examples/DeExampleWin32/new.tif", FileMode.Create);
+            FileStream stream = new FileStream("../new.tif", FileMode.Create);
             TiffBitmapEncoder encoder = new TiffBitmapEncoder();
             TextBlock myTextBlock = new TextBlock();
             encoder.Compression = TiffCompressOption.Zip;
