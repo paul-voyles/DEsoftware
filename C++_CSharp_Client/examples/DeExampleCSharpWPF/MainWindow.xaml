@@ -24,9 +24,9 @@
                 <ComboBoxItem>TCP</ComboBoxItem>
             </ComboBox>
         </StackPanel>
-        <StackPanel Grid.Row="1">            
-            <Button Click="btnLiveCapture_Click" Content="Test Load Image Speed" Grid.Row="1" Height="23" HorizontalAlignment="Left" Margin="4,0,0,0" Name="btnLiveCapture" Width="148" />
-            <Button Click="btnGetImage_Click" Content="Capture Single Image" Height="23" HorizontalAlignment="Left" Margin="4,4,0,4" Name="btnGetImage" Width="148" Visibility="Hidden"/>
+        <StackPanel Grid.Row="1">
+            <Button Click="btnGetImage_Click" Content="Capture Single Image" Height="23" HorizontalAlignment="Left" Margin="4,4,0,4" Name="btnGetImage" Width="148" Visibility="Visible"/>
+            <Button Click="btnLiveCapture_Click" Content="Test Load Image Speed" Height="23" HorizontalAlignment="Left" Margin="4,0,0,0" x:Name="btnLiveCapture" Width="148" />
         </StackPanel>
         <DataGrid AutoGenerateColumns="False" Grid.Column="1" Grid.Row="1" ItemsSource="{Binding CameraProperties}" Margin="4">
             <DataGrid.Columns>
