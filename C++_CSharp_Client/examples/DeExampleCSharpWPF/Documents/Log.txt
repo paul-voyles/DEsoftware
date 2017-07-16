@@ -1,0 +1,2 @@
+7/16/17
+- Need to copy all .dll files in HDF5DotNet folder to C:\Windows\System32 to run 
