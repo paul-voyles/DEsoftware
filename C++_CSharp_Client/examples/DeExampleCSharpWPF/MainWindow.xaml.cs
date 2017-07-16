@@ -20,7 +20,7 @@ using System.IO.MemoryMappedFiles;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Net;
-using CSharpExample1;
+using HDF5DotNet;
 
 namespace DeExampleCSharpWPF
 {
@@ -193,12 +193,11 @@ namespace DeExampleCSharpWPF
             encoder.Save(stream);
 
             // write in HDF5 (.h5) format
+             Program.CreateHDF();
+
 
             return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
         }
-
-
-
         /// <summary>
         /// capture single image from server
         /// </summary>
