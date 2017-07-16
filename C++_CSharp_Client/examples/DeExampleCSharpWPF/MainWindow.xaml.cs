@@ -21,6 +21,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Net;
 using HDF5DotNet;
+using CSharpExample1;
 
 namespace DeExampleCSharpWPF
 {

@@ -8,7 +8,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("deinterface.net.dll")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("hdf5dotnet.dll")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("hdf5_hldll.dll")]
 
