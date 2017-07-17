@@ -61,6 +61,7 @@ namespace CSharpExample1
         }
 
         // changed name from main to CreateHDF and argument to none cz 7/14/17
+        // need to accept a filename, file dimension (maybe not if always 2D, but need to consider what is the fastest way to save), and file size
         public static void CreateHDF()
         {
             try

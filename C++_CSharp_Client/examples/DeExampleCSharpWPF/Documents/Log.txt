@@ -1,2 +1,4 @@
 7/16/17
 - Need to copy all .dll files in HDF5DotNet folder to C:\Windows\System32 to run 
+- Consider to include the .dll file for HDF5DotNet in the code
+- The HDF5 file is currently saved under bin/x64/Debug, and the current version cannot debug with x86/64bit
