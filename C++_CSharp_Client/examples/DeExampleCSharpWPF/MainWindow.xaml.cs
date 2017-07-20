@@ -183,18 +183,20 @@ namespace DeExampleCSharpWPF
                 image16[i] = (ushort)((image[i] - min) * gain);
 
             byte[] imageBytes = new byte[stride * height];
+            // write file in tiff format
+            /* 
             BitmapSource temp = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
 
-            // write in tif format
             FileStream stream = new FileStream("../new.tif", FileMode.Create);
             TiffBitmapEncoder encoder = new TiffBitmapEncoder();
             TextBlock myTextBlock = new TextBlock();
             encoder.Compression = TiffCompressOption.Zip;
             encoder.Frames.Add(BitmapFrame.Create(temp));
             encoder.Save(stream);
+            */
 
             // write in HDF5 (.h5) format
-             Program.CreateHDF();
+            // Program.CreateHDF();
 
 
             return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
@@ -219,7 +221,7 @@ namespace DeExampleCSharpWPF
             }
         }
 
-        public static void SaveClipboardImageToFile(string filePath)
+/*        public static void SaveClipboardImageToFile(string filePath)
         {
             var image = Clipboard.GetImage();
             using (var fileStream = new FileStream(filePath, FileMode.Create))
@@ -229,7 +231,7 @@ namespace DeExampleCSharpWPF
                 encoder.Save(fileStream);
             }
         }
-
+*/
         /// <summary>
         /// Enter live mode / continuous capture mode. Continously ask for images and draw to the LiveModeView window
         /// </summary>

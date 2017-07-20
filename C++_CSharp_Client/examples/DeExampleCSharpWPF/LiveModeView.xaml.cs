@@ -31,6 +31,8 @@ namespace DeExampleCSharpWPF
         public decimal Fps
         {
             get { return Math.Round(Convert.ToDecimal(_imageCount / TotalSeconds), 3); }
+            //get { return Convert.ToDecimal(TotalSeconds); }
+            
         }
 
         public int ImageCount
@@ -61,7 +63,7 @@ namespace DeExampleCSharpWPF
                 if (_firstImage == false)
                     return Math.Round(((DateTime.Now - _renderStart).TotalMilliseconds) / 1000);
                 else
-                    return 0;
+                    return 1;   // return 0 would cause N/0 error
             } 
         }
 
