@@ -16,6 +16,5 @@
             <TextBlock Margin="4,0,4,0" Text="Image loading time:" />
             <TextBlock Text="{Binding Ilt}" />
         </StackPanel>
-        <Image Name="image" />
     </DockPanel>
 </Window>

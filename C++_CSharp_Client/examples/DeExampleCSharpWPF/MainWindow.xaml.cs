@@ -33,7 +33,7 @@ namespace DeExampleCSharpWPF
     {
         private DeInterfaceNET _deInterface;
         private bool _liveModeEnabled;
-        private LiveModeView _liveView;
+        //private LiveModeView _liveView;   LiveViewWindow no longer a separate window
         private bool _closing;
         UInt16[] m_image_local;
         static Semaphore semaphore;
@@ -47,10 +47,11 @@ namespace DeExampleCSharpWPF
 
         }
 
+        // window closing not necessary as no separate window exit
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            if (_liveModeEnabled)
-                _liveView.Close();
+ //           if (_liveModeEnabled)
+ //               _liveView.Close();
         }
 
         /// <summary>
@@ -98,10 +99,10 @@ namespace DeExampleCSharpWPF
         {
             if (btnConnect.Content.ToString() == "Disconnect")
             {
-                if (_liveModeEnabled)
+/*                if (_liveModeEnabled)
                 {
                     _liveView.Close();
-                }
+                }*/
                 _deInterface.close();
                 cmbCameras.Items.Clear();
                 cmbCameras.Text = "";
@@ -222,7 +223,7 @@ namespace DeExampleCSharpWPF
             }
         }
 
-/*        public static void SaveClipboardImageToFile(string filePath)
+        public static void SaveClipboardImageToFile(string filePath)
         {
             var image = Clipboard.GetImage();
             using (var fileStream = new FileStream(filePath, FileMode.Create))
@@ -232,9 +233,9 @@ namespace DeExampleCSharpWPF
                 encoder.Save(fileStream);
             }
         }
-*/
+
         /// <summary>
-        /// Enter live mode / continuous capture mode. Continously ask for images and draw to the LiveModeView window
+        /// LiveModeView merge into MainWindow
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -242,15 +243,18 @@ namespace DeExampleCSharpWPF
         {
             if (_liveModeEnabled)
             {
-                _liveView.Close();
+                Close();
                 return;
             }
             semaphore = new Semaphore(0, 1);
-            _liveView = new LiveModeView();
-            _liveView.Closing += LiveViewWindow_Closing;
-            _liveView.InitializeWBmp(GetImage());
-            _liveView.Show();
+            new LiveModeView();
+            Closing += LiveViewWindow_Closing;
+            InitializeWBmp(GetImage());
+            Show();
+            _updateTimer = new System.Timers.Timer(1000);
+            _updateTimer.Elapsed += new ElapsedEventHandler(_updateTimer_Elapsed);
 
+            InitializeWBmp(GetImage()); // initialize image in picture box
             //enable livemode on the server
             _deInterface.EnableLiveMode();
             _liveModeEnabled = true;
@@ -278,8 +282,8 @@ namespace DeExampleCSharpWPF
                             semaphore.WaitOne();
                             UInt16[] image = m_imageQueue.Dequeue();
                             semaphore.Release();
-                            _liveView.SetImage(image, width, height);
-                            _liveView.SetImageLoadTime(nTickCount);
+                            SetImage(image, width, height);
+                            SetImageLoadTime(nTickCount);
                         }
                     }
                 }
@@ -363,35 +367,6 @@ namespace DeExampleCSharpWPF
             NotifyPropertyChanged("CameraProperties");
         }
 
-      
-    }
-
-    public class Property
-    {
-        public string Name { get; set; }
-        public string Value { get; set; }
-    }
-
-    enum ImageTransfer_Mode
-    {
-        ImageTransfer_Mode_TCP = 1,		// Use TCP/IP connected protocol (original mode)
-        ImageTransfer_Mode_MMF = 2		// Use memory mapped file share buffer (local client only)
-    };
-
-    struct Mapped_Image_Data_
-    {
-        public bool client_opened_mmf;			// set to true by local client before connection to server
-        public System.UInt32 buffer_size_;			// size of image buffer
-        public System.UInt32 image_id_;		// image id, incremented with each new image transferred
-        public System.UInt32 image_size_;		// image size in bytes
-        public System.UInt32 img_start_;	// first pixel of image buffer
-    };
-
-    /// <summary>
-    /// Interaction logic for LiveModeView.xaml
-    /// </summary>
-    public partial class LiveModeView : Window, INotifyPropertyChanged
-    {
         private int _imageCount = 0;
         private bool _firstImage = true;
         private DateTime _renderStart;
@@ -440,31 +415,13 @@ namespace DeExampleCSharpWPF
             }
         }
 
-        public LiveModeView()
+/*        public void LiveModeView()
         {
             InitializeComponent();
             _updateTimer = new System.Timers.Timer(1000);
             _updateTimer.Elapsed += new ElapsedEventHandler(_updateTimer_Elapsed);
         }
-
-        private bool _contentLoaded;
-
-        public void InitializeComponent()
-        {
-            if (_contentLoaded)
-            {
-                return;
-            }
-            _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/DeExampleCSharpWPF;component/livemodeview.xaml", System.UriKind.Relative);
-
-            #line 1 "..\..\..\LiveModeView.xaml"
-            System.Windows.Application.LoadComponent(this, resourceLocater);
-
-            #line default
-            #line hidden
-        }
-
+        */
         /// <summary>
         /// update FPS and TotalSeconds properties
         /// </summary>
@@ -537,7 +494,7 @@ namespace DeExampleCSharpWPF
             NotifyPropertyChanged("Ilt");
         }
 
-        #region INotifyPropertyChanged
+/*        #region INotifyPropertyChanged
 
         public event PropertyChangedEventHandler PropertyChanged;
         private void NotifyPropertyChanged(String info)
@@ -549,5 +506,35 @@ namespace DeExampleCSharpWPF
         }
 
         #endregion
+*/
     }
+
+    public class Property
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
+    }
+
+    enum ImageTransfer_Mode
+    {
+        ImageTransfer_Mode_TCP = 1,		// Use TCP/IP connected protocol (original mode)
+        ImageTransfer_Mode_MMF = 2		// Use memory mapped file share buffer (local client only)
+    };
+
+    struct Mapped_Image_Data_
+    {
+        public bool client_opened_mmf;			// set to true by local client before connection to server
+        public System.UInt32 buffer_size_;			// size of image buffer
+        public System.UInt32 image_id_;		// image id, incremented with each new image transferred
+        public System.UInt32 image_size_;		// image size in bytes
+        public System.UInt32 img_start_;	// first pixel of image buffer
+    };
+
+    /// <summary>
+    /// Interaction logic for LiveModeView.xaml
+    /// </summary>
+/*    public partial class LiveModeView : Window, INotifyPropertyChanged
+    {
+       
+    }*/
     }
