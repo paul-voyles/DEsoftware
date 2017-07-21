@@ -47,11 +47,10 @@ namespace DeExampleCSharpWPF
 
         }
 
-        // window closing not necessary as no separate window exit
+        // used to close main window
         private void Window_Closing(object sender, CancelEventArgs e)
         {
- //           if (_liveModeEnabled)
- //               _liveView.Close();
+            Close();
         }
 
         /// <summary>
@@ -243,82 +242,121 @@ namespace DeExampleCSharpWPF
         {
             if (_liveModeEnabled)
             {
-                Close();
-                return;
+                _liveModeEnabled = false;
+                btnLiveCapture.Content = "Test Load Image Speed";
+//                Dispatcher.InvokeShutdown();      // this just somehow works to stop streaming the image, software would go through BeginInvoke once then idle
             }
-            semaphore = new Semaphore(0, 1);
-            new LiveModeView();
-            Closing += LiveViewWindow_Closing;
-            InitializeWBmp(GetImage());
-            Show();
-            _updateTimer = new System.Timers.Timer(1000);
-            _updateTimer.Elapsed += new ElapsedEventHandler(_updateTimer_Elapsed);
-
-            InitializeWBmp(GetImage()); // initialize image in picture box
-            //enable livemode on the server
-            _deInterface.EnableLiveMode();
-            _liveModeEnabled = true;
-            btnLiveCapture.Content = "Turn off Test";
-
-            //start new task for background image rendering
-
-            string xSize = "";
-            string ySize = "";
-            _deInterface.GetProperty("Image Size X", ref xSize);
-            _deInterface.GetProperty("Image Size Y", ref ySize);
-            int width = Convert.ToInt32(xSize);
-            int height = Convert.ToInt32(ySize);
-
-            semaphore.Release();
-            int nTickCount = 0;
-            Task.Factory.StartNew(() =>
+            else
             {
-                while (_liveModeEnabled)
+                semaphore = new Semaphore(0, 1);
+                new LiveModeView();
+ //               Closing += LiveViewWindow_Closing;
+                InitializeWBmp(GetImage());
+                Show();
+                _updateTimer = new System.Timers.Timer(1000);
+                _updateTimer.Elapsed += new ElapsedEventHandler(_updateTimer_Elapsed);
+
+                InitializeWBmp(GetImage()); // initialize image in picture box
+                                            //enable livemode on the server
+                _deInterface.EnableLiveMode();
+                _liveModeEnabled = true;
+                btnLiveCapture.Content = "Turn off Test";
+
+                //start new task for background image rendering
+
+                string xSize = "";
+                string ySize = "";
+                _deInterface.GetProperty("Image Size X", ref xSize);
+                _deInterface.GetProperty("Image Size Y", ref ySize);
+                int width = Convert.ToInt32(xSize);
+                int height = Convert.ToInt32(ySize);
+
+                semaphore.Release();
+                int nTickCount = 0;
+                Task.Factory.StartNew(() =>
                 {
-                    System.Threading.Thread.Sleep(1);
+                    while (_liveModeEnabled)
                     {
-                        if (m_imageQueue.Count > 0)
+                        System.Threading.Thread.Sleep(1);
                         {
-                            semaphore.WaitOne();
-                            UInt16[] image = m_imageQueue.Dequeue();
-                            semaphore.Release();
-                            SetImage(image, width, height);
-                            SetImageLoadTime(nTickCount);
+                            if (m_imageQueue.Count > 0)
+                            {
+                                semaphore.WaitOne();
+                                UInt16[] image = m_imageQueue.Dequeue();
+                                semaphore.Release();
+                                SetImage(image, width, height);
+                                SetImageLoadTime(nTickCount);
+                            }
                         }
                     }
-                }
-            }).ContinueWith(p =>
-            {
-
-            });
-
-            Task.Factory.StartNew(() =>
-            {
-                while (_liveModeEnabled)
+                }).ContinueWith(p =>
                 {
+
+                });
+
+                Task.Factory.StartNew(() =>
+                {
+                    while (_liveModeEnabled)
                     {
-                        int nTickCountOld = 0;
-                        UInt16[] image;
+                        {
+                            int nTickCountOld = 0;
+                            UInt16[] image;
 
-                        nTickCountOld = System.Environment.TickCount;
-                        _deInterface.GetImage(out image);
+                            nTickCountOld = System.Environment.TickCount;
+                            _deInterface.GetImage(out image);   //get image from camera
                         nTickCount = System.Environment.TickCount - nTickCountOld;
-                        semaphore.WaitOne();
-                        m_imageQueue.Enqueue(image);
-                        semaphore.Release();
+                            semaphore.WaitOne();
+                            m_imageQueue.Enqueue(image);
+                            semaphore.Release();
+                        }
+                        System.Threading.Thread.Sleep(1);
+
                     }
-                    System.Threading.Thread.Sleep(1);
-
-                }
-            }).ContinueWith(o =>
-            {
-                if (_deInterface.isConnected())
-                    _deInterface.DisableLiveMode();
-            });
-
+                }).ContinueWith(o =>
+                {
+                    if (_deInterface.isConnected())
+                        _deInterface.DisableLiveMode();
+                });
+            }
         }
 
-        private void LiveViewWindow_Closing(object sender, CancelEventArgs e)
+        public void SetImage(UInt16[] imageData, int width, int height)
+        {
+
+            // Scale image
+            int length = width * height;
+            ushort min = imageData[0]; ushort max = imageData[0];
+            for (int i = 1; i < length; i++)
+            {
+                if (imageData[i] < min) min = imageData[i];
+                if (imageData[i] > max) max = imageData[i];
+            }
+            double gain = UInt16.MaxValue / Math.Max(max - min, 1);
+            UInt16[] image16 = new UInt16[length];
+            for (int i = 0; i < length; i++)
+            {
+                image16[i] = (ushort)((imageData[i] - min) * gain);
+            }
+            if (_firstImage)
+            {
+                _renderStart = DateTime.Now;
+                _updateTimer.Start();
+                _firstImage = false;
+            }
+
+            //use the dispatcher to invoke onto the UI thread for image displaying
+
+            this.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                //write the image data to the WriteableBitmap buffer
+                _wBmp.WritePixels(new Int32Rect(0, 0, width, height), image16, width * 2, 0);
+
+            }));
+
+            ImageCount++;
+        }
+
+/*        private void LiveViewWindow_Closing(object sender, CancelEventArgs e)
         {
             _liveModeEnabled = false;
             Dispatcher.BeginInvoke((Action)(() =>
@@ -326,7 +364,7 @@ namespace DeExampleCSharpWPF
                 btnLiveCapture.Content = "Test Load Image Speed";
             }));
         }
-
+*/
         private void cmbCameras_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             CameraProperties.Clear();
@@ -443,7 +481,7 @@ namespace DeExampleCSharpWPF
             //_wBmp = new WriteableBitmap(bmpSource);
 
             _wBmp = new WriteableBitmap(bmpSource.PixelWidth, bmpSource.PixelHeight, bmpSource.DpiX, bmpSource.DpiY, bmpSource.Format, bmpSource.Palette);
-            pictureBox1.Source = _wBmp;
+            pictureBox1.Source = _wBmp; // display _wBmp to pictureBox1, will be called only once
         }
 
         /// <summary>
@@ -452,41 +490,7 @@ namespace DeExampleCSharpWPF
         /// <param name="imageData"></param>
         /// <param name="width"></param>
         /// <param name="height"></param>
-        public void SetImage(UInt16[] imageData, int width, int height)
-        {
-
-            // Scale image
-            int length = width * height;
-            ushort min = imageData[0]; ushort max = imageData[0];
-            for (int i = 1; i < length; i++)
-            {
-                if (imageData[i] < min) min = imageData[i];
-                if (imageData[i] > max) max = imageData[i];
-            }
-            double gain = UInt16.MaxValue / Math.Max(max - min, 1);
-            UInt16[] image16 = new UInt16[length];
-            for (int i = 0; i < length; i++)
-            {
-                image16[i] = (ushort)((imageData[i] - min) * gain);
-            }
-            if (_firstImage)
-            {
-                _renderStart = DateTime.Now;
-                _updateTimer.Start();
-                _firstImage = false;
-            }
-
-            //use the dispatcher to invoke onto the UI thread for image displaying
-
-            this.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                //write the image data to the WriteableBitmap buffer
-                _wBmp.WritePixels(new Int32Rect(0, 0, width, height), image16, width * 2, 0);
-
-            }));
-
-            ImageCount++;
-        }
+       
 
         public void SetImageLoadTime(int nTickCount)
         {
