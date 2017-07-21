@@ -51,11 +51,12 @@
         <TextBlock x:Name="textBlock1_Copy1" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="211,0,0,86" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" X:"/></TextBlock>
         <TextBlock x:Name="textBlock1_Copy2" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="59,0,0,48" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start "/><Run Text="Y"/><Run Text=":"/></TextBlock>
         <TextBlock x:Name="textBlock1_Copy3" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="210,0,0,48" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" "/><Run Text="Y"/><Run Text=":"/></TextBlock>
-        <Button Click="btnLiveCapture_Click" Content="Test Load Image Speed" Height="23" HorizontalAlignment="Left" Margin="10,284,0,0" x:Name="btnLiveCapture" Width="148" Grid.Column="2" Grid.Row="1" VerticalAlignment="Top" />
+        <Button Click="btnLiveCapture_Click" Content="Stream from DE" Height="23" HorizontalAlignment="Left" Margin="10,284,0,0" x:Name="btnLiveCapture" Width="148" Grid.Column="2" Grid.Row="1" VerticalAlignment="Top" />
         <Button Click="btnGetImage_Click" Content="Capture Single Image" Height="23" HorizontalAlignment="Left" Margin="10,312,0,0" x:Name="btnGetImage" Width="148" Visibility="Visible" Grid.Column="2" Grid.Row="1" VerticalAlignment="Top"/>
         <Image Grid.Column="1" HorizontalAlignment="Left" Height="584" Margin="41.531,41.823,0,0" Grid.Row="1" VerticalAlignment="Top" Width="584" />
-
+        
         <Image Name="pictureBox1" HorizontalAlignment="Left" Height="360" Margin="14,14,0,0" Grid.Row="1" VerticalAlignment="Top" Width="360" />
+        <Rectangle Fill="#FFF4F4F5" Height="360" Margin="14,14,0,0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>

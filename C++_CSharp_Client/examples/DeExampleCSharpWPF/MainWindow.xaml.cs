@@ -243,7 +243,7 @@ namespace DeExampleCSharpWPF
             if (_liveModeEnabled)
             {
                 _liveModeEnabled = false;
-                btnLiveCapture.Content = "Test Load Image Speed";
+                btnLiveCapture.Content = "Stream from DE";
 //                Dispatcher.InvokeShutdown();      // this just somehow works to stop streaming the image, software would go through BeginInvoke once then idle
             }
             else
@@ -260,7 +260,7 @@ namespace DeExampleCSharpWPF
                                             //enable livemode on the server
                 _deInterface.EnableLiveMode();
                 _liveModeEnabled = true;
-                btnLiveCapture.Content = "Turn off Test";
+                btnLiveCapture.Content = "Stop Streaming";
 
                 //start new task for background image rendering
 
