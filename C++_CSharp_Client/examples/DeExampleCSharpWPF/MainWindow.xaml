@@ -15,20 +15,11 @@
             <RowDefinition Height="54*" />
             <RowDefinition Height="815*" />
         </Grid.RowDefinitions>
-        <StackPanel Grid.ColumnSpan="3" Orientation="Horizontal" VerticalAlignment="Top" Height="42">
-            <TextBlock Margin="10,0,4,0" Text="IP:" VerticalAlignment="Center"/>
-            <TextBox Margin="0,0,4,0" Text="127.0.0.1" VerticalAlignment="Center"  Width="75" x:Name="IPAddr" />
-            <Button Click="btnConnect_Click" Content="Connect" Height="23" Margin="8,0,32,0" x:Name="btnConnect" Width="75" />
-            <TextBlock Margin="0,0,4,0" Text="Cameras" VerticalAlignment="Center" />
-            <ComboBox Height="23" x:Name="cmbCameras" SelectionChanged="cmbCameras_SelectionChanged" Width="120" />
-            <TextBlock Margin="0,0,4,0" Text="Transport:" VerticalAlignment="Center" />
-            <ComboBox Height="23" x:Name="cmbTransport" Width="120" >
-                <ComboBoxItem Content="MMF"/>
-                <ComboBoxItem Content="TCP"/>
-            </ComboBox>
-        </StackPanel>
+        <Rectangle Grid.Column="1" Fill="#FFF4F4F5" Margin="41.531,38,39.469,189.177" Grid.Row="1" Stroke="Black" StrokeThickness="2"/>
+
+        <Image Grid.Column="1" HorizontalAlignment="Left" Height="584" Margin="41.531,41.823,0,0" Grid.Row="1" VerticalAlignment="Top" Width="584" />
         <StackPanel Margin="0,47,0,0" Grid.RowSpan="2"/>
-        <DataGrid AutoGenerateColumns="False" Grid.Column="2" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,0" Grid.Row="1" Height="274" VerticalAlignment="Top">
+        <DataGrid AutoGenerateColumns="False" Grid.Column="2" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,536" Grid.Row="1">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Name}" CanUserReorder="True" CanUserResize="True" Header="Property" />
                 <DataGridTextColumn Binding="{Binding Value}" Header="Value" />
@@ -39,8 +30,15 @@
         <Button x:Name="button" Content="Search" Grid.Column="1" HorizontalAlignment="Left" Height="33" Margin="59,0,0,150" Grid.Row="1" VerticalAlignment="Bottom" Width="132" FontSize="18"/>
         <Button x:Name="button_Copy" Content="Acquire" Grid.Column="1" Height="33" Margin="248,0,249,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18"/>
         <Button x:Name="button_Copy1" Content="Run DE" Grid.Column="1" Height="33" Margin="0,0,58,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18" HorizontalAlignment="Right" Width="132"/>
+        <Border Grid.Column="1" Margin="231,222,231,350" Grid.Row="1" MinWidth="10" MinHeight="10" MaxWidth="512" MaxHeight="512" >
 
-        <ResizeGrip x:Name="resizeGrip" Grid.Column="1" Margin="231,222,231,350" Grid.Row="1" MinWidth="10" MinHeight="10" MaxWidth="512" MaxHeight="512" BorderThickness="1"/>
+            <Grid>
+
+                <ResizeGrip x:Name="resizeGrip" Background="#FFDDDEFB" BorderBrush="#FF2219E0" BorderThickness="2" Opacity="0.5" IsManipulationEnabled="True"/>
+
+            </Grid>
+
+        </Border>
 
         <TextBlock x:Name="textBlock1" Grid.Column="1" HorizontalAlignment="Left" Height="30" Margin="59,0,0,104" Grid.Row="1" TextWrapping="Wrap" Text="Region of Interest (ROI):" VerticalAlignment="Bottom" Width="152"/>
         <TextBox x:Name="textBox" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="101,0,0,87" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
@@ -53,10 +51,26 @@
         <TextBlock x:Name="textBlock1_Copy3" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="210,0,0,48" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" "/><Run Text="Y"/><Run Text=":"/></TextBlock>
         <Button Click="btnLiveCapture_Click" Content="Stream from DE" Height="23" HorizontalAlignment="Left" Margin="10,284,0,0" x:Name="btnLiveCapture" Width="148" Grid.Column="2" Grid.Row="1" VerticalAlignment="Top" />
         <Button Click="btnGetImage_Click" Content="Capture Single Image" Height="23" HorizontalAlignment="Left" Margin="10,312,0,0" x:Name="btnGetImage" Width="148" Visibility="Visible" Grid.Column="2" Grid.Row="1" VerticalAlignment="Top"/>
-        <Image Grid.Column="1" HorizontalAlignment="Left" Height="584" Margin="41.531,41.823,0,0" Grid.Row="1" VerticalAlignment="Top" Width="584" />
-        
-        <Image Name="pictureBox1" HorizontalAlignment="Left" Height="360" Margin="14,14,0,0" Grid.Row="1" VerticalAlignment="Top" Width="360" />
-        <Rectangle Fill="#FFF4F4F5" Height="360" Margin="14,14,0,0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top"/>
+
+        <Image x:Name="pictureBox1" HorizontalAlignment="Left" Height="360" Margin="14,14,0,0" Grid.Row="1" VerticalAlignment="Top" Width="360" />
+        <Rectangle Margin="7,7,7,0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top" Height="383" StrokeThickness="2"/>
+        <Path Grid.Column="1" Data="M398,-1" HorizontalAlignment="Left" Height="1" Margin="1,-1,0,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Top" Width="1"/>
+        <Rectangle Grid.ColumnSpan="3" Height="0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top"/>
+        <StackPanel Grid.ColumnSpan="3" Orientation="Horizontal" VerticalAlignment="Top" Height="42">
+            <TextBlock Margin="10,0,4,0" Text="IP:" VerticalAlignment="Center"/>
+            <TextBox Margin="0,0,4,0" Text="127.0.0.1" VerticalAlignment="Center"  Width="75" x:Name="IPAddr" />
+            <Button Click="btnConnect_Click" Content="Connect" Height="23" Margin="8,0,32,0" x:Name="btnConnect" Width="75" />
+            <TextBlock Margin="0,0,4,0" Text="Cameras" VerticalAlignment="Center" />
+            <ComboBox Height="23" x:Name="cmbCameras" SelectionChanged="cmbCameras_SelectionChanged" Width="120" />
+            <TextBlock Margin="0,0,4,0" Text="Transport:" VerticalAlignment="Center" />
+            <ComboBox Height="23" x:Name="cmbTransport" Width="120" >
+                <ComboBoxItem Content="MMF"/>
+                <ComboBoxItem Content="TCP"/>
+            </ComboBox>
+        </StackPanel>
+        <Path Grid.Column="2" Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="0,-7,0,-1" Grid.Row="1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2"/>
+        <Path Grid.ColumnSpan="3" Data="M0.5,46.5 L1592,47" Height="1.5" Margin="0.5,0,-1,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Bottom" StrokeThickness="2"/>
+        <Path Data="M1062,869 L1062,47" HorizontalAlignment="Right" Margin="0,-7,0,-1" Grid.Row="1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2"/>
 
     </Grid>
 </Window>

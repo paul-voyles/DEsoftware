@@ -50,7 +50,7 @@ namespace DeExampleCSharpWPF
         // used to close main window
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            Close();
+            
         }
 
         /// <summary>
