@@ -23,6 +23,8 @@ using System.Net;
 using HDF5DotNet;
 using CSharpExample1;
 using System.Timers;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace DeExampleCSharpWPF
 {
@@ -126,7 +128,7 @@ namespace DeExampleCSharpWPF
                 }
                 catch (Exception exc)
                 {
-                    MessageBox.Show(exc.Message);
+                    System.Windows.MessageBox.Show(exc.Message);
                 }
 
                 btnConnect.Content = "Disconnect";
@@ -218,13 +220,13 @@ namespace DeExampleCSharpWPF
             }
             catch (Exception exc)
             {
-                MessageBox.Show(exc.Message);
+                System.Windows.MessageBox.Show(exc.Message);
             }
         }
 
         public static void SaveClipboardImageToFile(string filePath)
         {
-            var image = Clipboard.GetImage();
+            var image = System.Windows.Clipboard.GetImage();
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 BitmapEncoder encoder = new PngBitmapEncoder();
@@ -319,6 +321,20 @@ namespace DeExampleCSharpWPF
                 });
             }
         }
+        private void DrawEllipseInt(PaintEventArgs e)
+        {
+            System.Drawing.Pen blackPen = new System.Drawing.Pen(System.Drawing.Color.Black, 3);
+
+            // Create location and size of ellipse.
+            int x = 0;
+            int y = 0;
+            int width = 200;
+            int height = 100;
+
+            // Draw ellipse to screen.
+            e.Graphics.DrawEllipse(blackPen, x, y, width, height);
+        }
+
 
         public void SetImage(UInt16[] imageData, int width, int height)
         {

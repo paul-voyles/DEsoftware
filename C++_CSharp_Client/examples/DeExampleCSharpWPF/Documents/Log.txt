@@ -1,3 +1,7 @@
+8/15/17
+- DE12 streaming would keep occupy RAM and won't clean it after streaming stopped. SoftwareSim is ok, DE20 would give error message
+- private void DrawEllipseInt(PaintEventsArgs e) is added to try to draw a circle representing the aperture
+
 7/16/17
 - Need to copy all .dll files in HDF5DotNet folder to C:\Windows\System32 to run 
 - Consider to include the .dll file for HDF5DotNet in the code
