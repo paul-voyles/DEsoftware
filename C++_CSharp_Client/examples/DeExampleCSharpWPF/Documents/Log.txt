@@ -1,6 +1,13 @@
+8/16/17
+- Use more straightforward way to display detector edge, create two ellipses and use a button to control its visibility
+-- default: Ellipse Name="OuterAngle" Height="266" Margin="71,68,60,0" Grid.Row="1" Stroke="Black" StrokeThickness="2" VerticalAlignment="Top" Visibility="Hidden" 
+
 8/15/17
 - DE12 streaming would keep occupy RAM and won't clean it after streaming stopped. SoftwareSim is ok, DE20 would give error message
 - private void DrawEllipseInt(PaintEventsArgs e) is added to try to draw a circle representing the aperture
+- Paint property is for pictureBox, not for image
+- all button needs to be under class MainWindow
+- Window : System.windows
 
 7/16/17
 - Need to copy all .dll files in HDF5DotNet folder to C:\Windows\System32 to run 

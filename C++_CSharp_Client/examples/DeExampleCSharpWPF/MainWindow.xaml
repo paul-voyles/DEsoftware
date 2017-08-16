@@ -7,30 +7,35 @@
         Title="MainWindow" Height="900" Width="1600" Closing="Window_Closing" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="397*" />
-            <ColumnDefinition Width="665*" />
-            <ColumnDefinition Width="530*"/>
+            <ColumnDefinition Width="207*" />
+            <ColumnDefinition Width="324*" />
+            <ColumnDefinition Width="265*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="54*" />
             <RowDefinition Height="815*" />
         </Grid.RowDefinitions>
-        <Rectangle Grid.Column="1" Fill="#FFF4F4F5" Margin="41.531,38,39.469,189.177" Grid.Row="1" Stroke="Black" StrokeThickness="2"/>
+        <Rectangle Margin="7,7,7,0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top" Height="400" StrokeThickness="2" RenderTransformOrigin="0.5,0.5"/>
 
-        <Image Grid.Column="1" HorizontalAlignment="Left" Height="584" Margin="41.531,41.823,0,0" Grid.Row="1" VerticalAlignment="Top" Width="584" />
-        <StackPanel Margin="0,47,0,0" Grid.RowSpan="2"/>
-        <DataGrid AutoGenerateColumns="False" Grid.Column="2" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,536" Grid.Row="1">
+        <Rectangle Grid.Column="1" Fill="#FFF4F4F5" Margin="41.531,38,39.469,189.177" Grid.Row="1" Stroke="Black" StrokeThickness="2" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+
+        <Image Grid.Column="1" Margin="41.531,41.823,35.469,189.177" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" />
+        <StackPanel Margin="-1,0,-12,-7" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin">
+            <Slider x:Name="slider_innerang" Height="25" Margin="139,417,125,0" ValueChanged="changeinnerang" Minimum="0" Maximum="1"/>
+            <Slider x:Name="slider_outerang" Height="23" Margin="139,0,125,0" ValueChanged="changeouterang" Minimum="0" Maximum="1"/>
+        </StackPanel>
+        <DataGrid AutoGenerateColumns="False" Grid.Column="2" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,0" Grid.Row="1" Height="274" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Name}" CanUserReorder="True" CanUserResize="True" Header="Property" />
                 <DataGridTextColumn Binding="{Binding Value}" Header="Value" />
             </DataGrid.Columns>
         </DataGrid>
-        <Grid HorizontalAlignment="Left" Height="51" Margin="-125,79,0,0" Grid.Row="1" VerticalAlignment="Top" Width="45"/>
-        <TextBlock x:Name="textBlock" Grid.Column="1" Height="28" Margin="162,10,161,0" Grid.Row="1" TextWrapping="Wrap" Text="HAADF Detector Preview" VerticalAlignment="Top" TextAlignment="Center" FontSize="18"/>
-        <Button x:Name="button" Content="Search" Grid.Column="1" HorizontalAlignment="Left" Height="33" Margin="59,0,0,150" Grid.Row="1" VerticalAlignment="Bottom" Width="132" FontSize="18"/>
-        <Button x:Name="button_Copy" Content="Acquire" Grid.Column="1" Height="33" Margin="248,0,249,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18"/>
-        <Button x:Name="button_Copy1" Content="Run DE" Grid.Column="1" Height="33" Margin="0,0,58,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18" HorizontalAlignment="Right" Width="132"/>
-        <Border Grid.Column="1" Margin="231,222,231,350" Grid.Row="1" MinWidth="10" MinHeight="10" MaxWidth="512" MaxHeight="512" >
+        <Grid HorizontalAlignment="Left" Height="51" Margin="-125,79,0,0" Grid.Row="1" VerticalAlignment="Top" Width="45" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <TextBlock x:Name="textBlock" Grid.Column="1" Height="28" Margin="162,10,161,0" Grid.Row="1" TextWrapping="Wrap" Text="HAADF Detector Preview" VerticalAlignment="Top" TextAlignment="Center" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Button x:Name="button" Content="Search" Grid.Column="1" HorizontalAlignment="Left" Height="33" Margin="59,0,0,150" Grid.Row="1" VerticalAlignment="Bottom" Width="132" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Button x:Name="button_Copy" Content="Acquire" Grid.Column="1" Height="33" Margin="248,0,249,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Button x:Name="button_Copy1" Content="Run DE" Grid.Column="1" Height="33" Margin="0,0,58,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18" HorizontalAlignment="Right" Width="132" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Border Grid.Column="1" Margin="231,222,231,350" Grid.Row="1" MinWidth="10" MinHeight="10" MaxWidth="512" MaxHeight="512" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" >
 
             <Grid>
 
@@ -40,23 +45,22 @@
 
         </Border>
 
-        <TextBlock x:Name="textBlock1" Grid.Column="1" HorizontalAlignment="Left" Height="30" Margin="59,0,0,104" Grid.Row="1" TextWrapping="Wrap" Text="Region of Interest (ROI):" VerticalAlignment="Bottom" Width="152"/>
-        <TextBox x:Name="textBox" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="101,0,0,87" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
-        <TextBox x:Name="textBox_Copy" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="101,0,0,48" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
-        <TextBox x:Name="textBox_Copy1" Grid.Column="1" Height="20" Margin="257,0,282,87" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom"/>
-        <TextBox x:Name="textBox_Copy2" Grid.Column="1" Height="20" Margin="257,0,282,48" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom"/>
-        <TextBlock x:Name="textBlock1_Copy" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="59,0,0,87" Grid.Row="1" TextWrapping="Wrap" Text="Start X:" VerticalAlignment="Bottom" Width="42"/>
-        <TextBlock x:Name="textBlock1_Copy1" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="211,0,0,86" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" X:"/></TextBlock>
-        <TextBlock x:Name="textBlock1_Copy2" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="59,0,0,48" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start "/><Run Text="Y"/><Run Text=":"/></TextBlock>
-        <TextBlock x:Name="textBlock1_Copy3" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="210,0,0,48" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" "/><Run Text="Y"/><Run Text=":"/></TextBlock>
-        <Button Click="btnLiveCapture_Click" Content="Stream from DE" Height="23" HorizontalAlignment="Left" Margin="10,284,0,0" x:Name="btnLiveCapture" Width="148" Grid.Column="2" Grid.Row="1" VerticalAlignment="Top" />
-        <Button Click="btnGetImage_Click" Content="Capture Single Image" Height="23" HorizontalAlignment="Left" Margin="10,312,0,0" x:Name="btnGetImage" Width="148" Visibility="Visible" Grid.Column="2" Grid.Row="1" VerticalAlignment="Top"/>
+        <TextBlock x:Name="textBlock1" Grid.Column="1" HorizontalAlignment="Left" Height="30" Margin="59,0,0,104" Grid.Row="1" TextWrapping="Wrap" Text="Region of Interest (ROI):" VerticalAlignment="Bottom" Width="152" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <TextBox x:Name="textBox" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="101,0,0,87" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <TextBox x:Name="textBox_Copy" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="101,0,0,48" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <TextBox x:Name="textBox_Copy1" Grid.Column="1" Height="20" Margin="257,0,282,87" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <TextBox x:Name="textBox_Copy2" Grid.Column="1" Height="20" Margin="257,0,282,48" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <TextBlock x:Name="textBlock1_Copy" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="59,0,0,87" Grid.Row="1" TextWrapping="Wrap" Text="Start X:" VerticalAlignment="Bottom" Width="42" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <TextBlock x:Name="textBlock1_Copy1" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="211,0,0,86" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"><Run Text="End"/><Run Text=" X:"/></TextBlock>
+        <TextBlock x:Name="textBlock1_Copy2" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="59,0,0,48" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"><Run Text="Start "/><Run Text="Y"/><Run Text=":"/></TextBlock>
+        <TextBlock x:Name="textBlock1_Copy3" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="210,0,0,48" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"><Run Text="End"/><Run Text=" "/><Run Text="Y"/><Run Text=":"/></TextBlock>
+        <Button Click="btnLiveCapture_Click" Content="Stream from DE" Height="23" HorizontalAlignment="Left" Margin="10,284,0,0" x:Name="btnLiveCapture" Width="148" Grid.Column="2" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" />
+        <Button Click="btnGetImage_Click" Content="Capture Single Image" Height="23" HorizontalAlignment="Left" Margin="10,312,0,0" x:Name="btnGetImage" Width="148" Visibility="Visible" Grid.Column="2" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
 
-        <Image x:Name="pictureBox1" HorizontalAlignment="Left" Height="360" Margin="14,14,0,0" Grid.Row="1" VerticalAlignment="Top" Width="360" />
-        <Rectangle Margin="7,7,7,0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top" Height="383" StrokeThickness="2"/>
-        <Path Grid.Column="1" Data="M398,-1" HorizontalAlignment="Left" Height="1" Margin="1,-1,0,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Top" Width="1"/>
-        <Rectangle Grid.ColumnSpan="3" Height="0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top"/>
-        <StackPanel Grid.ColumnSpan="3" Orientation="Horizontal" VerticalAlignment="Top" Height="42">
+        <Image x:Name="pictureBox1" Height="400" Margin="7,7,7,0" Grid.Row="1" VerticalAlignment="Top" />
+        <Path Grid.Column="1" Data="M398,-1" HorizontalAlignment="Left" Height="1" Margin="1,-1,0,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Top" Width="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Rectangle Grid.ColumnSpan="3" Height="0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <StackPanel Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,0,0,12" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin">
             <TextBlock Margin="10,0,4,0" Text="IP:" VerticalAlignment="Center"/>
             <TextBox Margin="0,0,4,0" Text="127.0.0.1" VerticalAlignment="Center"  Width="75" x:Name="IPAddr" />
             <Button Click="btnConnect_Click" Content="Connect" Height="23" Margin="8,0,32,0" x:Name="btnConnect" Width="75" />
@@ -68,9 +72,13 @@
                 <ComboBoxItem Content="TCP"/>
             </ComboBox>
         </StackPanel>
-        <Path Grid.Column="2" Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="0,-7,0,-1" Grid.Row="1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2"/>
-        <Path Grid.ColumnSpan="3" Data="M0.5,46.5 L1592,47" Height="1.5" Margin="0.5,0,-1,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Bottom" StrokeThickness="2"/>
-        <Path Data="M1062,869 L1062,47" HorizontalAlignment="Right" Margin="0,-7,0,-1" Grid.Row="1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2"/>
+        <Path Grid.Column="2" Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="0,-7,0,-1" Grid.Row="1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Path Grid.ColumnSpan="3" Data="M0.5,46.5 L1592,47" Height="1.5" Margin="0.5,0,-1,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Bottom" StrokeThickness="2" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Path Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="10,-7,0,-1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2" Grid.Column="1" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Button Click="button1_Click" x:Name="button1" Content="Detector" HorizontalAlignment="Left" Height="28" Margin="10,0,0,361" Grid.Row="1" VerticalAlignment="Bottom" Width="93" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Ellipse x:Name="OuterAngle" Height="266" Margin="67,67,67,0" Grid.Row="1" Stroke="Red" StrokeThickness="2" VerticalAlignment="Top" Visibility="Hidden" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" />
+        <Slider x:Name="slider" Grid.Column="1" HorizontalAlignment="Right" Margin="0,252,19,0" Grid.Row="1" VerticalAlignment="Top" Height="18" Width="12" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Ellipse x:Name="InnerAngle"  Height="400" Margin="7,7,7,0" Grid.Row="1" Stroke="Red" StrokeThickness="2" VerticalAlignment="Top" Visibility="Hidden" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
 
     </Grid>
 </Window>

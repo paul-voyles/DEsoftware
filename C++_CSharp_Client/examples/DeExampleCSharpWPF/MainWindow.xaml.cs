@@ -46,7 +46,6 @@ namespace DeExampleCSharpWPF
         public MainWindow()
         {
             InitializeComponent();
-
         }
 
         // used to close main window
@@ -146,6 +145,7 @@ namespace DeExampleCSharpWPF
                 }
                 cmbTransport.IsEnabled = false;
             }
+            
         }
 
         /// <summary>
@@ -235,11 +235,36 @@ namespace DeExampleCSharpWPF
             }
         }
 
-        /// <summary>
-        /// LiveModeView merge into MainWindow
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        // click to start using virtual detector to reconstrcut image
+        private void button1_Click(object sender, RoutedEventArgs e)
+        {
+            SolidColorBrush strokeBrush = new SolidColorBrush(Colors.Red);
+            strokeBrush.Opacity = .25d;
+            InnerAngle.Visibility = Visibility.Visible;
+            InnerAngle.Stroke = strokeBrush;
+            InnerAngle.StrokeThickness = InnerAngle.Height / 4;
+        }
+
+        // called by change on innerang slider, change the radius of inner angle ellipse
+        private void changeinnerang(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            double innerang = slider_innerang.Value;
+            InnerAngle.StrokeThickness = InnerAngle.Width / 2 * (1.0 - innerang);
+            
+        }
+        private void changeouterang(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            double outerang = slider_outerang.Value;
+            Thickness margin = InnerAngle.Margin;
+//            margin.Left = 7.0 + 200.0 * (1.0 - outerang);
+//            margin.Right = 7.0 + 200.0 * (1.0 - outerang);
+            margin.Top = 7.0 + 200.0 * (1.0 - outerang);
+            InnerAngle.Margin = margin;
+            InnerAngle.Height = 400.0 - margin.Top - margin.Top + 14.0;
+            InnerAngle.Width = InnerAngle.Height;
+         }
+
+
         private void btnLiveCapture_Click(object sender, RoutedEventArgs e)
         {
             if (_liveModeEnabled)
@@ -321,19 +346,8 @@ namespace DeExampleCSharpWPF
                 });
             }
         }
-        private void DrawEllipseInt(PaintEventArgs e)
-        {
-            System.Drawing.Pen blackPen = new System.Drawing.Pen(System.Drawing.Color.Black, 3);
 
-            // Create location and size of ellipse.
-            int x = 0;
-            int y = 0;
-            int width = 200;
-            int height = 100;
 
-            // Draw ellipse to screen.
-            e.Graphics.DrawEllipse(blackPen, x, y, width, height);
-        }
 
 
         public void SetImage(UInt16[] imageData, int width, int height)
@@ -514,19 +528,22 @@ namespace DeExampleCSharpWPF
             NotifyPropertyChanged("Ilt");
         }
 
-/*        #region INotifyPropertyChanged
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        private void NotifyPropertyChanged(String info)
-        {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(info));
-            }
-        }
 
-        #endregion
-*/
+
+        /*        #region INotifyPropertyChanged
+
+                public event PropertyChangedEventHandler PropertyChanged;
+                private void NotifyPropertyChanged(String info)
+                {
+                    if (PropertyChanged != null)
+                    {
+                        PropertyChanged(this, new PropertyChangedEventArgs(info));
+                    }
+                }
+
+                #endregion
+        */
     }
 
     public class Property
