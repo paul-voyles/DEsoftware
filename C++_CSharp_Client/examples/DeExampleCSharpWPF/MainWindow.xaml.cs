@@ -144,7 +144,14 @@ namespace DeExampleCSharpWPF
                         break;
                 }
                 cmbTransport.IsEnabled = false;
+                string xSize = "";
+                string ySize = "";
+                _deInterface.GetProperty("Image Size X", ref xSize);
+                _deInterface.GetProperty("Image Size Y", ref ySize);
+                PixelsX.Text = xSize;
+                PixelsY.Text = ySize;
             }
+
             
         }
 
@@ -252,6 +259,8 @@ namespace DeExampleCSharpWPF
             InnerAngle.StrokeThickness = InnerAngle.Width / 2 * (1.0 - innerang);
             
         }
+
+        // move the slider for outerangle won't change inner angle
         private void changeouterang(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             double outerang = slider_outerang.Value;
@@ -263,9 +272,9 @@ namespace DeExampleCSharpWPF
             InnerAngle.Height = 400.0 - margin.Top - margin.Top + 14.0;
             InnerAngle.Width = InnerAngle.Height;
          }
+        
 
-
-        private void btnLiveCapture_Click(object sender, RoutedEventArgs e)
+        public void btnLiveCapture_Click(object sender, RoutedEventArgs e)
         {
             if (_liveModeEnabled)
             {
@@ -275,6 +284,7 @@ namespace DeExampleCSharpWPF
             }
             else
             {
+                ImageCount = 0;
                 semaphore = new Semaphore(0, 1);
                 new LiveModeView();
  //               Closing += LiveViewWindow_Closing;
@@ -331,7 +341,7 @@ namespace DeExampleCSharpWPF
 
                             nTickCountOld = System.Environment.TickCount;
                             _deInterface.GetImage(out image);   //get image from camera
-                        nTickCount = System.Environment.TickCount - nTickCountOld;
+                            nTickCount = System.Environment.TickCount - nTickCountOld; // get time elapsed
                             semaphore.WaitOne();
                             m_imageQueue.Enqueue(image);
                             semaphore.Release();
@@ -384,6 +394,15 @@ namespace DeExampleCSharpWPF
             }));
 
             ImageCount++;
+            if (ImageCount > 10)
+            {
+                _liveModeEnabled = false;
+                Dispatcher.BeginInvoke((Action)(() =>
+                {
+                    btnLiveCapture.Content = "Stream from DE";  //invoke is needed to control btn from another thread
+                }));
+                return;
+            }
         }
 
 /*        private void LiveViewWindow_Closing(object sender, CancelEventArgs e)
@@ -528,6 +547,18 @@ namespace DeExampleCSharpWPF
             NotifyPropertyChanged("Ilt");
         }
 
+        // change DE camera setting for number of pixels along x and y
+        private void Submit_Setting_Click(object sender, RoutedEventArgs e)
+        {
+            string pxx = PixelsX.Text;
+            string pxy = PixelsY.Text;
+            _deInterface.SetProperty("Image Size X", pxx);
+            _deInterface.SetProperty("Image Size Y", pxy);
+
+        }
+
+        }
+
 
 
 
@@ -574,4 +605,4 @@ namespace DeExampleCSharpWPF
     {
        
     }*/
-    }
+    

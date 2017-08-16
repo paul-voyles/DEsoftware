@@ -23,6 +23,7 @@
         <StackPanel Margin="-1,0,-12,-7" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin">
             <Slider x:Name="slider_innerang" Height="25" Margin="139,417,125,0" ValueChanged="changeinnerang" Minimum="0" Maximum="1"/>
             <Slider x:Name="slider_outerang" Height="23" Margin="139,0,125,0" ValueChanged="changeouterang" Minimum="0" Maximum="1"/>
+            <Image x:Name="Recon" Height="300" Margin="54.75,10,54.75,0" Width="300" />
         </StackPanel>
         <DataGrid AutoGenerateColumns="False" Grid.Column="2" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,0" Grid.Row="1" Height="274" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin">
             <DataGrid.Columns>
@@ -31,10 +32,11 @@
             </DataGrid.Columns>
         </DataGrid>
         <Grid HorizontalAlignment="Left" Height="51" Margin="-125,79,0,0" Grid.Row="1" VerticalAlignment="Top" Width="45" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Rectangle x:Name="ReconBox" Height="300" Margin="63.5,475,50.5,0" Stroke="Black" Grid.Row="1" VerticalAlignment="Top"/>
         <TextBlock x:Name="textBlock" Grid.Column="1" Height="28" Margin="162,10,161,0" Grid.Row="1" TextWrapping="Wrap" Text="HAADF Detector Preview" VerticalAlignment="Top" TextAlignment="Center" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Button x:Name="button" Content="Search" Grid.Column="1" HorizontalAlignment="Left" Height="33" Margin="59,0,0,150" Grid.Row="1" VerticalAlignment="Bottom" Width="132" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Button x:Name="button_Copy" Content="Acquire" Grid.Column="1" Height="33" Margin="248,0,249,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
-        <Button x:Name="button_Copy1" Content="Run DE" Grid.Column="1" Height="33" Margin="0,0,58,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18" HorizontalAlignment="Right" Width="132" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Button x:Name="Submit_Setting" Click="Submit_Setting_Click" Content="Submit Setting" Grid.Column="1" Height="33" Margin="0,0,58,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18" HorizontalAlignment="Right" Width="132" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Border Grid.Column="1" Margin="231,222,231,350" Grid.Row="1" MinWidth="10" MinHeight="10" MaxWidth="512" MaxHeight="512" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" >
 
             <Grid>
@@ -77,8 +79,16 @@
         <Path Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="10,-7,0,-1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2" Grid.Column="1" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Button Click="button1_Click" x:Name="button1" Content="Detector" HorizontalAlignment="Left" Height="28" Margin="10,0,0,361" Grid.Row="1" VerticalAlignment="Bottom" Width="93" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Ellipse x:Name="OuterAngle" Height="266" Margin="67,67,67,0" Grid.Row="1" Stroke="Red" StrokeThickness="2" VerticalAlignment="Top" Visibility="Hidden" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" />
-        <Slider x:Name="slider" Grid.Column="1" HorizontalAlignment="Right" Margin="0,252,19,0" Grid.Row="1" VerticalAlignment="Top" Height="18" Width="12" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Ellipse x:Name="InnerAngle"  Height="400" Margin="7,7,7,0" Grid.Row="1" Stroke="Red" StrokeThickness="2" VerticalAlignment="Top" Visibility="Hidden" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <TextBox x:Name="PixelsX" Grid.Column="1" Height="20" Margin="0,0,81.342,87.334" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="109"/>
+        <TextBox x:Name="PixelsY" Grid.Column="1" Height="20" Margin="0,0,81.339,63" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="109"/>
+        <TextBlock x:Name="textBlock1_Copy4" Grid.Column="1" HorizontalAlignment="Right" Height="20" Margin="0,0,197.333,62" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Y"/><Run Text=" Pixels"/><Run Text=":"/></TextBlock>
+        <TextBlock x:Name="textBlock1_Copy5" Grid.Column="1" HorizontalAlignment="Right" Height="20" Margin="0,0,192,87" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="48.667" Text="X Pixels:"/>
+        <TextBlock x:Name="textBlock1_Copy6" Grid.Column="1" HorizontalAlignment="Right" Height="30" Margin="0,0,88.667,104.666" Grid.Row="1" TextWrapping="Wrap" Text="Scan grid setting:" VerticalAlignment="Bottom" Width="152"/>
+        <TextBox x:Name="PixelsX_Copy" Grid.Column="1" Height="20" Margin="0,0,81.333,33.618" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="109"/>
+        <TextBox x:Name="PixelsY_Copy" Grid.Column="1" Height="20" Margin="0,0,81.33,9.284" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="109"/>
+        <TextBlock x:Name="textBlock1_Copy7" Grid.Column="1" HorizontalAlignment="Right" Height="20" Margin="0,0,193.995,8.284" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="62" Text="Y Positions:"/>
+        <TextBlock x:Name="textBlock1_Copy8" Grid.Column="1" HorizontalAlignment="Right" Height="20" Margin="0,0,195.828,34.618" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="60.667"><Run Text="X "/><Run Text="Positions"/><Run Text=":"/></TextBlock>
 
     </Grid>
 </Window>

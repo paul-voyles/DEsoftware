@@ -1,6 +1,35 @@
 8/16/17
 - Use more straightforward way to display detector edge, create two ellipses and use a button to control its visibility
 -- default: Ellipse Name="OuterAngle" Height="266" Margin="71,68,60,0" Grid.Row="1" Stroke="Black" StrokeThickness="2" VerticalAlignment="Top" Visibility="Hidden" 
+- Need to solve the problem when input image is not square in pixels
+- Functions in DeInterface:
+	- 	DeInterfaceNET();
+		!DeInterfaceNET();
+		~DeInterfaceNET();
+
+		bool connect(String^ ip, int rPort, int wPort);
+		bool close();
+		bool isConnected();
+
+		bool SetProperty(String^ prop, String^ val);
+		bool SetCameraName(String^ name);		
+
+		bool GetCameraNames(List<String^>^% cameras);
+		bool GetPropertyNames(List<String^>^% props);
+		bool GetProperty(String^ prop, String^% value);
+		bool GetImage([Out]array<UInt16, 1> ^%image);
+		bool IsInLiveMode();
+		bool EnableLiveMode();
+		bool DisableLiveMode();
+		DeError^ GetLastError();
+	private:
+		DeInterfaceWin32 *unmanaged;
+		bool connected;
+
+- may be able to use SetProperty to set image size along x and y direction
+- Number of pixels can be arbitary number?
+- tried but not working, so far cannot change image size from software
+- How to control how many images to take from software?
 
 8/15/17
 - DE12 streaming would keep occupy RAM and won't clean it after streaming stopped. SoftwareSim is ok, DE20 would give error message
