@@ -362,7 +362,17 @@ namespace DeExampleCSharpWPF
 
         public void SetImage(UInt16[] imageData, int width, int height)
         {
-
+            string StrX = PosX.Text;
+            string StrY = PosY.Text;
+            int px, py; 
+            int numpos = 0;
+            if (int.TryParse(StrX, out px))
+            {
+                if (int.TryParse(StrY, out py))
+                {
+                    numpos = px * py;
+                }
+            }
             // Scale image
             int length = width * height;
             ushort min = imageData[0]; ushort max = imageData[0];
@@ -394,7 +404,7 @@ namespace DeExampleCSharpWPF
             }));
 
             ImageCount++;
-            if (ImageCount > 10)
+            if (ImageCount > numpos)
             {
                 _liveModeEnabled = false;
                 Dispatcher.BeginInvoke((Action)(() =>
