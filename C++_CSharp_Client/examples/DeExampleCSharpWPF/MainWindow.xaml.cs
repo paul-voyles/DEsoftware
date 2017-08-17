@@ -286,7 +286,7 @@ namespace DeExampleCSharpWPF
                 semaphore = new Semaphore(0, 1);
                 new LiveModeView();
  //               Closing += LiveViewWindow_Closing;
-                InitializeWBmp(GetImage());
+                InitializeWBmp(GetImage()); // only used to display image on imagebox.1
                 Show();
                 _updateTimer = new System.Timers.Timer(1000);
                 _updateTimer.Elapsed += new ElapsedEventHandler(_updateTimer_Elapsed);
@@ -297,7 +297,8 @@ namespace DeExampleCSharpWPF
                 _liveModeEnabled = true;
                 btnLiveCapture.Content = "Stop Streaming";
 
-                //start new task for background image rendering
+                // start new task for background image rendering
+                // determine size for each image
 
                 string xSize = "";
                 string ySize = "";
@@ -305,6 +306,35 @@ namespace DeExampleCSharpWPF
                 _deInterface.GetProperty("Image Size Y", ref ySize);
                 int width = Convert.ToInt32(xSize);
                 int height = Convert.ToInt32(ySize);
+
+                // determine how many frames to take
+                string StrX = null;
+                string StrY = null;
+                int px = 0, py = 0;
+                int numpos = 0;
+
+                PosX.Dispatcher.Invoke(
+                    (ThreadStart)delegate { StrX = PosX.Text; }
+                    );
+                PosY.Dispatcher.Invoke(
+                    (ThreadStart)delegate { StrY = PosX.Text; }
+                    );
+
+                if (Int32.TryParse(StrX, out px))
+                {
+                    if (Int32.TryParse(StrY, out py))
+                    {
+                        numpos = px * py;
+                    }
+                }
+
+                // generate reconstruction bitmap with given size
+                UInt16[] recon = new UInt16[px*py]; // array for reconstrcution purpose
+                UInt16[] recon_scale = new UInt16[px * py];
+                Bitmap ReconBMP = new Bitmap(px, py);   // bitmap for recon purpose
+                int length = px * py;
+                ushort min = recon[0]; ushort max = recon[0];
+                //Graphics flagGraphics = Graphics.FromImage(ReconBMP);   // construct flagGraphics for recon bitmap
 
                 semaphore.Release();
                 int nTickCount = 0;
@@ -315,12 +345,55 @@ namespace DeExampleCSharpWPF
                         System.Threading.Thread.Sleep(1);
                         {
                             if (m_imageQueue.Count > 0)
+                            // scale and display image
                             {
                                 semaphore.WaitOne();
                                 UInt16[] image = m_imageQueue.Dequeue();
                                 semaphore.Release();
                                 SetImage(image, width, height);
                                 SetImageLoadTime(nTickCount);
+                                // fill in array 'recon' for reconstruction image
+                                double innerang = 0;
+                                double outerang = 0;
+                                slider_innerang.Dispatcher.Invoke(
+                                    (ThreadStart)delegate { innerang = slider_innerang.Value; }
+                                    );
+                                slider_outerang.Dispatcher.Invoke(
+                                    (ThreadStart)delegate { outerang = slider_outerang.Value; }
+                                    );
+                                
+                                recon[ImageCount-1] = IntegrateBitmap(image, width, height, innerang, outerang);
+                            }
+                            if(ImageCount==1)
+                            {
+                                min = recon[0];
+                                max = recon[0];
+                            }
+
+                            if(ImageCount!=0)
+                            {
+                                // imagecount would increase by 1 after setimage function, one more number on recon array
+                                if (recon[ImageCount - 1] < min) min = recon[ImageCount - 1];
+                                if (recon[ImageCount - 1] > max) max = recon[ImageCount - 1]; //update max and min after recon array changed
+                                for (int i = 0; i < ImageCount; i++)
+                                {
+                                    recon_scale[i] = (ushort)((recon[i] - min) * 255 / (max - min + 1));  // rescale with new max and min
+                                }
+                            }
+                            ReconBMP = CreateBitmap(recon_scale,px,py);
+                            BitmapSource ReconBitmapSource = ConvertBitmapSource(ReconBMP);
+                            InitializeWBmpRecon(ReconBitmapSource);
+
+                            // criteria to stop image acquisition
+                            if (ImageCount == numpos)
+                            {
+                                _liveModeEnabled = false;
+                                Dispatcher.BeginInvoke((Action)(() =>
+                                {
+                                    btnLiveCapture.Content = "Stream from DE";  //invoke is needed to control btn from another thread
+                                }));
+                                ImageCount = 0;
+                                return;
                             }
                         }
                     }
@@ -355,31 +428,42 @@ namespace DeExampleCSharpWPF
             }
         }
 
+        public Bitmap CreateBitmap(ushort[] imagedata, int pxx, int pxy)
+        {
+            System.Drawing.Bitmap flag = new System.Drawing.Bitmap(pxx, pxy);
+            for (int x = 0; x < pxx; x++)
+            {
+                for (int y = 0; y < pxy ; y++)
+                {
+                    int pixel = pxx * y + x;
+                    flag.SetPixel(x, y, System.Drawing.Color.FromArgb(imagedata[pixel],imagedata[pixel],imagedata[pixel]));
+                }
+            }
+
+            return flag;
+        }
 
 
+        // convert bitmap to BitmapSource
+        public BitmapSource ConvertBitmapSource(System.Drawing.Bitmap bitmap)
+        {
+            var bitmapData = bitmap.LockBits(
+                new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                System.Drawing.Imaging.ImageLockMode.ReadOnly, bitmap.PixelFormat);
+
+            var bitmapSource = BitmapSource.Create(
+                bitmapData.Width, bitmapData.Height, 96, 96, PixelFormats.Bgr24, null,
+                bitmapData.Scan0, bitmapData.Stride * bitmapData.Height, bitmapData.Stride);
+
+            bitmap.UnlockBits(bitmapData);
+            return bitmapSource;
+        }
 
         public void SetImage(UInt16[] imageData, int width, int height)
         {
-            string StrX=null;
-            string StrY=null;
-            int px=0, py=0; 
-            int numpos = 0;
 
-            PosX.Dispatcher.Invoke(
-                (ThreadStart) delegate{StrX = PosX.Text;}
-                );
-            PosY.Dispatcher.Invoke(
-                (ThreadStart)delegate { StrY = PosX.Text; }
-                );
 
-            if (Int32.TryParse(StrX, out px))
-            {
-                if (Int32.TryParse(StrY, out py))
-                {
-                    numpos = px * py;
-                }
-            }
-            Bitmap ReconBMP = new Bitmap(px,py);    // generate reconstruction bitmap with given size
+
             // Scale image
             int length = width * height;
             ushort min = imageData[0]; ushort max = imageData[0];
@@ -402,29 +486,44 @@ namespace DeExampleCSharpWPF
             }
 
             //use the dispatcher to invoke onto the UI thread for image displaying
-
             this.Dispatcher.BeginInvoke(new Action(() =>
             {
                 //write the image data to the WriteableBitmap buffer
                 _wBmp.WritePixels(new Int32Rect(0, 0, width, height), image16, width * 2, 0);
 
             }));
-
             ImageCount++;
-            if (ImageCount == numpos)
-            {
-                _liveModeEnabled = false;
-                Dispatcher.BeginInvoke((Action)(() =>
-                {
-                    btnLiveCapture.Content = "Stream from DE";  //invoke is needed to control btn from another thread
-                }));
-                CreateReconBitmap();
-                return;
-            }
+            
         }
 
-        public void CreateReconBitmap()
+        public UInt16 IntegrateBitmap(UInt16[] imageData, int pxx, int pxy, double innerang, double outerang)
         {
+            double centerx = pxx / 2;
+            double centery = pxy / 2;
+            if (pxx > pxy)
+            {
+                outerang = pxx * outerang;
+            }
+            else
+            {
+                outerang = pxy * outerang;
+            }
+                // use the smaller one among pxx and pxy to calculate outerang
+            innerang = outerang * innerang;
+            UInt16 sum=0;
+            for (int i = 0; i<pxx; i++)
+            {
+                for (int j = 0; j < pxy;j++)
+                {
+                    double distance = Math.Pow(Convert.ToDouble(i - centerx), 2) + Math.Pow(Convert.ToDouble(j - centery), 2);
+                    distance = Math.Sqrt(distance);
+                    if (distance < outerang && distance > innerang)
+                    {
+                        sum += imageData[i+j*pxx];
+                    }
+                }
+            }
+            return sum;
         }
 
 /*        private void LiveViewWindow_Closing(object sender, CancelEventArgs e)
@@ -481,6 +580,7 @@ namespace DeExampleCSharpWPF
         private DateTime _renderStart;
         private System.Timers.Timer _updateTimer;
         private WriteableBitmap _wBmp;
+        private WriteableBitmap _wBmpRecon;
         private int nTickCount = 0;
         private decimal dTickCountAvg = 0;
         private int nCount = 0;
@@ -555,13 +655,22 @@ namespace DeExampleCSharpWPF
             pictureBox1.Source = _wBmp; // display _wBmp to pictureBox1, will be called only once
         }
 
+        public void InitializeWBmpRecon(BitmapSource bmpSource)
+        {
+            //_wBmp = new WriteableBitmap(bmpSource);
+
+            _wBmpRecon = new WriteableBitmap(bmpSource.PixelWidth, bmpSource.PixelHeight, bmpSource.DpiX, bmpSource.DpiY, bmpSource.Format, bmpSource.Palette);
+            Recon.Dispatcher.Invoke(
+                (ThreadStart)delegate { Recon.Source = _wBmpRecon; }
+            );
+        }
         /// <summary>
         /// Set the image to the array of ushorts representing a 16 bit grayscale image
         /// </summary>
         /// <param name="imageData"></param>
         /// <param name="width"></param>
         /// <param name="height"></param>
-       
+
 
         public void SetImageLoadTime(int nTickCount)
         {
