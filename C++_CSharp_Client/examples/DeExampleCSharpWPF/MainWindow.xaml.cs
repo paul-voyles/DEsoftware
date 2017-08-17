@@ -362,13 +362,21 @@ namespace DeExampleCSharpWPF
 
         public void SetImage(UInt16[] imageData, int width, int height)
         {
-            string StrX = PosX.Text;
-            string StrY = PosY.Text;
-            int px, py; 
+            string StrX=null;
+            string StrY=null;
+            int px=0, py=0; 
             int numpos = 0;
-            if (int.TryParse(StrX, out px))
+
+            PosX.Dispatcher.Invoke(
+                (ThreadStart) delegate{StrX = PosX.Text;}
+                );
+            PosY.Dispatcher.Invoke(
+                (ThreadStart)delegate { StrY = PosX.Text; }
+                );
+
+            if (Int32.TryParse(StrX, out px))
             {
-                if (int.TryParse(StrY, out py))
+                if (Int32.TryParse(StrY, out py))
                 {
                     numpos = px * py;
                 }
