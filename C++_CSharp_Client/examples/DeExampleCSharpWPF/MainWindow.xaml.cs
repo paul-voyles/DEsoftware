@@ -265,8 +265,6 @@ namespace DeExampleCSharpWPF
         {
             double outerang = slider_outerang.Value;
             Thickness margin = InnerAngle.Margin;
-//            margin.Left = 7.0 + 200.0 * (1.0 - outerang);
-//            margin.Right = 7.0 + 200.0 * (1.0 - outerang);
             margin.Top = 7.0 + 200.0 * (1.0 - outerang);
             InnerAngle.Margin = margin;
             InnerAngle.Height = 400.0 - margin.Top - margin.Top + 14.0;
@@ -381,6 +379,7 @@ namespace DeExampleCSharpWPF
                     numpos = px * py;
                 }
             }
+            Bitmap ReconBMP = new Bitmap(px,py);    // generate reconstruction bitmap with given size
             // Scale image
             int length = width * height;
             ushort min = imageData[0]; ushort max = imageData[0];
@@ -412,15 +411,20 @@ namespace DeExampleCSharpWPF
             }));
 
             ImageCount++;
-            if (ImageCount > numpos)
+            if (ImageCount == numpos)
             {
                 _liveModeEnabled = false;
                 Dispatcher.BeginInvoke((Action)(() =>
                 {
                     btnLiveCapture.Content = "Stream from DE";  //invoke is needed to control btn from another thread
                 }));
+                CreateReconBitmap();
                 return;
             }
+        }
+
+        public void CreateReconBitmap()
+        {
         }
 
 /*        private void LiveViewWindow_Closing(object sender, CancelEventArgs e)

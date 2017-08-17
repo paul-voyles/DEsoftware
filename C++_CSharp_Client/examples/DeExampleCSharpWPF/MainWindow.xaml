@@ -15,6 +15,7 @@
             <RowDefinition Height="54*" />
             <RowDefinition Height="815*" />
         </Grid.RowDefinitions>
+        <Rectangle x:Name="ReconBox" Height="300" Margin="63.5,475,50.5,0" Stroke="Black" Grid.Row="1" VerticalAlignment="Top"/>
         <Rectangle Margin="7,7,7,0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top" Height="400" StrokeThickness="2" RenderTransformOrigin="0.5,0.5"/>
 
         <Rectangle Grid.Column="1" Fill="#FFF4F4F5" Margin="41.531,38,39.469,189.177" Grid.Row="1" Stroke="Black" StrokeThickness="2" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
@@ -32,7 +33,6 @@
             </DataGrid.Columns>
         </DataGrid>
         <Grid HorizontalAlignment="Left" Height="51" Margin="-125,79,0,0" Grid.Row="1" VerticalAlignment="Top" Width="45" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
-        <Rectangle x:Name="ReconBox" Height="300" Margin="63.5,475,50.5,0" Stroke="Black" Grid.Row="1" VerticalAlignment="Top"/>
         <TextBlock x:Name="textBlock" Grid.Column="1" Height="28" Margin="162,10,161,0" Grid.Row="1" TextWrapping="Wrap" Text="HAADF Detector Preview" VerticalAlignment="Top" TextAlignment="Center" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Button x:Name="button" Content="Search" Grid.Column="1" HorizontalAlignment="Left" Height="33" Margin="59,0,0,150" Grid.Row="1" VerticalAlignment="Bottom" Width="132" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Button x:Name="button_Copy" Content="Acquire" Grid.Column="1" Height="33" Margin="248,0,249,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
