@@ -328,10 +328,13 @@ namespace DeExampleCSharpWPF
                     }
                 }
 
-                // generate reconstruction bitmap with given size
+                // generate reconstruction bitmap and initialize _wBmpRecon
                 UInt16[] recon = new UInt16[px*py]; // array for reconstrcution purpose
                 UInt16[] recon_scale = new UInt16[px * py];
                 Bitmap ReconBMP = new Bitmap(px, py);   // bitmap for recon purpose
+                BitmapSource ReconBitmapSource = ConvertBitmapSource(ReconBMP);
+                InitializeWBmpRecon(ReconBitmapSource);
+
                 int length = px * py;
                 ushort min = recon[0]; ushort max = recon[0];
                 //Graphics flagGraphics = Graphics.FromImage(ReconBMP);   // construct flagGraphics for recon bitmap
@@ -364,13 +367,19 @@ namespace DeExampleCSharpWPF
                                 
                                 recon[ImageCount-1] = IntegrateBitmap(image, width, height, innerang, outerang);
                             }
-                            if(ImageCount==1)
+                            if(ImageCount==1)   // case for first pixel
                             {
                                 min = recon[0];
                                 max = recon[0];
+                                recon_scale[0] = 255;  // rescale with new max and min
+                                this.Dispatcher.BeginInvoke(new Action(() =>
+                                {
+                                    _wBmpRecon.WritePixels(new Int32Rect(0, 0, px, py), recon_scale, px * 2, 0);
+
+                                }));
                             }
 
-                            if(ImageCount!=0)
+                            if(ImageCount > 1)
                             {
                                 // imagecount would increase by 1 after setimage function, one more number on recon array
                                 if (recon[ImageCount - 1] < min) min = recon[ImageCount - 1];
@@ -379,11 +388,12 @@ namespace DeExampleCSharpWPF
                                 {
                                     recon_scale[i] = (ushort)((recon[i] - min) * 255 / (max - min + 1));  // rescale with new max and min
                                 }
-                            }
-                            ReconBMP = CreateBitmap(recon_scale,px,py);
-                            BitmapSource ReconBitmapSource = ConvertBitmapSource(ReconBMP);
-                            InitializeWBmpRecon(ReconBitmapSource);
+                                this.Dispatcher.BeginInvoke(new Action(() =>
+                                {
+                                    _wBmpRecon.WritePixels(new Int32Rect(0, 0, px, py), recon_scale, px * 2, 0);
 
+                                }));
+                            }
                             // criteria to stop image acquisition
                             if (ImageCount == numpos)
                             {
@@ -409,7 +419,6 @@ namespace DeExampleCSharpWPF
                         {
                             int nTickCountOld = 0;
                             UInt16[] image;
-
                             nTickCountOld = System.Environment.TickCount;
                             _deInterface.GetImage(out image);   //get image from camera
                             nTickCount = System.Environment.TickCount - nTickCountOld; // get time elapsed
@@ -418,7 +427,6 @@ namespace DeExampleCSharpWPF
                             semaphore.Release();
                         }
                         System.Threading.Thread.Sleep(1);
-
                     }
                 }).ContinueWith(o =>
                 {
@@ -452,7 +460,7 @@ namespace DeExampleCSharpWPF
                 System.Drawing.Imaging.ImageLockMode.ReadOnly, bitmap.PixelFormat);
 
             var bitmapSource = BitmapSource.Create(
-                bitmapData.Width, bitmapData.Height, 96, 96, PixelFormats.Bgr24, null,
+                bitmapData.Width, bitmapData.Height, 96, 96, PixelFormats.Gray8, null,
                 bitmapData.Scan0, bitmapData.Stride * bitmapData.Height, bitmapData.Stride);
 
             bitmap.UnlockBits(bitmapData);
@@ -461,9 +469,6 @@ namespace DeExampleCSharpWPF
 
         public void SetImage(UInt16[] imageData, int width, int height)
         {
-
-
-
             // Scale image
             int length = width * height;
             ushort min = imageData[0]; ushort max = imageData[0];

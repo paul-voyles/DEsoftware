@@ -1,7 +1,15 @@
+8/18/17
+- Window size needs to be adjustable
+- Recon image success, but RAM would be a problem if acquiring too many frames
+- How many pixels are used in software simulator?
+
 8/17/17
 ! DE server can set total number of acquisitions, need to coordinate this number with the X/Y Positions in software
 ! Change start/end X/Y into slider
 - On DE server, you can change both Binning X/Y and ROI Dimension X/Y, binning factor would be applied on top of ROI dimension, and also ROI offset, not sure what that means
+- to display bitmap on image:
+	_wBmp = new WriteableBitmap(bmpSource.PixelWidth, bmpSource.PixelHeight, bmpSource.DpiX, bmpSource.DpiY, bmpSource.Format, bmpSource.Palette);
+            pictureBox1.Source = _wBmp; // display _wBmp to pictureBox1, will be called only once
 
 8/16/17
 - Use more straightforward way to display detector edge, create a ellipse and use a button to control its visibility, the size and thickness of edge can be controlled by two sliders representing inner and outer collection angle
