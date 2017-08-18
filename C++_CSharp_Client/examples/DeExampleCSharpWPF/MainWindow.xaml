@@ -21,6 +21,7 @@
         <Rectangle Grid.Column="1" Fill="#FFF4F4F5" Margin="41.531,38,39.469,189.177" Grid.Row="1" Stroke="Black" StrokeThickness="2" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
 
         <Image Grid.Column="1" Margin="41.531,41.823,35.469,189.177" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" />
+        <RadioButton x:Name="EnableDetector" Content="Enable Detector" HorizontalAlignment="Left" Height="17" Margin="10,0,0,379" Width="111" Grid.Row="1" VerticalAlignment="Bottom" Click="EnableDetector_click" />
         <StackPanel Margin="-1,0,-12,-7" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin">
             <Slider x:Name="slider_innerang" Height="25" Margin="139,417,125,0" ValueChanged="changeinnerang" Minimum="0" Maximum="1"/>
             <Slider x:Name="slider_outerang" Height="23" Margin="139,0,125,0" ValueChanged="changeouterang" Minimum="0" Maximum="1" UseLayoutRounding="True"/>
@@ -47,15 +48,15 @@
 
         </Border>
 
-        <TextBlock x:Name="textBlock1" Grid.Column="1" HorizontalAlignment="Left" Height="30" Margin="59,0,0,104" Grid.Row="1" TextWrapping="Wrap" Text="Region of Interest (ROI):" VerticalAlignment="Bottom" Width="152" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
-        <TextBox x:Name="textBox" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="101,0,0,87" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
-        <TextBox x:Name="textBox_Copy" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="101,0,0,68" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
-        <TextBox x:Name="textBox_Copy1" Grid.Column="1" Height="20" Margin="235,0,304,87" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" d:LayoutOverrides="TopMargin, BottomMargin"/>
-        <TextBox x:Name="textBox_Copy2" Grid.Column="1" Height="20" Margin="235,0,304,68" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom"/>
-        <TextBlock x:Name="textBlock1_Copy" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="59,0,0,87" Grid.Row="1" TextWrapping="Wrap" Text="Start X:" VerticalAlignment="Bottom" Width="42" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
-        <TextBlock x:Name="textBlock1_Copy1" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="198,0,0,86" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42" d:LayoutOverrides="TopMargin, BottomMargin"><Run Text="End"/><Run Text=" X:"/></TextBlock>
-        <TextBlock x:Name="textBlock1_Copy2" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="59,0,0,68" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start "/><Run Text="Y"/><Run Text=":"/></TextBlock>
-        <TextBlock x:Name="textBlock1_Copy3" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="197,0,0,68" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" "/><Run Text="Y"/><Run Text=":"/></TextBlock>
+        <TextBlock x:Name="textBlock1" Grid.Column="1" HorizontalAlignment="Left" Height="18" Margin="57,0,0,122" Grid.Row="1" TextWrapping="Wrap" Text="Region of Interest (ROI):" VerticalAlignment="Bottom" Width="152"/>
+        <TextBox x:Name="textBox" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="99,0,0,102" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
+        <TextBox x:Name="textBox_Copy" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="99,0,0,83" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
+        <TextBox x:Name="textBox_Copy1" Grid.Column="1" Height="20" Margin="233,0,306,102" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom"/>
+        <TextBox x:Name="textBox_Copy2" Grid.Column="1" Height="20" Margin="233,0,306,83" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom"/>
+        <TextBlock x:Name="textBlock1_Copy" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="57,0,0,102" Grid.Row="1" TextWrapping="Wrap" Text="Start X:" VerticalAlignment="Bottom" Width="42"/>
+        <TextBlock x:Name="textBlock1_Copy1" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="196,0,0,101" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" X:"/></TextBlock>
+        <TextBlock x:Name="textBlock1_Copy2" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="57,0,0,83" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start "/><Run Text="Y"/><Run Text=":"/></TextBlock>
+        <TextBlock x:Name="textBlock1_Copy3" Grid.Column="1" HorizontalAlignment="Left" Height="20" Margin="195,0,0,83" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" "/><Run Text="Y"/><Run Text=":"/></TextBlock>
         <Button Click="btnLiveCapture_Click" Content="Stream from DE" Height="23" HorizontalAlignment="Left" Margin="10,284,0,0" x:Name="btnLiveCapture" Width="148" Grid.Column="2" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" />
         <Button Click="btnGetImage_Click" Content="Capture Single Image" Height="23" HorizontalAlignment="Left" Margin="10,312,0,0" x:Name="btnGetImage" Width="148" Visibility="Visible" Grid.Column="2" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
 
@@ -73,11 +74,18 @@
                 <ComboBoxItem Content="MMF"/>
                 <ComboBoxItem Content="TCP"/>
             </ComboBox>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Width="315" Margin="0,13,0,0">
+                <TextBlock Text="FPS:" Margin="10,0,4,0" />
+                <TextBlock Text="{Binding Fps}" />
+                <TextBlock Margin="10,0,4,0" Text="Image Count:" />
+                <TextBlock Text="{Binding ImageCount}" />
+                <TextBlock Margin="10,0,4,0" Text="Seconds:" />
+                <TextBlock Text="{Binding TotalSeconds}" />
+            </StackPanel>
         </StackPanel>
         <Path Grid.Column="2" Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="0,-7,0,-1" Grid.Row="1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Path Grid.ColumnSpan="3" Data="M0.5,46.5 L1592,47" Height="1.5" Margin="0.5,0,-1,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Bottom" StrokeThickness="2" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Path Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="10,-7,0,-1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2" Grid.Column="1" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
-        <Button Click="button1_Click" x:Name="button1" Content="Enable Detector" HorizontalAlignment="Left" Height="28" Margin="10,0,0,361" Grid.Row="1" VerticalAlignment="Bottom" Width="93"/>
         <Ellipse x:Name="InnerAngle"  Height="400" Margin="7,7,7,0" Grid.Row="1" Stroke="Red" StrokeThickness="200" VerticalAlignment="Top" Visibility="Hidden" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <TextBox x:Name="PixelsX" Grid.Column="1" Height="20" Margin="0,0,81.342,100.334" Grid.Row="1" TextWrapping="Wrap" Text="256" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="109"/>
         <TextBox x:Name="PixelsY" Grid.Column="1" Height="20" Margin="0,0,81.339,81" Grid.Row="1" TextWrapping="Wrap" Text="256" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="109"/>
@@ -91,9 +99,10 @@
         <TextBlock x:Name="textBlock1_Copy9" HorizontalAlignment="Left" Height="30" Margin="139,0,0,5" Grid.Row="1" TextWrapping="Wrap" Text="Reconstruction" VerticalAlignment="Bottom" Width="152" FontSize="20"/>
         <TextBlock x:Name="textBlock1_Copy10" HorizontalAlignment="Left" Height="18" Margin="304,418,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Inner Angle" VerticalAlignment="Top" Width="100"/>
         <TextBlock x:Name="textBlock1_Copy11" HorizontalAlignment="Left" Height="18" Margin="304,441,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Top" Width="100"><Run Text="Outer"/><Run Text=" Angle"/></TextBlock>
-        <TextBlock x:Name="textBlock1_Copy7" Grid.Column="1" HorizontalAlignment="Right" Height="20" Margin="0,0,192,22.284" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="79" Text="Total Images:"/>
-        <TextBlock x:Name="textBlock1_Copy1" Grid.Column="1" HorizontalAlignment="Right" Height="20" Margin="0,0,70,22.284" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="79" Text="RAM space:"/>
+        <TextBlock x:Name="TotalImages" Grid.Column="1" HorizontalAlignment="Right" Height="20" Margin="0,0,192,22.284" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="79" Text="Total Images:"/>
+        <TextBlock x:Name="RamSpace" Grid.Column="1" HorizontalAlignment="Right" Height="20" Margin="0,0,70,22.284" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="79" Text="RAM space:"/>
         <ProgressBar Grid.Column="1" HorizontalAlignment="Right" Height="12.284" Margin="0,0,81.342,10" Grid.Row="1" VerticalAlignment="Bottom" Width="189.658"/>
+        <RadioButton x:Name="DisableDetector" Content="Disable Detector" Height="17" Width="111" Click="DisableDetector_click" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,356" Grid.Row="1" IsChecked="True"/>
 
     </Grid>
 </Window>

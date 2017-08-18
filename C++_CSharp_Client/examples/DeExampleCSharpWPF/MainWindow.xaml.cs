@@ -278,17 +278,20 @@ namespace DeExampleCSharpWPF
             {
                 _liveModeEnabled = false;
                 btnLiveCapture.Content = "Stream from DE";
-//                Dispatcher.InvokeShutdown();      // this just somehow works to stop streaming the image, software would go through BeginInvoke once then idle
+                _updateTimer.Stop();
+                //                Dispatcher.InvokeShutdown();      // this just somehow works to stop streaming the image, software would go through BeginInvoke once then idle
             }
             else
             {
+                bool ImageRecon = false;
+                if (EnableDetector.IsChecked == true) ImageRecon = true;
                 ImageCount = 0;
                 semaphore = new Semaphore(0, 1);
                 new LiveModeView();
  //               Closing += LiveViewWindow_Closing;
                 InitializeWBmp(GetImage()); // only used to display image on imagebox.1
                 Show();
-                _updateTimer = new System.Timers.Timer(1000);
+                _updateTimer = new System.Timers.Timer(10);
                 _updateTimer.Elapsed += new ElapsedEventHandler(_updateTimer_Elapsed);
 
                 InitializeWBmp(GetImage()); // initialize image in picture box
@@ -329,7 +332,7 @@ namespace DeExampleCSharpWPF
                 }
 
                 // generate reconstruction bitmap and initialize _wBmpRecon
-                UInt16[] recon = new UInt16[px*py]; // array for reconstrcution purpose
+                UInt16[] recon = new UInt16[px * py]; // array for reconstrcution purpose
                 UInt16[] recon_scale = new UInt16[px * py]; // array for scaled reconstrcuction image
                 Bitmap ReconBMP = new Bitmap(px, py);   // bitmap for recon purpose
                 BitmapSource ReconBitmapSource = ConvertBitmapSource(ReconBMP); // convert bitmap to bitmapsource, then can be used to generate writable bitmap
@@ -366,7 +369,7 @@ namespace DeExampleCSharpWPF
                                 
                                 recon[ImageCount-1] = IntegrateBitmap(image, width, height, innerang, outerang);
                             }
-                            if(ImageCount==1)   // case for first pixel
+                            if(ImageCount==1 && ImageRecon)   // case for first pixel
                             {
                                 min = recon[0];
                                 max = recon[0];
@@ -378,7 +381,7 @@ namespace DeExampleCSharpWPF
                                 }));
                             }
 
-                            if(ImageCount > 1)
+                            if(ImageCount > 1 && ImageRecon)
                             {
                                 // imagecount would increase by 1 after setimage function, one more number on recon array
                                 if (recon[ImageCount - 1] < min) min = recon[ImageCount - 1];
@@ -402,6 +405,7 @@ namespace DeExampleCSharpWPF
                                     btnLiveCapture.Content = "Stream from DE";  //invoke is needed to control btn from another thread
                                 }));
                                 ImageCount = 0;
+                                _updateTimer.Stop();
                                 return;
                             }
                         }
@@ -592,8 +596,8 @@ namespace DeExampleCSharpWPF
         private int nCount = 0;
         public decimal Fps
         {
-            get { return Math.Round(Convert.ToDecimal(_imageCount / TotalSeconds), 3); }
-            //get { return Convert.ToDecimal(TotalSeconds); }
+           get { return Math.Round(Convert.ToDecimal(Convert.ToDouble(_imageCount) / TotalSeconds), 3); }
+                        //get { return Convert.ToDecimal(TotalSeconds); }
 
         }
 
@@ -630,22 +634,14 @@ namespace DeExampleCSharpWPF
             }
         }
 
-/*        public void LiveModeView()
-        {
-            InitializeComponent();
-            _updateTimer = new System.Timers.Timer(1000);
-            _updateTimer.Elapsed += new ElapsedEventHandler(_updateTimer_Elapsed);
-        }
-        */
-        /// <summary>
-        /// update FPS and TotalSeconds properties
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+
         private void _updateTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            NotifyPropertyChanged("Fps");
-            NotifyPropertyChanged("TotalSeconds");
+            if (TotalSeconds > 1)   // add an extra criteria to avoid bugs when time is shorter than 1 second
+            {
+                NotifyPropertyChanged("Fps");
+                NotifyPropertyChanged("TotalSeconds");
+            }
 
         }
 
@@ -694,7 +690,23 @@ namespace DeExampleCSharpWPF
 
         }
 
+        private void EnableDetector_click(object sender, RoutedEventArgs e)
+        {
+                SolidColorBrush strokeBrush = new SolidColorBrush(Colors.Red);
+                strokeBrush.Opacity = .25d;
+                InnerAngle.Visibility = Visibility.Visible;
+                InnerAngle.Stroke = strokeBrush;
+                InnerAngle.Height = 400;
+                InnerAngle.StrokeThickness = InnerAngle.Height / 2;
+                slider_outerang.Value = 1;
+                slider_innerang.Value = 0;
         }
+
+        private void DisableDetector_click(object sender, RoutedEventArgs e)
+        {
+            InnerAngle.Visibility = Visibility.Hidden;
+        }
+    }
 
 
 

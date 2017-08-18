@@ -6,6 +6,9 @@
 - stream and reconstruct from DE won't take up RAM,even with lots of beam positions
 ! Try to read only useful informations from camera and display them in a more efficient way
 ? where will DE camera save the buffered images in RAM?
+! Only do reconstruction if detector is enabled, maybe change 'enable detector' button into a radio button
+- checked relationship between imagecount, recon image, and DE preview, things are correct
+£¡ Add a button to reset image
 
 8/17/17
 ! DE server can set total number of acquisitions, need to coordinate this number with the X/Y Positions in software
