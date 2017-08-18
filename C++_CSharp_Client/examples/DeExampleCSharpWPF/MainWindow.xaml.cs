@@ -211,11 +211,7 @@ namespace DeExampleCSharpWPF
 
             return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
         }
-        /// <summary>
-        /// capture single image from server
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+
 
         private void btnGetImage_Click(object sender, RoutedEventArgs e)
         {
@@ -249,7 +245,10 @@ namespace DeExampleCSharpWPF
             strokeBrush.Opacity = .25d;
             InnerAngle.Visibility = Visibility.Visible;
             InnerAngle.Stroke = strokeBrush;
-            InnerAngle.StrokeThickness = InnerAngle.Height / 4;
+            InnerAngle.Height = 400;
+            InnerAngle.StrokeThickness = InnerAngle.Height / 2;
+            slider_outerang.Value = 1;
+            slider_innerang.Value = 0;
         }
 
         // called by change on innerang slider, change the radius of inner angle ellipse
@@ -260,7 +259,7 @@ namespace DeExampleCSharpWPF
             
         }
 
-        // move the slider for outerangle won't change inner angle
+        // called by change on outerang slider, will simultaneously change ellipse thickness according to innerang
         private void changeouterang(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             double outerang = slider_outerang.Value;
@@ -269,9 +268,10 @@ namespace DeExampleCSharpWPF
             InnerAngle.Margin = margin;
             InnerAngle.Height = 400.0 - margin.Top - margin.Top + 14.0;
             InnerAngle.Width = InnerAngle.Height;
-         }
+            InnerAngle.StrokeThickness = InnerAngle.Width / 2 * (1.0 - slider_innerang.Value);
+        }
         
-
+        // start live view by clicking 'stream from DE'
         public void btnLiveCapture_Click(object sender, RoutedEventArgs e)
         {
             if (_liveModeEnabled)
@@ -330,14 +330,13 @@ namespace DeExampleCSharpWPF
 
                 // generate reconstruction bitmap and initialize _wBmpRecon
                 UInt16[] recon = new UInt16[px*py]; // array for reconstrcution purpose
-                UInt16[] recon_scale = new UInt16[px * py];
+                UInt16[] recon_scale = new UInt16[px * py]; // array for scaled reconstrcuction image
                 Bitmap ReconBMP = new Bitmap(px, py);   // bitmap for recon purpose
-                BitmapSource ReconBitmapSource = ConvertBitmapSource(ReconBMP);
+                BitmapSource ReconBitmapSource = ConvertBitmapSource(ReconBMP); // convert bitmap to bitmapsource, then can be used to generate writable bitmap
                 InitializeWBmpRecon(ReconBitmapSource);
 
                 int length = px * py;
                 ushort min = recon[0]; ushort max = recon[0];
-                //Graphics flagGraphics = Graphics.FromImage(ReconBMP);   // construct flagGraphics for recon bitmap
 
                 semaphore.Release();
                 int nTickCount = 0;
@@ -540,6 +539,8 @@ namespace DeExampleCSharpWPF
             }));
         }
 */
+
+        // consider only get useful properties instead of getting all properties
         private void cmbCameras_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             CameraProperties.Clear();
