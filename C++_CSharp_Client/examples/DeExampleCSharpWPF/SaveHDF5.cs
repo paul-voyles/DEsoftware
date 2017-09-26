@@ -69,8 +69,8 @@ namespace CSharpExample1
                 // We will write and read an int array of this length.
                 const int DATA_ARRAY_LENGTH = 12;
 
-                // Rank is the number of dimensions of the data array.
-                const int RANK = 1;
+                // Rank is the number of dimensions of the data array, rank of 4D STEM data is always 3.
+                const int RANK = 3 ;
 
                 // Create an HDF5 file.
                 // The enumeration type H5F.CreateMode provides only the legal 
