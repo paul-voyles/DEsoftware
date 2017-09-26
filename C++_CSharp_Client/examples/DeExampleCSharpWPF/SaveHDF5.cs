@@ -76,15 +76,19 @@ namespace CSharpExample1
                 // The enumeration type H5F.CreateMode provides only the legal 
                 // creation modes.  Missing H5Fcreate parameters are provided
                 // with default values.
-                H5FileId fileId = H5F.create("myCSharp.h5",
+                H5FileId fileId = H5F.create("D:/2017/Pixelated Camera/CameraSoftware/FileFormat/Test/test.emd",
                                              H5F.CreateMode.ACC_TRUNC);
 
-                // Create a HDF5 group.  
-                H5GroupId groupId = H5G.create(fileId, "/cSharpGroup");
-                H5GroupId subGroup = H5G.create(groupId, "mySubGroup");
-
-                // Close the subgroup.
-                H5G.close(subGroup);
+                H5GroupId groupId = H5G.create(fileId, "ImageSimulator");   // root group
+                H5GroupId dataGroup = H5G.create(groupId, "data"); 
+                H5GroupId userGroup = H5G.create(groupId, "user"); 
+                H5GroupId micGroup = H5G.create(groupId, "microscope");
+                H5GroupId sampleGroup = H5G.create(groupId, "sample"); 
+                H5GroupId commentGroup = H5G.create(groupId, "comments");
+                H5G.close(userGroup);
+                H5G.close(micGroup);
+                H5G.close(sampleGroup);
+                H5G.close(commentGroup);
 
                 // Prepare to create a data space for writing a 1-dimensional 
                 // signed integer array.
@@ -346,7 +350,7 @@ namespace CSharpExample1
                    H5S.create_simple(1, attributeDims);
 
                 H5AttributeId attributeId =
-                    H5A.create(groupId, "ascendingRamp", attributeType, attributeSpace);
+                    H5A.create(groupId, "ascendingRamp", attributeType, attributeSpace);    //H5A used to create attribute
 
                 int offset = H5T.getOffset(attributeType);
                 Console.WriteLine("Offset is {0}", offset);

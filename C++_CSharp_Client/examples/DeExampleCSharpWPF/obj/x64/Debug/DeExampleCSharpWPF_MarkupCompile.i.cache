@@ -1,7 +1,7 @@
 ﻿DeExampleCSharpWPF
 
 
-winexe
+exe
 C#
 .cs
 C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\
@@ -11,9 +11,9 @@ false
 DEBUG;TRACE
 C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\App.xaml
 4-1535636039
-2-1620259299
+3967847810
 9-400350745
-151450730088
+152023620495
 ImageView.xaml;LiveModeView.xaml;MainWindow.xaml;Simple Styles.xaml;
 
 False

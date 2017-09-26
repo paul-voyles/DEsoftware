@@ -3,7 +3,6 @@ C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExample
 C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.exe
 C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.pdb
 C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\DeInterface.NET.dll
-C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\DeInterface.NET.xml
 C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csprojResolveAssemblyReference.cache
 C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\ImageView.baml
 C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\LiveModeView.baml

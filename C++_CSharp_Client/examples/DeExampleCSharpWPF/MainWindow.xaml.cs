@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -206,7 +207,9 @@ namespace DeExampleCSharpWPF
             */
 
             // write in HDF5 (.h5) format
-            // Program.CreateHDF();
+            //H5FileId fileId = H5F.create("D:/2017/Pixelated Camera/CameraSoftware/FileFormat/Test/test.emd", H5F.CreateMode.ACC_TRUNC);
+
+            Program.CreateHDF();
 
 
             return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
