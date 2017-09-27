@@ -153,13 +153,11 @@ namespace DeExampleCSharpWPF
                 PixelsY.Text = ySize;
             }
 
-            
-        }
+    }
 
-        /// <summary>
-        /// Get a 16 bit gray scale image from the server and return a BitmapSource
-        /// </summary>
-        /// <returns></returns>
+
+        // Get a 16 bit gray scale image from the server and return a BitmapSource
+
         private BitmapSource GetImage()
         {
             UInt16[] image;
@@ -206,13 +204,51 @@ namespace DeExampleCSharpWPF
             encoder.Save(stream);
             */
 
+            
+
+            //Program.CreateHDF();
+
+
+                return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
+        }
+
+        public void InitializeHDF()
+        {
             // write in HDF5 (.h5) format
-            //H5FileId fileId = H5F.create("D:/2017/Pixelated Camera/CameraSoftware/FileFormat/Test/test.emd", H5F.CreateMode.ACC_TRUNC);
 
-            Program.CreateHDF();
+            // generate standard groups
+            H5FileId fileId = H5F.create("D:/2017/Pixelated Camera/CameraSoftware/FileFormat/Test/test2.h5",
+                             H5F.CreateMode.ACC_TRUNC);
+            H5GroupId dataGroup = H5G.create(fileId, "/data");  //dash is required for root group
+            H5GroupId userGroup = H5G.create(fileId, "/user");
+            H5GroupId micGroup = H5G.create(fileId, "/microscope");
+            H5GroupId sampleGroup = H5G.create(fileId, "/sample");
+            H5GroupId commentGroup = H5G.create(fileId, "/comments");
+
+            // create attributes
+            long[] attributeDims = new long[1];
+            attributeDims[0] = 10;
+            string tempstring = "Chenyu";
+            string[] user = new string[] { tempstring };
+            char[] userarray = tempstring.ToCharArray();
+            H5DataTypeId attributeType = H5T.create(H5T.CreateClass.STRING, 10); // controls length of the string
+            //H5DataSpaceId attributeSpace = H5S.create_simple(1, attributeDims);
+            H5DataSpaceId attributeSpace = H5S.create(H5S.H5SClass.SCALAR);
+            H5AttributeId attributeId = H5A.create(userGroup, "user", attributeType, attributeSpace);   // create attributeId but empty one
+            H5A.write<string>(attributeId, attributeType, new H5Array<string>(user));
+            //H5A.write<char>(attributeId, attributeType, new H5Array<char>(userarray));
+            H5A.close(attributeId);
+
+            Console.WriteLine("{0}", user);
 
 
-            return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
+            // close groups and file
+            H5G.close(userGroup);
+            H5G.close(micGroup);
+            H5G.close(sampleGroup);
+            H5G.close(commentGroup);
+            H5G.close(dataGroup);
+            H5F.close(fileId);
         }
 
 
@@ -277,15 +313,17 @@ namespace DeExampleCSharpWPF
         // start live view by clicking 'stream from DE'
         public void btnLiveCapture_Click(object sender, RoutedEventArgs e)
         {
+            
             if (_liveModeEnabled)
             {
                 _liveModeEnabled = false;
                 btnLiveCapture.Content = "Stream from DE";
                 _updateTimer.Stop();
-                //                Dispatcher.InvokeShutdown();      // this just somehow works to stop streaming the image, software would go through BeginInvoke once then idle
+                //Dispatcher.InvokeShutdown();      // this just somehow works to stop streaming the image, software would go through BeginInvoke once then idle
             }
             else
             {
+                InitializeHDF();
                 bool ImageRecon = false;
                 if (EnableDetector.IsChecked == true) ImageRecon = true;
                 ImageCount = 0;
@@ -334,6 +372,8 @@ namespace DeExampleCSharpWPF
                     }
                 }
 
+                UInt16[] datacube = new UInt16[numpos * width * height];
+
                 // generate reconstruction bitmap and initialize _wBmpRecon
                 UInt16[] recon = new UInt16[px * py]; // array for reconstrcution purpose
                 UInt16[] recon_scale = new UInt16[px * py]; // array for scaled reconstrcuction image
@@ -374,6 +414,7 @@ namespace DeExampleCSharpWPF
                             }
                             if(ImageCount==1 && ImageRecon)   // case for first pixel
                             {
+                                
                                 min = recon[0];
                                 max = recon[0];
                                 recon_scale[0] = 255;  // rescale with new max and min

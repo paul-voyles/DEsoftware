@@ -4,22 +4,16 @@
 exe
 C#
 .cs
-C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\
+C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\
 DeExampleCSharpWPF
 none
 false
 DEBUG;TRACE
-C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\App.xaml
+C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\App.xaml
 4-1535636039
-<<<<<<< HEAD
 3967847810
 9-400350745
 152023620495
-=======
-2-1620259299
-91224093719
-15681031737
->>>>>>> origin/master
 ImageView.xaml;LiveModeView.xaml;MainWindow.xaml;Simple Styles.xaml;
 
 False
