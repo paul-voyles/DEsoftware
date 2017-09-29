@@ -1,3 +1,16 @@
+9/29/17
+- To save string metadata in HDF5 file, string has to be converted to ASCii code first, a good example can be found at https://lists.hdfgroup.org/pipermail/hdf-forum_lists.hdfgroup.org/2014-November/008201.html
+- An successful example is show here:
+
+	    char[] testChars = new char[] { 'C','h' };
+            byte[] asciiStr = ASCIIEncoding.ASCII.GetBytes(testChars);
+            H5AttributeId attributeId = H5A.create(userGroup, "Board Name", H5T.create(H5T.CreateClass.STRING, 256), H5S.create(H5S.H5SClass.SCALAR));
+            H5A.write(attributeId, H5T.create(H5T.CreateClass.STRING, 256), new H5Array<byte>(asciiStr));
+            H5A.close(attributeId);
+
+- there should be some more elegent way to convert letters into ASC2 code, the byte[] asciiStr contains long[], each one saves the corresponding ascii code of a letter in it
+
+
 8/18/17
 - Window size needs to be adjustable
 - Recon image success, but RAM would be a problem if acquiring too many frames

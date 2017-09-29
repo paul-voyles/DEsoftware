@@ -212,45 +212,6 @@ namespace DeExampleCSharpWPF
                 return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
         }
 
-        public void InitializeHDF()
-        {
-            // write in HDF5 (.h5) format
-
-            // generate standard groups
-            H5FileId fileId = H5F.create("D:/2017/Pixelated Camera/CameraSoftware/FileFormat/Test/test2.h5",
-                             H5F.CreateMode.ACC_TRUNC);
-            H5GroupId dataGroup = H5G.create(fileId, "/data");  //dash is required for root group
-            H5GroupId userGroup = H5G.create(fileId, "/user");
-            H5GroupId micGroup = H5G.create(fileId, "/microscope");
-            H5GroupId sampleGroup = H5G.create(fileId, "/sample");
-            H5GroupId commentGroup = H5G.create(fileId, "/comments");
-
-            // create attributes
-            long[] attributeDims = new long[1];
-            attributeDims[0] = 10;
-            string tempstring = "Chenyu";
-            string[] user = new string[] { tempstring };
-            char[] userarray = tempstring.ToCharArray();
-            H5DataTypeId attributeType = H5T.create(H5T.CreateClass.STRING, 10); // controls length of the string
-            //H5DataSpaceId attributeSpace = H5S.create_simple(1, attributeDims);
-            H5DataSpaceId attributeSpace = H5S.create(H5S.H5SClass.SCALAR);
-            H5AttributeId attributeId = H5A.create(userGroup, "user", attributeType, attributeSpace);   // create attributeId but empty one
-            H5A.write<string>(attributeId, attributeType, new H5Array<string>(user));
-            //H5A.write<char>(attributeId, attributeType, new H5Array<char>(userarray));
-            H5A.close(attributeId);
-
-            Console.WriteLine("{0}", user);
-
-
-            // close groups and file
-            H5G.close(userGroup);
-            H5G.close(micGroup);
-            H5G.close(sampleGroup);
-            H5G.close(commentGroup);
-            H5G.close(dataGroup);
-            H5F.close(fileId);
-        }
-
 
         private void btnGetImage_Click(object sender, RoutedEventArgs e)
         {
@@ -323,7 +284,7 @@ namespace DeExampleCSharpWPF
             }
             else
             {
-                InitializeHDF();
+                HDF5.InitializeHDF();
                 bool ImageRecon = false;
                 if (EnableDetector.IsChecked == true) ImageRecon = true;
                 ImageCount = 0;

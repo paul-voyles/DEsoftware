@@ -2,12 +2,13 @@
 using System;
 using System.Collections;
 using HDF5DotNet;
+using System.Text;
 
 // copied from HDF5DotNet-src/examples/CSharpExample/CSharpExample1, cz 7/14/17
 
 namespace CSharpExample1
 {
-    class Program
+    class HDF5
     {
         // This function is unsafe because it gets a void pointer as a
         // parameter.
@@ -58,6 +59,74 @@ namespace CSharpExample1
             // Returning SUCCESS means that iteration should continue to the 
             // next attribute (if one exists).
             return H5IterationResult.SUCCESS;
+        }
+
+        // Generate string attribute
+        // GroupName: target group for the new attribute
+        // AttName: attribute name
+        // AttContent: content for the attribute, has to be a string
+        public static void StringAttributeGenerator(H5GroupId GroupName, string AttName, string AttContent)
+        {
+            char[] AttContentChar = AttContent.ToCharArray();
+            byte[] asciiStr = ASCIIEncoding.ASCII.GetBytes(AttContentChar);
+            int length = asciiStr.Length;
+            H5AttributeId attributeId = H5A.create(GroupName, AttName, H5T.create(H5T.CreateClass.STRING, length), H5S.create(H5S.H5SClass.SCALAR));
+            H5A.write(attributeId, H5T.create(H5T.CreateClass.STRING, length), new H5Array<byte>(asciiStr));
+            H5A.close(attributeId);
+        }
+
+        // Generate floating number attributes
+        // GroupName: target group for the new attribute
+        // AttName: attribute name
+        // AttContent: content for the attribute, has to be a single floating number, here 32bit floating number is used, consider using 64bit double if necessary
+        public static void NumberAttributeGenerator(H5GroupId GroupName, string AttName, float AttContent)
+        {
+            float[] AttArray = new float[1] { AttContent };
+            long[] dims = new long[1];
+            dims[0] = AttArray.Length;
+            H5AttributeId attributeId = H5A.create(GroupName, AttName, H5T.copy(H5T.H5Type.NATIVE_FLOAT), H5S.create_simple(1, dims));
+            H5A.write(attributeId, H5T.copy(H5T.H5Type.NATIVE_FLOAT), new H5Array<float>(AttArray));
+            H5A.close(attributeId);
+        }
+
+        public static void InitializeHDF()
+        {
+            // write in HDF5 (.h5) format
+
+            // generate standard groups
+            H5FileId fileId = H5F.create("D:/2017/Pixelated Camera/CameraSoftware/FileFormat/Test/test2.emd",
+                             H5F.CreateMode.ACC_TRUNC);
+            H5GroupId dataGroup = H5G.create(fileId, "/data");  //dash is required for root group
+            H5GroupId userGroup = H5G.create(fileId, "/user");
+            H5GroupId micGroup = H5G.create(fileId, "/microscope");
+            H5GroupId sampleGroup = H5G.create(fileId, "/sample");
+            H5GroupId commentGroup = H5G.create(fileId, "/comments");
+
+            // generate attributes for user group, all attributes are sting
+            StringAttributeGenerator(userGroup, "user", "Chenyu Zhang");
+            StringAttributeGenerator(userGroup, "email", "chenyu.zhang@wisc.edu");
+            StringAttributeGenerator(userGroup, "institution", "UW-Madison");
+            StringAttributeGenerator(userGroup, "department", "Materials Science and Engineering");
+
+            // generate attributes for microscope group
+            StringAttributeGenerator(micGroup, "voltage units", "kV");
+            NumberAttributeGenerator(micGroup, "voltage", Convert.ToSingle(300));
+            StringAttributeGenerator(micGroup, "wavelength units", "nm");
+            NumberAttributeGenerator(micGroup, "wavelength", Convert.ToSingle(0.00197));
+
+            // generate attributes for sample group
+            StringAttributeGenerator(sampleGroup, "material", "STO");
+            StringAttributeGenerator(sampleGroup, "preparation", "Mechanical polishing and ion milling");
+            StringAttributeGenerator(sampleGroup, "Zone Axis", "[1][0][0]");
+
+
+            // close groups and file
+            H5G.close(userGroup);
+            H5G.close(micGroup);
+            H5G.close(sampleGroup);
+            H5G.close(commentGroup);
+            H5G.close(dataGroup);
+            H5F.close(fileId);
         }
 
         // changed name from main to CreateHDF and argument to none cz 7/14/17
