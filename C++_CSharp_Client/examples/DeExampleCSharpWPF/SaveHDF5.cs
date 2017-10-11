@@ -89,14 +89,27 @@ namespace CSharpExample1
             H5A.close(attributeId);
         }
 
-        public static void InitializeHDF()
+        public static void WriteDataCube(H5FileId fileId, UInt16[,,] datacube)
+        {
+            long[] dims = new long[3] { datacube.GetLength(0), datacube.GetLength(1), datacube.GetLength(2)};
+            H5GroupId dataGroup = H5G.create(fileId, "/data");
+            H5GroupId dataSubGroup = H5G.create(dataGroup, "DEsoftware");
+            H5DataSpaceId spaceId = H5S.create_simple(3, dims, null);
+            H5DataTypeId typeId = H5T.copy(H5T.H5Type.NATIVE_USHORT);
+            H5DataSetId dataSetId = H5D.create(dataSubGroup, "simulation",
+                                                   typeId, spaceId);
+            H5D.write<ushort>(dataSetId, new H5DataTypeId(H5T.H5Type.NATIVE_USHORT), 
+                                  new H5Array<ushort>(datacube));
+        }
+
+        public static H5FileId InitializeHDF(int numpos, int height, int width)
         {
             // write in HDF5 (.h5) format
 
             // generate standard groups
             H5FileId fileId = H5F.create("D:/2017/Pixelated Camera/CameraSoftware/FileFormat/Test/test2.emd",
                              H5F.CreateMode.ACC_TRUNC);
-            H5GroupId dataGroup = H5G.create(fileId, "/data");  //dash is required for root group
+            //H5GroupId dataGroup = H5G.create(fileId, "/data");  //dash is required for root group
             H5GroupId userGroup = H5G.create(fileId, "/user");
             H5GroupId micGroup = H5G.create(fileId, "/microscope");
             H5GroupId sampleGroup = H5G.create(fileId, "/sample");
@@ -125,8 +138,10 @@ namespace CSharpExample1
             H5G.close(micGroup);
             H5G.close(sampleGroup);
             H5G.close(commentGroup);
-            H5G.close(dataGroup);
+            //H5G.close(dataGroup);
             H5F.close(fileId);
+
+            return fileId;
         }
 
         // changed name from main to CreateHDF and argument to none cz 7/14/17

@@ -204,10 +204,6 @@ namespace DeExampleCSharpWPF
             encoder.Save(stream);
             */
 
-            
-
-            //Program.CreateHDF();
-
 
                 return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
         }
@@ -220,6 +216,7 @@ namespace DeExampleCSharpWPF
                 ImageView imageView = new ImageView();
                 imageView.image.Source = GetImage();    //return a BitmapSource
                 imageView.Show();
+
             }
             catch (Exception exc)
             {
@@ -284,7 +281,8 @@ namespace DeExampleCSharpWPF
             }
             else
             {
-                HDF5.InitializeHDF();
+                
+                //HDF5.InitializeHDF();   // initialize the HDF file used to save 3D data cube
                 bool ImageRecon = false;
                 if (EnableDetector.IsChecked == true) ImageRecon = true;
                 ImageCount = 0;
@@ -333,8 +331,9 @@ namespace DeExampleCSharpWPF
                     }
                 }
 
-                UInt16[] datacube = new UInt16[numpos * width * height];
-
+                H5FileId fileId = HDF5.InitializeHDF(numpos, width, height);
+                UInt16[,,] datacube = new UInt16[numpos,width,height];    // generate the data cube, each value should be an integer
+                UInt16[] image = new UInt16[width*height];  // 1D image array used to save temp 2D frame
                 // generate reconstruction bitmap and initialize _wBmpRecon
                 UInt16[] recon = new UInt16[px * py]; // array for reconstrcution purpose
                 UInt16[] recon_scale = new UInt16[px * py]; // array for scaled reconstrcuction image
@@ -357,7 +356,7 @@ namespace DeExampleCSharpWPF
                             // scale and display image
                             {
                                 semaphore.WaitOne();
-                                UInt16[] image = m_imageQueue.Dequeue();
+                                image = m_imageQueue.Dequeue();
                                 semaphore.Release();
                                 SetImage(image, width, height);
                                 SetImageLoadTime(nTickCount);
@@ -384,6 +383,14 @@ namespace DeExampleCSharpWPF
                                     _wBmpRecon.WritePixels(new Int32Rect(0, 0, px, py), recon_scale, px * 2, 0);
 
                                 }));
+
+                                for (int x = 0; x < width; x++)
+                                {
+                                    for (int y = 0; y < height; y++)
+                                    {
+                                        datacube[0, x, y] = image[x * height + y];
+                                    }
+                                }
                             }
 
                             if(ImageCount > 1 && ImageRecon)
@@ -400,10 +407,18 @@ namespace DeExampleCSharpWPF
                                     _wBmpRecon.WritePixels(new Int32Rect(0, 0, px, py), recon_scale, px * 2, 0);
 
                                 }));
+                                for (int x = 0; x < width; x++)
+                                {
+                                    for (int y = 0; y < height; y++)
+                                    {
+                                        datacube[ImageCount-1, x, y] = image[x*height+y];
+                                    }
+                                }
                             }
                             // criteria to stop image acquisition
                             if (ImageCount == numpos)
                             {
+                                //HDF5.WriteDataCube(fileId, datacube);
                                 _liveModeEnabled = false;
                                 Dispatcher.BeginInvoke((Action)(() =>
                                 {
@@ -426,7 +441,7 @@ namespace DeExampleCSharpWPF
                     {
                         {
                             int nTickCountOld = 0;
-                            UInt16[] image;
+                            //UInt16[] image;
                             nTickCountOld = System.Environment.TickCount;
                             _deInterface.GetImage(out image);   //get image from camera
                             nTickCount = System.Environment.TickCount - nTickCountOld; // get time elapsed
@@ -705,6 +720,17 @@ namespace DeExampleCSharpWPF
                 InnerAngle.StrokeThickness = InnerAngle.Height / 2;
                 slider_outerang.Value = 1;
                 slider_innerang.Value = 0;
+            string path = "D:/2017/Pixelated Camera/CameraSoftware/FileFormat/MRC/ExampleFile/20171005_00013_RawImages.mrc";
+            using (FileStream fs = File.Open(path, FileMode.Open))
+            {
+                byte[] b = new byte[1024];
+                UTF8Encoding temp = new UTF8Encoding(true);
+
+                while (fs.Read(b, 0, b.Length) > 0)
+                {
+                    Console.WriteLine(temp.GetString(b));
+                }
+            }
         }
 
         private void DisableDetector_click(object sender, RoutedEventArgs e)

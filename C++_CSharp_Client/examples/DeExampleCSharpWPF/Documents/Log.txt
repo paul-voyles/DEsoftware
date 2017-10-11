@@ -1,3 +1,9 @@
+10/5/17
+- Updates on image acquisition routine, let DE server save files to MRC format on SSD first, then load it and do reconstruction
+	- on my PC, with HDD, the file writing speed is much slower than image acquisition speed and thus limiting the total speed
+	- How does DE server calculate the maximum exposure time? Seems maximum exposure time corresponds to 10,000 frames on DE computer and 2048 on my PC
+	- Why image simulator would always generate 1k by 1k image no matter what number I use to set ROI?	
+
 9/29/17
 - To save string metadata in HDF5 file, string has to be converted to ASCii code first, a good example can be found at https://lists.hdfgroup.org/pipermail/hdf-forum_lists.hdfgroup.org/2014-November/008201.html
 - An successful example is show here:

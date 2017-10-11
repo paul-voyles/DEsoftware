@@ -172,6 +172,7 @@
     <Content Include="DeInterface.NET.dll" />
     <Content Include="HDF5DotNet.dll" />
     <Content Include="hdf5_hldll.dll" />
+    <Content Include="mrcio.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\..\lib\x64\Debug\DeInterface.NET.dll" />
