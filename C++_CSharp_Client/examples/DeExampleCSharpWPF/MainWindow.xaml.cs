@@ -721,15 +721,24 @@ namespace DeExampleCSharpWPF
                 slider_outerang.Value = 1;
                 slider_innerang.Value = 0;
             string path = "D:/2017/Pixelated Camera/CameraSoftware/FileFormat/MRC/ExampleFile/20171005_00013_RawImages.mrc";
-            using (FileStream fs = File.Open(path, FileMode.Open))
+            using (var filestream = File.Open(@path, FileMode.Open))
+            using (var binaryStream = new BinaryReader(filestream))
             {
-                byte[] b = new byte[1024];
-                UTF8Encoding temp = new UTF8Encoding(true);
-
-                while (fs.Read(b, 0, b.Length) > 0)
+                for (var i = 0; i < 10; i++)    // 10 integer numbers, int32
                 {
-                    Console.WriteLine(temp.GetString(b));
+                    Console.WriteLine(binaryStream.ReadInt32());
                 }
+                Console.WriteLine('\n');
+                for (var i = 0; i < 12; i++)    // 12 floating numbers, single
+                {
+                    Console.WriteLine(binaryStream.ReadSingle());
+                }
+                Console.WriteLine('\n');
+                for (var i = 0; i < 30; i++)    // 30 integer numbers, int32
+                {
+                    Console.WriteLine(binaryStream.ReadInt32());
+                }
+                Console.WriteLine('\n');
             }
         }
 
