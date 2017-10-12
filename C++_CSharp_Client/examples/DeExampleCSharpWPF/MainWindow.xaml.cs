@@ -222,6 +222,152 @@ namespace DeExampleCSharpWPF
             {
                 System.Windows.MessageBox.Show(exc.Message);
             }
+
+            // start reading mrc file
+            string path = "D:/2017/Pixelated Camera/CameraSoftware/FileFormat/MRC/ExampleFile/20171005_00013_RawImages.mrc";
+            using (var filestream = File.Open(@path, FileMode.Open))
+            using (var binaryStream = new BinaryReader(filestream))
+            {
+                // read headers
+                int width = binaryStream.ReadInt32();
+                int height = binaryStream.ReadInt32();
+                int numpos = binaryStream.ReadInt32();
+                int format = binaryStream.ReadInt32();
+                for (var i = 0; i < 6; i++)    // the rest 6 integer numbers, int32, useless here
+                {
+
+                    Console.WriteLine(binaryStream.ReadInt32());
+                }
+                Console.WriteLine('\n');
+                for (var i = 0; i < 12; i++)    // 12 floating numbers, single
+                {
+                    Console.WriteLine(binaryStream.ReadSingle());
+                }
+                Console.WriteLine('\n');
+                for (var i = 0; i < 30; i++)    // 30 integer numbers, int32
+                {
+                    Console.WriteLine(binaryStream.ReadInt32());
+                }
+                Console.WriteLine('\n');
+                for (var i = 0; i < 8; i++)    // 8 chars
+                {
+                    Console.WriteLine(binaryStream.ReadChar());
+                }
+                Console.WriteLine('\n');
+                for (var i = 0; i < 2; i++)    // 2 integer numbers, int32
+                {
+                    Console.WriteLine(binaryStream.ReadInt32());
+                }
+                for (var i = 0; i < 10; i++)    // 10 strings
+                {
+                    Console.WriteLine(binaryStream.ReadChars(80));
+                }
+
+                // finish reading headers
+                //UInt16[,,] datacube = new UInt16[numpos, width, height];
+                UInt16[] datacube_array = new UInt16[numpos * width * height];
+                for (var ilayer = 0; ilayer < numpos; ilayer++)
+                {
+                    for (var iy = 0; iy < height; iy++)
+                    {
+                        for (var ix = 0; ix < width; ix++)
+                        {
+                            //datacube[ilayer,iy,ix] = binaryStream.ReadUInt16();
+                            datacube_array[ilayer*width*height + iy*width + ix] = binaryStream.ReadUInt16();
+                        }
+                    }
+                }
+
+                // TD: show final image on image view panel here
+
+                // start reconstruction and show reconstruction result if option enabled
+                string StrX = null;
+                string StrY = null;
+                int px = 0, py = 0;
+               
+
+                if (EnableDetector.IsChecked == true)
+                PosX.Dispatcher.Invoke(
+                    (ThreadStart)delegate { StrX = PosX.Text; }
+                    );
+                PosY.Dispatcher.Invoke(
+                    (ThreadStart)delegate { StrY = PosX.Text; }
+                    );
+
+                if (Int32.TryParse(StrX, out px))
+                {
+                    if (Int32.TryParse(StrY, out py))
+                    {
+                        if (numpos == px * py)
+                        {
+                            Bitmap ReconBMP = new Bitmap(px, py);   // bitmap for recon purpose
+                            UInt16[] recon = new UInt16[px * py]; // array for reconstrcution purpose
+                            UInt16[] recon_scale = new UInt16[px * py]; // array for scaled reconstrcuction image
+                            int min = recon[0];
+                            int max = recon[0];
+                            recon_scale[0] = 255;
+                            BitmapSource ReconBitmapSource = ConvertBitmapSource(ReconBMP); // convert bitmap to bitmapsource, then can be used to generate writable bitmap
+                            InitializeWBmpRecon(ReconBitmapSource);
+                            for (var iy = 0; iy < py; iy++)
+                            {
+                                for (var ix = 0; ix < px; ix++)
+                                {
+                                    UInt16[] imagelayer = ExtractArray(datacube_array, iy * px + ix, width, height);
+                                    double innerang = 0;
+                                    double outerang = 0;
+                                    slider_innerang.Dispatcher.Invoke(
+                                        (ThreadStart)delegate { innerang = slider_innerang.Value; }
+                                        );
+                                    slider_outerang.Dispatcher.Invoke(
+                                        (ThreadStart)delegate { outerang = slider_outerang.Value; }
+                                        );
+                                    recon[iy*px + ix] = IntegrateBitmap(imagelayer, width, height, innerang, outerang);
+                                    if (recon[iy * px + ix] < min) min = recon[ImageCount - 1];
+                                    if (recon[iy * px + ix] > max) max = recon[ImageCount - 1]; //update max and min after recon array changed
+                                    for (int i = 0; i < iy * px + ix; i++)
+                                    {
+                                        recon_scale[i] = (ushort)((recon[i] - min) * 255 / (max - min + 1));  // rescale with new max and min if scale changed
+                                    }
+                                }
+                            }
+                            this.Dispatcher.BeginInvoke(new Action(() =>
+                            {
+                                _wBmpRecon.WritePixels(new Int32Rect(0, 0, px, py), recon_scale, px * 2, 0);
+
+                            }));
+                            
+                        }
+                    }
+                }
+            }
+        }
+
+        // function used to extract 2D layer from 3D datacube, used for 1D array saving scheme
+        public UInt16[] ExtractArray(UInt16[] DataArray, int layernum, int width, int height)
+        {
+            UInt16[] layer = new UInt16[width*height];
+            for (var iy = 0; iy < width; iy++)
+            {
+                for (var ix = 0; ix < height; ix++)
+                {
+                    layer[iy*width+ix] = DataArray[layernum*width*height+iy*width+ix];
+                }
+            }
+            return layer;
+        }
+
+        // function used to extract 2D layer from 3D datacube
+        public UInt16[,] ExtractLayer(UInt16[,,] DataCube, int layernum, int width, int height)
+        {
+            UInt16[,] layer = new UInt16[width, height];
+            for (var iy = 0; iy < width; iy++)
+            {
+                for (var ix = 0; ix < height; ix++)
+                {
+                    layer[iy, ix] = DataCube[layernum,iy,ix];
+                }
+            }
+            return layer;
         }
 
         public static void SaveClipboardImageToFile(string filePath)
@@ -524,6 +670,7 @@ namespace DeExampleCSharpWPF
             
         }
 
+        // use 1D array as input, sum up intensity within range to return one single value
         public UInt16 IntegrateBitmap(UInt16[] imageData, int pxx, int pxy, double innerang, double outerang)
         {
             double centerx = pxx / 2;
@@ -720,26 +867,6 @@ namespace DeExampleCSharpWPF
                 InnerAngle.StrokeThickness = InnerAngle.Height / 2;
                 slider_outerang.Value = 1;
                 slider_innerang.Value = 0;
-            string path = "D:/2017/Pixelated Camera/CameraSoftware/FileFormat/MRC/ExampleFile/20171005_00013_RawImages.mrc";
-            using (var filestream = File.Open(@path, FileMode.Open))
-            using (var binaryStream = new BinaryReader(filestream))
-            {
-                for (var i = 0; i < 10; i++)    // 10 integer numbers, int32
-                {
-                    Console.WriteLine(binaryStream.ReadInt32());
-                }
-                Console.WriteLine('\n');
-                for (var i = 0; i < 12; i++)    // 12 floating numbers, single
-                {
-                    Console.WriteLine(binaryStream.ReadSingle());
-                }
-                Console.WriteLine('\n');
-                for (var i = 0; i < 30; i++)    // 30 integer numbers, int32
-                {
-                    Console.WriteLine(binaryStream.ReadInt32());
-                }
-                Console.WriteLine('\n');
-            }
         }
 
         private void DisableDetector_click(object sender, RoutedEventArgs e)
