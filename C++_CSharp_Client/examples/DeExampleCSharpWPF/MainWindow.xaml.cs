@@ -108,6 +108,7 @@ namespace DeExampleCSharpWPF
                 cmbCameras.Items.Clear();
                 cmbCameras.Text = "";
                 btnConnect.Content = "Connect";
+                slider_outerang.Value = 1;
             }
             else if (_deInterface.connect(IPAddr.Text, 48880, 48879))
             {
@@ -192,31 +193,21 @@ namespace DeExampleCSharpWPF
                 image16[i] = (ushort)((image[i] - min) * gain);
 
             byte[] imageBytes = new byte[stride * height];
-            // write file in tiff format
-            /* 
-            BitmapSource temp = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
-
-            FileStream stream = new FileStream("../new.tif", FileMode.Create);
-            TiffBitmapEncoder encoder = new TiffBitmapEncoder();
-            TextBlock myTextBlock = new TextBlock();
-            encoder.Compression = TiffCompressOption.Zip;
-            encoder.Frames.Add(BitmapFrame.Create(temp));
-            encoder.Save(stream);
-            */
 
 
-                return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
+            return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
         }
 
 
         private void btnGetImage_Click(object sender, RoutedEventArgs e)
         {
+            UInt16[] image = new UInt16[width * height];
             try
             {
                 ImageView imageView = new ImageView();
                 imageView.image.Source = GetImage();    //return a BitmapSource
                 imageView.Show();
-
+                _deInterface.GetImage(out image);
             }
             catch (Exception exc)
             {
@@ -224,7 +215,8 @@ namespace DeExampleCSharpWPF
             }
 
             // start reading mrc file
-            string path = "D:/2017/Pixelated Camera/CameraSoftware/FileFormat/MRC/ExampleFile/20171005_00013_RawImages.mrc";
+            //string path = "D:/2017/Pixelated Camera/CameraSoftware/FileFormat/MRC/ExampleFile/20171005_00013_RawImages.mrc";
+            string path = "D:/RawFrames/SoftwareSim/20171013_00120_RawImages.mrc";
             using (var filestream = File.Open(@path, FileMode.Open))
             using (var binaryStream = new BinaryReader(filestream))
             {
@@ -286,7 +278,6 @@ namespace DeExampleCSharpWPF
                 int px = 0, py = 0;
                
 
-                if (EnableDetector.IsChecked == true)
                 PosX.Dispatcher.Invoke(
                     (ThreadStart)delegate { StrX = PosX.Text; }
                     );
@@ -303,8 +294,9 @@ namespace DeExampleCSharpWPF
                             Bitmap ReconBMP = new Bitmap(px, py);   // bitmap for recon purpose
                             UInt16[] recon = new UInt16[px * py]; // array for reconstrcution purpose
                             UInt16[] recon_scale = new UInt16[px * py]; // array for scaled reconstrcuction image
-                            int min = recon[0];
-                            int max = recon[0];
+                            ushort sum = 0;
+                            int min = 65535;
+                            int max = 0;
                             recon_scale[0] = 255;
                             BitmapSource ReconBitmapSource = ConvertBitmapSource(ReconBMP); // convert bitmap to bitmapsource, then can be used to generate writable bitmap
                             InitializeWBmpRecon(ReconBitmapSource);
@@ -321,9 +313,10 @@ namespace DeExampleCSharpWPF
                                     slider_outerang.Dispatcher.Invoke(
                                         (ThreadStart)delegate { outerang = slider_outerang.Value; }
                                         );
-                                    recon[iy*px + ix] = IntegrateBitmap(imagelayer, width, height, innerang, outerang);
-                                    if (recon[iy * px + ix] < min) min = recon[ImageCount - 1];
-                                    if (recon[iy * px + ix] > max) max = recon[ImageCount - 1]; //update max and min after recon array changed
+                                    sum = IntegrateBitmap(imagelayer, width, height, innerang, outerang);
+                                    recon[iy*px + ix] = sum;
+                                    if (recon[iy * px + ix] < min) min = recon[iy * px + ix];
+                                    if (recon[iy * px + ix] > max) max = recon[iy * px + ix]; //update max and min after recon array changed
                                     for (int i = 0; i < iy * px + ix; i++)
                                     {
                                         recon_scale[i] = (ushort)((recon[i] - min) * 255 / (max - min + 1));  // rescale with new max and min if scale changed
@@ -488,7 +481,8 @@ namespace DeExampleCSharpWPF
                 InitializeWBmpRecon(ReconBitmapSource);
 
                 int length = px * py;
-                ushort min = recon[0]; ushort max = recon[0];
+                ushort min = recon[0];
+                ushort max = recon[0];
 
                 semaphore.Release();
                 int nTickCount = 0;
@@ -872,6 +866,10 @@ namespace DeExampleCSharpWPF
         private void DisableDetector_click(object sender, RoutedEventArgs e)
         {
             InnerAngle.Visibility = Visibility.Hidden;
+        }
+
+        private void EnableDetector_Checked(object sender, RoutedEventArgs e)
+        {
         }
     }
 

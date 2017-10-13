@@ -22,7 +22,7 @@
         <Rectangle Grid.Column="2" Fill="#FFF4F4F5" Margin="41.531,38,39.469,189.177" Grid.Row="1" Stroke="Black" StrokeThickness="2" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
 
         <Image Grid.Column="2" Margin="41.531,41.823,35.469,189.177" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" />
-        <RadioButton x:Name="EnableDetector" Content="Enable Detector" Height="17" Margin="10,0,27,379" Grid.Row="1" VerticalAlignment="Bottom" Click="EnableDetector_click" />
+        <RadioButton x:Name="EnableDetector" Content="Enable Detector" Height="17" Margin="10,0,27,379" Grid.Row="1" VerticalAlignment="Bottom" Click="EnableDetector_click" IsChecked="True" Checked="EnableDetector_Checked" />
         <StackPanel Margin="-1,0,-12,-7" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" Grid.ColumnSpan="2">
             <Slider x:Name="slider_innerang" Height="25" Margin="139,417,125,0" ValueChanged="changeinnerang" Minimum="0" Maximum="1"/>
             <Slider x:Name="slider_outerang" Height="23" Margin="139,0,125,0" ValueChanged="changeouterang" Minimum="0" Maximum="1" UseLayoutRounding="True"/>
@@ -93,8 +93,8 @@
         <TextBlock x:Name="textBlock1_Copy4" Grid.Column="2" HorizontalAlignment="Right" Height="20" Margin="0,0,198.333,80" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Y"/><Run Text=" Pixels"/><Run Text=":"/></TextBlock>
         <TextBlock x:Name="textBlock1_Copy5" Grid.Column="2" HorizontalAlignment="Right" Height="20" Margin="0,0,192,100" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="48.667" Text="X Pixels:"/>
         <TextBlock x:Name="textBlock1_Copy6" Grid.Column="2" HorizontalAlignment="Right" Height="30" Margin="0,0,88.667,110.666" Grid.Row="1" TextWrapping="Wrap" Text="Scan grid setting:" VerticalAlignment="Bottom" Width="152"/>
-        <TextBox x:Name="PosX" Grid.Column="2" Height="20" Margin="0,0,81.333,61.618" Grid.Row="1" TextWrapping="Wrap" Text="1" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="109"/>
-        <TextBox x:Name="PosY" Grid.Column="2" Height="20" Margin="0,0,81.33,43.284" Grid.Row="1" TextWrapping="Wrap" Text="1" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="109"/>
+        <TextBox x:Name="PosX" Grid.Column="2" Height="20" Margin="0,0,81.333,61.618" Grid.Row="1" TextWrapping="Wrap" Text="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="109"/>
+        <TextBox x:Name="PosY" Grid.Column="2" Height="20" Margin="0,0,81.33,43.284" Grid.Row="1" TextWrapping="Wrap" Text="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="109"/>
         <TextBlock x:Name="textBlock1_Copy7" Grid.Column="2" HorizontalAlignment="Right" Height="20" Margin="0,0,193.995,42.284" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="62" Text="Y Positions:"/>
         <TextBlock x:Name="textBlock1_Copy8" Grid.Column="2" HorizontalAlignment="Right" Height="20" Margin="0,0,195.828,61.618" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="60.667"><Run Text="X "/><Run Text="Positions"/><Run Text=":"/></TextBlock>
         <TextBlock x:Name="textBlock1_Copy9" HorizontalAlignment="Left" Height="30" Margin="-9,0,0,5" Grid.Row="1" TextWrapping="Wrap" Text="Reconstruction" VerticalAlignment="Bottom" Width="152" FontSize="20" Grid.Column="1"/>
@@ -103,7 +103,7 @@
         <TextBlock x:Name="TotalImages" Grid.Column="2" HorizontalAlignment="Right" Height="20" Margin="0,0,192,22.284" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="79" Text="Total Images:"/>
         <TextBlock x:Name="RamSpace" Grid.Column="2" HorizontalAlignment="Right" Height="20" Margin="0,0,70,22.284" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="79" Text="RAM space:"/>
         <ProgressBar Grid.Column="2" HorizontalAlignment="Right" Height="12.284" Margin="0,0,81.342,10" Grid.Row="1" VerticalAlignment="Bottom" Width="189.658"/>
-        <RadioButton x:Name="DisableDetector" Content="Disable Detector" Height="17" Click="DisableDetector_click" VerticalAlignment="Bottom" Margin="10,0,27,356" Grid.Row="1" IsChecked="True"/>
+        <RadioButton x:Name="DisableDetector" Content="Disable Detector" Height="17" Click="DisableDetector_click" VerticalAlignment="Bottom" Margin="10,0,27,356" Grid.Row="1" IsChecked="False"/>
 
     </Grid>
 </Window>
