@@ -96,8 +96,18 @@ namespace CSharpExample1
             H5GroupId dataSubGroup = H5G.create(dataGroup, "DEsoftware");
             H5DataSpaceId spaceId = H5S.create_simple(3, dims);
             H5DataTypeId typeId = H5T.copy(H5T.H5Type.NATIVE_USHORT);
-            H5DataSetId dataSetId = H5D.create(dataSubGroup, "simulation",
+            H5DataSetId dataSetId = H5D.create(dataSubGroup, "data",
                                                    typeId, spaceId);
+            // create attribute emd_group_type that is required for emd file
+            int par = 1;
+            byte[] AttArray = BitConverter.GetBytes(par);
+            long[] attdims = new long[1];
+            dims[0] = AttArray.Length;
+
+            H5AttributeId attributeId = H5A.create(dataSubGroup, "emd_group_type", H5T.copy(H5T.H5Type.NATIVE_UINT), H5S.create_simple(1, attdims));
+            H5A.write(attributeId, H5T.copy(H5T.H5Type.NATIVE_UCHAR), new H5Array<byte>(AttArray));  // not sure how to create attribute of UINT8 here???
+            H5A.close(attributeId);
+
             H5D.write<ushort>(dataSetId, typeId, new H5Array<ushort>(datacube));
             H5S.close(spaceId);
             H5T.close(typeId);
@@ -106,13 +116,17 @@ namespace CSharpExample1
             H5G.close(dataSubGroup);
         }
 
-        public static H5FileId InitializeHDF(int numpos, int height, int width, UInt16[,,] datacube)
+        public static H5FileId InitializeHDF(int numpos, int height, int width, UInt16[,,] datacube, string fullpath)
         {
             // write in HDF5 (.h5) format
 
             // generate standard groups
-            H5FileId fileId = H5F.create("D:/2017/Pixelated Camera/CameraSoftware/FileFormat/Test/test3.emd",
-                             H5F.CreateMode.ACC_TRUNC);
+            H5FileId fileId = H5F.create(fullpath,
+                            H5F.CreateMode.ACC_TRUNC);
+            //H5FileId fileId = H5F.create("D:/2017/Pixelated Camera/CameraSoftware/FileFormat/Test/test5.emd",
+                             //H5F.CreateMode.ACC_TRUNC);
+            //NumberAttributeGenerator(fileId, "voltage", Convert.ToSingle(300));
+
             //H5GroupId dataGroup = H5G.create(fileId, "/data");  //dash is required for root group
             H5GroupId userGroup = H5G.create(fileId, "/user");
             H5GroupId micGroup = H5G.create(fileId, "/microscope");

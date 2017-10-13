@@ -28,7 +28,7 @@
             <Slider x:Name="slider_outerang" Height="23" Margin="139,0,125,0" ValueChanged="changeouterang" Minimum="0" Maximum="1" UseLayoutRounding="True"/>
             <Image x:Name="Recon" Height="300" Margin="54.75,10,54.75,0" Width="300" />
         </StackPanel>
-        <DataGrid AutoGenerateColumns="False" Grid.Column="3" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,0" Grid.Row="1" Height="274" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin">
+        <DataGrid AutoGenerateColumns="False" Grid.Column="3" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,0" Grid.Row="1" Height="307" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Name}" CanUserReorder="True" CanUserResize="True" Header="Property" />
                 <DataGridTextColumn Binding="{Binding Value}" Header="Value" />
@@ -36,7 +36,8 @@
         </DataGrid>
         <Grid HorizontalAlignment="Left" Height="51" Margin="-125,79,0,0" Grid.Row="1" VerticalAlignment="Top" Width="45" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <TextBlock x:Name="textBlock" Grid.Column="2" Height="28" Margin="162,10,161,0" Grid.Row="1" TextWrapping="Wrap" Text="HAADF Detector Preview" VerticalAlignment="Top" TextAlignment="Center" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
-        <Button x:Name="button" Content="Search" Grid.Column="2" HorizontalAlignment="Left" Height="33" Margin="59,0,0,150" Grid.Row="1" VerticalAlignment="Bottom" Width="132" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Button x:Name="button" Content="Search" Grid.Column="2" HorizontalAlignment="Left" Height="33" Margin="59,0,0,150" Grid.Row="1" VerticalAlignment="Bottom" Width="132" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin">
+        </Button>
         <Button x:Name="button_Copy" Content="Acquire" Grid.Column="2" Height="33" Margin="248,0,249,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Button x:Name="Submit_Setting" Click="Submit_Setting_Click" Content="Submit Setting" Grid.Column="2" Height="33" Margin="0,0,58,150" Grid.Row="1" VerticalAlignment="Bottom" FontSize="18" HorizontalAlignment="Right" Width="132" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
         <Border Grid.Column="2" Margin="231,222,231,350" Grid.Row="1" MinWidth="10" MinHeight="10" MaxWidth="512" MaxHeight="512" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" >
@@ -58,8 +59,8 @@
         <TextBlock x:Name="textBlock1_Copy1" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="196,0,0,101" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" X:"/></TextBlock>
         <TextBlock x:Name="textBlock1_Copy2" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="57,0,0,83" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start "/><Run Text="Y"/><Run Text=":"/></TextBlock>
         <TextBlock x:Name="textBlock1_Copy3" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="195,0,0,83" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" "/><Run Text="Y"/><Run Text=":"/></TextBlock>
-        <Button Click="btnLiveCapture_Click" Content="Stream from DE" Height="23" HorizontalAlignment="Left" Margin="10,284,0,0" x:Name="btnLiveCapture" Width="148" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" />
-        <Button Click="btnGetImage_Click" Content="Capture Single Image" Height="23" HorizontalAlignment="Left" Margin="10,312,0,0" x:Name="btnGetImage" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Button Click="btnLiveCapture_Click" Content="Stream from DE" Height="23" HorizontalAlignment="Left" Margin="10,284,0,0" x:Name="btnLiveCapture" Width="148" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" Visibility="Hidden" />
+        <Button Click="btnGetImage_Click" Content="Capture Image" Height="23" HorizontalAlignment="Left" Margin="25,324,0,0" x:Name="btnGetImage" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top"/>
 
         <Image x:Name="pictureBox1" Height="400" Margin="7,7,7,0" Grid.Row="1" VerticalAlignment="Top" Grid.ColumnSpan="2" />
         <Path Grid.Column="2" Data="M398,-1" HorizontalAlignment="Left" Height="1" Margin="1,-1,0,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Top" Width="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
@@ -104,8 +105,12 @@
         <TextBlock x:Name="RamSpace" Grid.Column="2" HorizontalAlignment="Right" Height="20" Margin="0,0,70,22.284" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="79" Text="RAM space:"/>
         <ProgressBar Grid.Column="2" HorizontalAlignment="Right" Height="12.284" Margin="0,0,81.342,10" Grid.Row="1" VerticalAlignment="Bottom" Width="189.658"/>
         <RadioButton x:Name="DisableDetector" Content="Disable Detector" Height="17" Click="DisableDetector_click" VerticalAlignment="Bottom" Margin="10,0,27,356" Grid.Row="1" IsChecked="True"/>
-        <Button Click="LoadnRecon_Click" Content="Load file and reconstruct" Height="23" HorizontalAlignment="Left" Margin="10,340,0,0" x:Name="LoadnRecon" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin"/>
-        <Button Click="ResaveEMD_Click" Content="Resave as EMD file" Height="23" HorizontalAlignment="Left" Margin="10,368,0,0" x:Name="ResaveEMD" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin"/>
+        <Button Click="LoadnRecon_Click" Content="Load file and reconstruct" Height="23" HorizontalAlignment="Left" Margin="25,351,0,0" x:Name="LoadnRecon" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top"/>
+        <Button Click="ResaveEMD_Click" Content="Save" Margin="25,379,0,0" x:Name="ResaveEMD" Visibility="Visible" Grid.Column="3" Grid.Row="1" HorizontalAlignment="Left" Width="73" Height="23" VerticalAlignment="Top"/>
+        <Button Click="EMDFilePath_Click" Content="Select EMD file path" Margin="0,380,50,0" x:Name="EMDFilePath" Visibility="Visible" Grid.Column="3" Grid.Row="1" HorizontalAlignment="Right" Width="148" RenderTransformOrigin="0.439,3.913" Height="23" VerticalAlignment="Top"/>
+        <TextBox x:Name="EMDPath" Grid.Column="3" Height="23" Margin="178,351,51,0" Grid.Row="1" TextWrapping="Wrap" Text="D:/RawFrames" VerticalAlignment="Top"/>
+        <TextBox x:Name="EMDName" Grid.Column="3" Margin="178,379,203,0" Grid.Row="1" TextWrapping="Wrap" Text="ExampleFile" Height="23" VerticalAlignment="Top"/>
+        <Button Click="DiscardEMD_Click" Content="Discard" Margin="103,379,0,0" x:Name="DiscardEMD" Visibility="Visible" Grid.Column="3" Grid.Row="1" HorizontalAlignment="Left" Width="70" Height="23" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>

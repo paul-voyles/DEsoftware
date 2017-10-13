@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -198,10 +199,40 @@ namespace DeExampleCSharpWPF
             return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
         }
 
+        private void EMDFilePath_Click(object sender, RoutedEventArgs e)
+        {
+            string folder = EMDPath.Text;
+            System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                folder = dlg.SelectedPath;
+            }
+            folder = folder.Replace("\\", "/");
+            EMDPath.Text = folder;
+            string filename = EMDName.Text;
+            string fullpath = folder + "/" + filename + ".emd";
+        }
+
+        private void DiscardEMD_Click(object sender, RoutedEventArgs e)
+        {
+            string folder = EMDPath.Text;
+            string filename = EMDName.Text;
+            string fullpath = folder + "/" + filename + ".emd";
+            File.Delete(fullpath);
+        }
 
         private void btnGetImage_Click(object sender, RoutedEventArgs e)
         {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
             SingleCapture();
+            stopWatch.Stop();
+            TimeSpan ts = stopWatch.Elapsed;
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+            ts.Hours, ts.Minutes, ts.Seconds,
+            ts.Milliseconds / 10);
+            Console.WriteLine("RunTime " + elapsedTime);
+            System.Windows.Forms.MessageBox.Show("Image acquisition finished.\n Total time: " + elapsedTime);
         }
 
         // load mrc file that just acquired and do reconstrcution for BF/ABF
@@ -265,57 +296,50 @@ namespace DeExampleCSharpWPF
                 int format = binaryStream.ReadInt32();
                 for (var i = 0; i < 6; i++)    // the rest 6 integer numbers, int32, useless here
                 {
-
-                    Console.WriteLine(binaryStream.ReadInt32());
+                    binaryStream.ReadInt32();
+                    //Console.WriteLine(binaryStream.ReadInt32());
                 }
                 Console.WriteLine('\n');
                 for (var i = 0; i < 12; i++)    // 12 floating numbers, single
                 {
-                    Console.WriteLine(binaryStream.ReadSingle());
+                    binaryStream.ReadSingle();
+                    //Console.WriteLine(binaryStream.ReadSingle());
                 }
                 Console.WriteLine('\n');
                 for (var i = 0; i < 30; i++)    // 30 integer numbers, int32
                 {
-                    Console.WriteLine(binaryStream.ReadInt32());
+                    binaryStream.ReadInt32();
+                    //Console.WriteLine(binaryStream.ReadInt32());
                 }
                 Console.WriteLine('\n');
                 for (var i = 0; i < 8; i++)    // 8 chars
                 {
-                    Console.WriteLine(binaryStream.ReadChar());
+                    binaryStream.ReadChar();
+                    //Console.WriteLine(binaryStream.ReadChar());
                 }
                 Console.WriteLine('\n');
                 for (var i = 0; i < 2; i++)    // 2 integer numbers, int32
                 {
-                    Console.WriteLine(binaryStream.ReadInt32());
+                    binaryStream.ReadInt32();
+                    //Console.WriteLine(binaryStream.ReadInt32());
                 }
                 for (var i = 0; i < 10; i++)    // 10 strings
                 {
-                    Console.WriteLine(binaryStream.ReadChars(80));
+                    binaryStream.ReadChars(80);
+                    //Console.WriteLine(binaryStream.ReadChars(80));
                 }
 
                 // finish reading headers
-                UInt16[,,] datacube = new UInt16[numpos, width, height];
-                UInt16[] datacube_array = new UInt16[numpos * width * height];
+                UInt16[,,] datacube = new UInt16[width, height, numpos];
 
-                // 1D array created for reconstruction, two arrays probably cost a lot of RAM
+                // 3D array created for reconstruction and HDF5 file
                 for (var ilayer = 0; ilayer < numpos; ilayer++)
                 {
                     for (var iy = 0; iy < height; iy++)
                     {
                         for (var ix = 0; ix < width; ix++)
                         {
-                            datacube_array[ilayer*width*height + iy*width + ix] = binaryStream.ReadUInt16();
-                        }
-                    }
-                }
-                // 3D array created for HDF5 save
-                for (var ilayer = 0; ilayer < numpos; ilayer++)
-                {
-                    for (var iy = 0; iy < height; iy++)
-                    {
-                        for (var ix = 0; ix < width; ix++)
-                        {
-                            datacube[ilayer, iy, ix] = datacube_array[ilayer * width * height + iy * width + ix];
+                            datacube[ix, iy, ilayer] = binaryStream.ReadUInt16(); // [ix, iy, ilayer], correspond to [col, row, layer]
                         }
                     }
                 }
@@ -326,7 +350,8 @@ namespace DeExampleCSharpWPF
                 int px = 0, py = 0;
 
                 // create H5 file with attributes and data
-                H5FileId fileId = HDF5.InitializeHDF(numpos, width, height, datacube);
+                string fullpath = EMDPath.Text + "/" + EMDName.Text + ".emd" ;
+                H5FileId fileId = HDF5.InitializeHDF(numpos, width, height, datacube,fullpath);
 
 
                 PosX.Dispatcher.Invoke(
@@ -355,7 +380,7 @@ namespace DeExampleCSharpWPF
                             {
                                 for (var ix = 0; ix < px; ix++)
                                 {
-                                    UInt16[] imagelayer = ExtractArray(datacube_array, iy * px + ix, width, height);
+                                    UInt16[] imagelayer = ExtractArray(datacube, iy * px + ix, width, height);
                                     double innerang = 0;
                                     double outerang = 0;
                                     slider_innerang.Dispatcher.Invoke(
@@ -387,14 +412,14 @@ namespace DeExampleCSharpWPF
         }
 
         // function used to extract 2D layer from 3D datacube, used for 1D array saving scheme
-        public UInt16[] ExtractArray(UInt16[] DataArray, int layernum, int width, int height)
+        public UInt16[] ExtractArray(UInt16[,,] DataCube, int layernum, int width, int height)
         {
             UInt16[] layer = new UInt16[width*height];
             for (var iy = 0; iy < width; iy++)
             {
                 for (var ix = 0; ix < height; ix++)
                 {
-                    layer[iy*width+ix] = DataArray[layernum*width*height+iy*width+ix];
+                    layer[iy*width+ix] = DataCube[ix,iy,layernum];
                 }
             }
             return layer;
@@ -756,7 +781,7 @@ namespace DeExampleCSharpWPF
         }
 */
 
-        // consider only get useful properties instead of getting all properties
+        // only get useful properties instead of getting all properties
         private void cmbCameras_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             CameraProperties.Clear();
@@ -766,7 +791,26 @@ namespace DeExampleCSharpWPF
             _deInterface.SetCameraName(cmbCameras.SelectedItem.ToString());
 
             List<String> props = new List<String>();
-            _deInterface.GetPropertyNames(ref props);
+            props.Add("Acquisition Mode");
+            props.Add("Autosave Raw Frames");
+            props.Add("Autosave Directory");
+            props.Add("Autosave Frames - Previous Dataset Name");
+            props.Add("Binning X");
+            props.Add("Binning Y");
+            props.Add("Camera Position");
+            props.Add("Exposure Time (seconds)");
+            props.Add("Exposure Time Max (seconds)");
+            props.Add("Frames Per Second");
+            props.Add("Frames Per Second (Max)");
+            props.Add("ROI Dimension X");
+            props.Add("ROI Dimension Y");
+            props.Add("ROI Offset X");
+            props.Add("ROI Offset Y");
+            props.Add("Sensor Hardware Binning");
+            props.Add("Sensor Hardware ROI");
+            props.Add("Total Number of Frames");
+
+            //_deInterface.GetPropertyNames(ref props);
 
             foreach (string propertyName in props)
             {
@@ -886,12 +930,15 @@ namespace DeExampleCSharpWPF
         }
 
         // change DE camera setting for number of pixels along x and y
+        // seems push property to DE server doesn't work well
         private void Submit_Setting_Click(object sender, RoutedEventArgs e)
         {
             string pxx = PixelsX.Text;
             string pxy = PixelsY.Text;
-            _deInterface.SetProperty("Image Size X", pxx);
-            _deInterface.SetProperty("Image Size Y", pxy);
+            
+            //_deInterface.SetProperty("ROI Dimension X", "512");
+            //_deInterface.SetProperty("Image Size X", pxx);
+            //_deInterface.SetProperty("Image Size Y", pxy);
 
         }
 
@@ -911,6 +958,7 @@ namespace DeExampleCSharpWPF
         private void DisableDetector_click(object sender, RoutedEventArgs e)
         {
             InnerAngle.Visibility = Visibility.Hidden;
+            
         }
 
         private void EnableDetector_Checked(object sender, RoutedEventArgs e)

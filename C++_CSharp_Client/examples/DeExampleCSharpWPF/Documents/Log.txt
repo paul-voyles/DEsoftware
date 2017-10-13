@@ -11,6 +11,9 @@
 - created another button to load mrc file and do reconstruction
 	- will simultaneously create HDF5 file
 	- another 3D array will be used for HDF5, which probably going to cost more RAM
+- Included two more text boxes to input EMD file directory and name
+- ??? Seems push property from software to server is not working well
+- ??? Sometimes actual exposure time is different from server exposure time setting, seems server just runs at top speed???
 
 10/5/17
 - Updates on image acquisition routine, let DE server save files to MRC format on SSD first, then load it and do reconstruction
