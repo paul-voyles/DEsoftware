@@ -1,3 +1,17 @@
+10/13/17
+- Finished MRC loading routine, after loading, reconstruction would be calculated
+- Not sure what is in the returned image here, often shows to be pure black.
+- Adapted image acuqisition scheme, now single capture (should) also display image in imagebox1
+- To be added:
+	- save loaded MRC matrix as hdf5/emd file
+	- automatically load file path from DE server
+- Problem: if trying to access to the MRC file within btnGetImage_click function, system will show that mrc file is occupied by another process
+	- tried to create another layer of function that calls image capture then mrc loading, still won't work
+	- however, it's ok to create another button to load mrcfile and do reconstruction
+- created another button to load mrc file and do reconstruction
+	- will simultaneously create HDF5 file
+	- another 3D array will be used for HDF5, which probably going to cost more RAM
+
 10/5/17
 - Updates on image acquisition routine, let DE server save files to MRC format on SSD first, then load it and do reconstruction
 	- on my PC, with HDD, the file writing speed is much slower than image acquisition speed and thus limiting the total speed

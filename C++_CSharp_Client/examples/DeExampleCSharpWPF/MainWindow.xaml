@@ -22,7 +22,7 @@
         <Rectangle Grid.Column="2" Fill="#FFF4F4F5" Margin="41.531,38,39.469,189.177" Grid.Row="1" Stroke="Black" StrokeThickness="2" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
 
         <Image Grid.Column="2" Margin="41.531,41.823,35.469,189.177" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" />
-        <RadioButton x:Name="EnableDetector" Content="Enable Detector" Height="17" Margin="10,0,27,379" Grid.Row="1" VerticalAlignment="Bottom" Click="EnableDetector_click" IsChecked="True" Checked="EnableDetector_Checked" />
+        <RadioButton x:Name="EnableDetector" Content="Enable Detector" Height="17" Margin="10,0,27,379" Grid.Row="1" VerticalAlignment="Bottom" Click="EnableDetector_click" IsChecked="False" Checked="EnableDetector_Checked" />
         <StackPanel Margin="-1,0,-12,-7" Grid.Row="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" Grid.ColumnSpan="2">
             <Slider x:Name="slider_innerang" Height="25" Margin="139,417,125,0" ValueChanged="changeinnerang" Minimum="0" Maximum="1"/>
             <Slider x:Name="slider_outerang" Height="23" Margin="139,0,125,0" ValueChanged="changeouterang" Minimum="0" Maximum="1" UseLayoutRounding="True"/>
@@ -103,7 +103,9 @@
         <TextBlock x:Name="TotalImages" Grid.Column="2" HorizontalAlignment="Right" Height="20" Margin="0,0,192,22.284" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="79" Text="Total Images:"/>
         <TextBlock x:Name="RamSpace" Grid.Column="2" HorizontalAlignment="Right" Height="20" Margin="0,0,70,22.284" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="79" Text="RAM space:"/>
         <ProgressBar Grid.Column="2" HorizontalAlignment="Right" Height="12.284" Margin="0,0,81.342,10" Grid.Row="1" VerticalAlignment="Bottom" Width="189.658"/>
-        <RadioButton x:Name="DisableDetector" Content="Disable Detector" Height="17" Click="DisableDetector_click" VerticalAlignment="Bottom" Margin="10,0,27,356" Grid.Row="1" IsChecked="False"/>
+        <RadioButton x:Name="DisableDetector" Content="Disable Detector" Height="17" Click="DisableDetector_click" VerticalAlignment="Bottom" Margin="10,0,27,356" Grid.Row="1" IsChecked="True"/>
+        <Button Click="LoadnRecon_Click" Content="Load file and reconstruct" Height="23" HorizontalAlignment="Left" Margin="10,340,0,0" x:Name="LoadnRecon" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin"/>
+        <Button Click="ResaveEMD_Click" Content="Resave as EMD file" Height="23" HorizontalAlignment="Left" Margin="10,368,0,0" x:Name="ResaveEMD" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin"/>
 
     </Grid>
 </Window>

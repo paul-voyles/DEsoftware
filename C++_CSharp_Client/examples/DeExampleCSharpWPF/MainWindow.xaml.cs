@@ -41,6 +41,9 @@ namespace DeExampleCSharpWPF
         UInt16[] m_image_local;
         static Semaphore semaphore;
         Queue<UInt16[]> m_imageQueue = new Queue<ushort[]>();
+        public int numpos;
+        public int height;
+        public int width;
 
         public ObservableCollection<Property> CameraProperties { get; private set; }
 
@@ -55,10 +58,7 @@ namespace DeExampleCSharpWPF
             
         }
 
-        /// <summary>
-        /// Get Image Transfer Mode
-        /// </summary>
-        /// <returns></returns>
+        // Get Image Transfer Mode      
         private ImageTransfer_Mode GetImageTransferMode()
         {
             string strHostName = Dns.GetHostName();
@@ -173,8 +173,8 @@ namespace DeExampleCSharpWPF
             string ySize = "";
             _deInterface.GetProperty("Image Size X", ref xSize);
             _deInterface.GetProperty("Image Size Y", ref ySize);
-            int width = Convert.ToInt32(xSize);
-            int height = Convert.ToInt32(ySize);
+            width = Convert.ToInt32(xSize);
+            height = Convert.ToInt32(ySize);
             int bytesPerPixel = (PixelFormats.Gray16.BitsPerPixel + 7) / 8;
             int stride = 4 * ((width * bytesPerPixel + 3) / 4);
 
@@ -201,29 +201,67 @@ namespace DeExampleCSharpWPF
 
         private void btnGetImage_Click(object sender, RoutedEventArgs e)
         {
-            UInt16[] image = new UInt16[width * height];
+            SingleCapture();
+        }
+
+        // load mrc file that just acquired and do reconstrcution for BF/ABF
+        public void LoadnRecon_Click(object sender, RoutedEventArgs e)
+        {
+            // if EnableDetector option is not checked, change it to ture and use default BF range
+            if (EnableDetector.IsChecked == false)
+            {
+                EnableDetector.IsChecked = true;
+                slider_innerang.Value = 0;
+                slider_outerang.Value = 1;
+            }
+            // call function to load MRC file and do reconstruction
+            ReadMRCfile();
+        }
+
+        // save the loaded mrc file to EMD format
+        private void ResaveEMD_Click(object sender, RoutedEventArgs e)
+        {
+           // HDF5.InitializeHDF(numpos, height, width);
+        }
+
+        public void SingleCapture()
+        {
             try
             {
-                ImageView imageView = new ImageView();
+                // old scheme of single acquisition in a new window
+                /*ImageView imageView = new ImageView();
                 imageView.image.Source = GetImage();    //return a BitmapSource
-                imageView.Show();
-                _deInterface.GetImage(out image);
+                imageView.Show();*/
+
+                // image acquisition scheme adapted from live stream, display image in imagebox1
+                InitializeWBmp(GetImage());
+                Show();
+                //InitializeWBmp(GetImage()); // initialize image in picture box
+                                            //enable livemode on the server
             }
             catch (Exception exc)
             {
                 System.Windows.MessageBox.Show(exc.Message);
             }
+        }
 
+        public void ReadMRCfile()
+        {
             // start reading mrc file
-            //string path = "D:/2017/Pixelated Camera/CameraSoftware/FileFormat/MRC/ExampleFile/20171005_00013_RawImages.mrc";
-            string path = "D:/RawFrames/SoftwareSim/20171013_00120_RawImages.mrc";
+            string path_string = "";
+            string name_string = "";
+            _deInterface.GetProperty("Autosave Directory", ref path_string);
+            _deInterface.GetProperty("Autosave Frames - Previous Dataset Name", ref name_string);
+            path_string = path_string.Replace("\\","/");
+            string path = path_string + "/" + name_string + "_RawImages.mrc";
+
             using (var filestream = File.Open(@path, FileMode.Open))
             using (var binaryStream = new BinaryReader(filestream))
             {
                 // read headers
-                int width = binaryStream.ReadInt32();
-                int height = binaryStream.ReadInt32();
-                int numpos = binaryStream.ReadInt32();
+                width = binaryStream.ReadInt32();
+                height = binaryStream.ReadInt32();
+                numpos = binaryStream.ReadInt32();
                 int format = binaryStream.ReadInt32();
                 for (var i = 0; i < 6; i++)    // the rest 6 integer numbers, int32, useless here
                 {
@@ -256,27 +294,40 @@ namespace DeExampleCSharpWPF
                 }
 
                 // finish reading headers
-                //UInt16[,,] datacube = new UInt16[numpos, width, height];
+                UInt16[,,] datacube = new UInt16[numpos, width, height];
                 UInt16[] datacube_array = new UInt16[numpos * width * height];
+
+                // 1D array created for reconstruction, two arrays probably cost a lot of RAM
                 for (var ilayer = 0; ilayer < numpos; ilayer++)
                 {
                     for (var iy = 0; iy < height; iy++)
                     {
                         for (var ix = 0; ix < width; ix++)
                         {
-                            //datacube[ilayer,iy,ix] = binaryStream.ReadUInt16();
                             datacube_array[ilayer*width*height + iy*width + ix] = binaryStream.ReadUInt16();
                         }
                     }
                 }
-
-                // TD: show final image on image view panel here
+                // 3D array created for HDF5 save
+                for (var ilayer = 0; ilayer < numpos; ilayer++)
+                {
+                    for (var iy = 0; iy < height; iy++)
+                    {
+                        for (var ix = 0; ix < width; ix++)
+                        {
+                            datacube[ilayer, iy, ix] = datacube_array[ilayer * width * height + iy * width + ix];
+                        }
+                    }
+                }
 
                 // start reconstruction and show reconstruction result if option enabled
                 string StrX = null;
                 string StrY = null;
                 int px = 0, py = 0;
-               
+
+                // create H5 file with attributes and data
+                H5FileId fileId = HDF5.InitializeHDF(numpos, width, height, datacube);
+
 
                 PosX.Dispatcher.Invoke(
                     (ThreadStart)delegate { StrX = PosX.Text; }
@@ -446,14 +497,14 @@ namespace DeExampleCSharpWPF
                 string ySize = "";
                 _deInterface.GetProperty("Image Size X", ref xSize);
                 _deInterface.GetProperty("Image Size Y", ref ySize);
-                int width = Convert.ToInt32(xSize);
-                int height = Convert.ToInt32(ySize);
+                width = Convert.ToInt32(xSize);
+                height = Convert.ToInt32(ySize);
 
                 // determine how many frames to take
                 string StrX = null;
                 string StrY = null;
                 int px = 0, py = 0;
-                int numpos = 0;
+                numpos = 0;
 
                 PosX.Dispatcher.Invoke(
                     (ThreadStart)delegate { StrX = PosX.Text; }
@@ -470,7 +521,7 @@ namespace DeExampleCSharpWPF
                     }
                 }
 
-                H5FileId fileId = HDF5.InitializeHDF(numpos, width, height);
+                //H5FileId fileId = HDF5.InitializeHDF(numpos, width, height);
                 UInt16[,,] datacube = new UInt16[numpos,width,height];    // generate the data cube, each value should be an integer
                 UInt16[] image = new UInt16[width*height];  // 1D image array used to save temp 2D frame
                 // generate reconstruction bitmap and initialize _wBmpRecon
@@ -827,13 +878,6 @@ namespace DeExampleCSharpWPF
                 (ThreadStart)delegate { Recon.Source = _wBmpRecon; }
             );
         }
-        /// <summary>
-        /// Set the image to the array of ushorts representing a 16 bit grayscale image
-        /// </summary>
-        /// <param name="imageData"></param>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-
 
         public void SetImageLoadTime(int nTickCount)
         {
@@ -861,6 +905,7 @@ namespace DeExampleCSharpWPF
                 InnerAngle.StrokeThickness = InnerAngle.Height / 2;
                 slider_outerang.Value = 1;
                 slider_innerang.Value = 0;
+            ReadMRCfile();
         }
 
         private void DisableDetector_click(object sender, RoutedEventArgs e)

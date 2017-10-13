@@ -94,20 +94,24 @@ namespace CSharpExample1
             long[] dims = new long[3] { datacube.GetLength(0), datacube.GetLength(1), datacube.GetLength(2)};
             H5GroupId dataGroup = H5G.create(fileId, "/data");
             H5GroupId dataSubGroup = H5G.create(dataGroup, "DEsoftware");
-            H5DataSpaceId spaceId = H5S.create_simple(3, dims, null);
+            H5DataSpaceId spaceId = H5S.create_simple(3, dims);
             H5DataTypeId typeId = H5T.copy(H5T.H5Type.NATIVE_USHORT);
             H5DataSetId dataSetId = H5D.create(dataSubGroup, "simulation",
                                                    typeId, spaceId);
-            H5D.write<ushort>(dataSetId, new H5DataTypeId(H5T.H5Type.NATIVE_USHORT), 
-                                  new H5Array<ushort>(datacube));
+            H5D.write<ushort>(dataSetId, typeId, new H5Array<ushort>(datacube));
+            H5S.close(spaceId);
+            H5T.close(typeId);
+            H5D.close(dataSetId);
+            H5G.close(dataGroup);
+            H5G.close(dataSubGroup);
         }
 
-        public static H5FileId InitializeHDF(int numpos, int height, int width)
+        public static H5FileId InitializeHDF(int numpos, int height, int width, UInt16[,,] datacube)
         {
             // write in HDF5 (.h5) format
 
             // generate standard groups
-            H5FileId fileId = H5F.create("D:/2017/Pixelated Camera/CameraSoftware/FileFormat/Test/test2.emd",
+            H5FileId fileId = H5F.create("D:/2017/Pixelated Camera/CameraSoftware/FileFormat/Test/test3.emd",
                              H5F.CreateMode.ACC_TRUNC);
             //H5GroupId dataGroup = H5G.create(fileId, "/data");  //dash is required for root group
             H5GroupId userGroup = H5G.create(fileId, "/user");
@@ -132,6 +136,8 @@ namespace CSharpExample1
             StringAttributeGenerator(sampleGroup, "preparation", "Mechanical polishing and ion milling");
             StringAttributeGenerator(sampleGroup, "Zone Axis", "[1][0][0]");
 
+            // Write 3D data cube to the file
+            WriteDataCube(fileId, datacube);
 
             // close groups and file
             H5G.close(userGroup);
