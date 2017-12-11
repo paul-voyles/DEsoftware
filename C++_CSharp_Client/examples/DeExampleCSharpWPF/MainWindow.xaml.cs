@@ -351,7 +351,7 @@ namespace DeExampleCSharpWPF
 
                 // create H5 file with attributes and data
                 string fullpath = EMDPath.Text + "/" + EMDName.Text + ".emd" ;
-                H5FileId fileId = HDF5.InitializeHDF(numpos, width, height, datacube,fullpath);
+                //H5FileId fileId = HDF5.InitializeHDF(numpos, width, height, datacube,fullpath);
 
 
                 PosX.Dispatcher.Invoke(

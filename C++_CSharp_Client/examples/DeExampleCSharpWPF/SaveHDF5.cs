@@ -89,26 +89,51 @@ namespace CSharpExample1
             H5A.close(attributeId);
         }
 
+        // Generate double attributes
+        // GroupName: target group for the new attribute
+        // AttName: attribute name
+        // AttContent: content for the attribute, has to be a single floating number, here 64bit double is used, to generate subgroups in Data
+        public static void DoubleAttributeGenerator(H5GroupId GroupName, string AttName, double AttContent)
+        {
+            double[] AttArray = new double[1] { AttContent };
+            long[] dims = new long[1];
+            dims[0] = AttArray.Length;
+            H5AttributeId attributeId = H5A.create(GroupName, AttName, H5T.copy(H5T.H5Type.NATIVE_DOUBLE), H5S.create_simple(1, dims));
+            H5A.write(attributeId, H5T.copy(H5T.H5Type.NATIVE_FLOAT), new H5Array<double>(AttArray));
+            H5A.close(attributeId);
+        }
+
         public static void WriteDataCube(H5FileId fileId, UInt16[,,] datacube)
         {
-            long[] dims = new long[3] { datacube.GetLength(0), datacube.GetLength(1), datacube.GetLength(2)};
             H5GroupId dataGroup = H5G.create(fileId, "/data");
             H5GroupId dataSubGroup = H5G.create(dataGroup, "DEsoftware");
+            long[] dims = new long[3] { datacube.GetLength(0), datacube.GetLength(1), datacube.GetLength(2)};
+            
             H5DataSpaceId spaceId = H5S.create_simple(3, dims);
             H5DataTypeId typeId = H5T.copy(H5T.H5Type.NATIVE_USHORT);
             H5DataSetId dataSetId = H5D.create(dataSubGroup, "data",
                                                    typeId, spaceId);
-            // create attribute emd_group_type that is required for emd file
-            int par = 1;
-            byte[] AttArray = BitConverter.GetBytes(par);
-            long[] attdims = new long[1];
-            dims[0] = AttArray.Length;
 
-            H5AttributeId attributeId = H5A.create(dataSubGroup, "emd_group_type", H5T.copy(H5T.H5Type.NATIVE_UINT), H5S.create_simple(1, attdims));
-            H5A.write(attributeId, H5T.copy(H5T.H5Type.NATIVE_UCHAR), new H5Array<byte>(AttArray));  // not sure how to create attribute of UINT8 here???
+            // create attribute emd_group_type for dataSubGroup, which is required to have value 1
+            int par = 1;
+            long[] attdims = new long[1];
+            int[] AttArray = new int[1] { par };
+            dims[0] = AttArray.Length;
+            H5AttributeId attributeId = H5A.create(dataSubGroup, "emd_group_type", H5T.copy(H5T.H5Type.NATIVE_UCHAR), H5S.create_simple(1, dims));
+            H5A.write(attributeId, H5T.copy(H5T.H5Type.NATIVE_INT), new H5Array<int>(AttArray));
             H5A.close(attributeId);
 
+            // write datacube to "data", which contains whole 3D datacube
             H5D.write<ushort>(dataSetId, typeId, new H5Array<ushort>(datacube));
+
+            // create three more array for three dimensions
+            long[] dim1 = new long[1] { datacube.GetLength(0) };
+            double[] dimarray = new double [datacube.GetLength(0)];
+            spaceId = H5S.create_simple(3, dim1 );
+            typeId = H5T.copy(H5T.H5Type.NATIVE_DOUBLE);
+            dataSetId = H5D.create(dataSubGroup, "dim1", typeId, spaceId);
+            H5D.write<double>(dataSetId, typeId, new H5Array<double>(dimarray));
+
             H5S.close(spaceId);
             H5T.close(typeId);
             H5D.close(dataSetId);

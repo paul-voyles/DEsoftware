@@ -1,3 +1,14 @@
+12/11/17
+- Don't change saving path without restart DE server, DE server will try to find last acquired image under old path and gives error
+- For emd_group_type, which is UINT8, H5T.H5Type.NATIVE_UCHAR works well
+- Colin version uses INT16, where DE generates UINT16, not sure whethere they work well, don't worry about that for now
+	- one way to do this is to transfer data from UINT16 to INT16 when streaming from MRC data
+- Now try to generate array for different dimensions, now assume only 3 dimensions, use integer numbers for now
+	$ consider change the unit into physical number later
+
+10/15/17
+- DE server is very slow when changing the binning number or ROI dimension
+
 10/13/17
 - Finished MRC loading routine, after loading, reconstruction would be calculated
 - Not sure what is in the returned image here, often shows to be pure black.
