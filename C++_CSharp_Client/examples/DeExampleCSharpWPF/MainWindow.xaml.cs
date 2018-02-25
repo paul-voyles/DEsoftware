@@ -964,6 +964,11 @@ namespace DeExampleCSharpWPF
         private void EnableDetector_Checked(object sender, RoutedEventArgs e)
         {
         }
+
+        private void button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 
 
