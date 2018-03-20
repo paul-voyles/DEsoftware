@@ -55,26 +55,47 @@ namespace DeExampleCSharpWPF
 
         System.Windows.Point _startPosition;
         bool _isResizing = false;
-        private void resizeGrip_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (Mouse.Capture(resizeGrip2))
-            {
-                _isResizing = true;
-                _startPosition = Mouse.GetPosition(this);
-            }
-        }
+        bool _isResizing2 = false;
 
+
+        /// <summary>
+        ///  functions used to move or resize ROI with two resizing grips
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void window_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (_isResizing)
+            if (_isResizing)    // top left resizing grip
             {
                 System.Windows.Point currentPosition = Mouse.GetPosition(this);
                 double diffX = currentPosition.X - _startPosition.X;
                 double diffY = currentPosition.Y - _startPosition.Y;
                 double currentLeft = gridResize.Margin.Left;
                 double currentTop = gridResize.Margin.Top;
-                gridResize.Margin = new Thickness(currentLeft + diffX, currentTop + diffY, 0, 0);
+                double currentRight = gridResize.Margin.Right;
+                double currentBottom = gridResize.Margin.Bottom;
+                gridResize.Margin = new Thickness(currentLeft + diffX, currentTop + diffY, currentRight, currentBottom);
                 _startPosition = currentPosition;
+                StartX.Text = currentLeft.ToString();
+                StartY.Text = currentTop.ToString();
+                EndX.Text = (567-currentRight).ToString();
+                EndY.Text = (567-currentBottom).ToString();
+            }
+            if (_isResizing2)
+            {
+                System.Windows.Point currentPosition = Mouse.GetPosition(this);
+                double diffX = currentPosition.X - _startPosition.X;
+                double diffY = currentPosition.Y - _startPosition.Y;
+                double currentLeft = gridResize.Margin.Left;
+                double currentTop = gridResize.Margin.Top;
+                double currentRight = gridResize.Margin.Right;
+                double currentBottom = gridResize.Margin.Bottom;
+                gridResize.Margin = new Thickness(currentLeft, currentTop, currentRight - diffX, currentBottom - diffY);
+                _startPosition = currentPosition;
+                StartX.Text = currentLeft.ToString();
+                StartY.Text = currentTop.ToString();
+                EndX.Text = (567-currentRight).ToString();
+                EndY.Text = (567-currentBottom).ToString();
             }
         }
 
@@ -86,6 +107,33 @@ namespace DeExampleCSharpWPF
                 Mouse.Capture(null);
             }
 
+        }
+
+        private void resizeGrip_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (Mouse.Capture(resizeGrip2))
+            {
+                _isResizing = true;
+                _startPosition = Mouse.GetPosition(this);
+            }
+        }
+
+        private void resizeGrip3_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_isResizing2 == true)
+            {
+                _isResizing2 = false;
+                Mouse.Capture(null);
+            }
+        }
+
+        private void resizeGrip3_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (Mouse.Capture(resizeGrip3))
+            {
+                _isResizing2 = true;
+                _startPosition = Mouse.GetPosition(this);
+            }
         }
 
         // used to close main window
