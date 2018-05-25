@@ -74,12 +74,21 @@ namespace DeExampleCSharpWPF
                 double currentTop = gridResize.Margin.Top;
                 double currentRight = gridResize.Margin.Right;
                 double currentBottom = gridResize.Margin.Bottom;
+                if(currentLeft<0)
+                {
+                    currentLeft = 0;
+                }
+                if (currentTop < 0)
+                {
+                    currentTop = 0;
+                }
+
                 gridResize.Margin = new Thickness(currentLeft + diffX, currentTop + diffY, currentRight, currentBottom);
                 _startPosition = currentPosition;
                 StartX.Text = currentLeft.ToString();
                 StartY.Text = currentTop.ToString();
-                EndX.Text = (567-currentRight).ToString();
-                EndY.Text = (567-currentBottom).ToString();
+                EndX.Text = (512-currentRight).ToString();
+                EndY.Text = (512-currentBottom).ToString();  // 28 for height of topic
             }
             if (_isResizing2)
             {
@@ -90,12 +99,20 @@ namespace DeExampleCSharpWPF
                 double currentTop = gridResize.Margin.Top;
                 double currentRight = gridResize.Margin.Right;
                 double currentBottom = gridResize.Margin.Bottom;
+                if (currentRight < 0)
+                {
+                    currentRight = 0;
+                }
+                if (currentBottom < 0)
+                {
+                    currentBottom = 0;
+                }
                 gridResize.Margin = new Thickness(currentLeft, currentTop, currentRight - diffX, currentBottom - diffY);
                 _startPosition = currentPosition;
                 StartX.Text = currentLeft.ToString();
                 StartY.Text = currentTop.ToString();
-                EndX.Text = (567-currentRight).ToString();
-                EndY.Text = (567-currentBottom).ToString();
+                EndX.Text = (512-currentRight).ToString();
+                EndY.Text = (512-currentBottom).ToString();
             }
         }
 
