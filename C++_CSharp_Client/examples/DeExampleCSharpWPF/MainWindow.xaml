@@ -103,8 +103,8 @@
                 </Grid>
 
                 <StackPanel  Orientation="Horizontal" Margin="0,20,0,0">
-                    <Button x:Name="button" Content="Search" Height="33" Width="132" Margin="20,0,0,0" Click="button_Click" FontSize="18"/>
-                    <Button x:Name="button_Copy" Content="Acquire" Height="33" Width="132" Margin="30,0,0,0" FontSize="18"/>
+                    <Button x:Name="button" Content="Reset Setting" Height="33" Width="132" Margin="20,0,0,0" Click="button_Click" FontSize="18"/>
+                    <Button x:Name="button_Copy" Content="Acquire" Height="33" Width="132" Margin="30,0,0,0" FontSize="18" Click="Single_Acquire"/>
                     <Button x:Name="Submit_Setting" Click="Submit_Setting_Click" Content="Submit Setting" Height="33" Margin="30,0,0,0" FontSize="18"  Width="132" />
                 </StackPanel>
 
@@ -127,9 +127,9 @@
 
                     <StackPanel Orientation="Vertical" Margin="40,0,0,0">
                         <TextBlock x:Name="textBlock1_Copy6" Height="20" Margin="0,40,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Scan grid setting:" VerticalAlignment="Bottom" Width="152"/>
-                        <TextBlock x:Name="textBlock1_Copy5"  Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Width="48.667" Text="X Pixels:" HorizontalAlignment="Left"/>
+                        <TextBlock x:Name="textBlock1_Copy5"  Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Width="109.667" Text="X Pixels per frame:" HorizontalAlignment="Left"/>
                         <TextBox x:Name="PixelsX" Height="20" Margin="0,0,0,0"  TextWrapping="Wrap" Text="256" Width="109" HorizontalAlignment="Left"/>
-                        <TextBlock x:Name="textBlock1_Copy4" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Width="42" HorizontalAlignment="Left"><Run Text="Y"/><Run Text=" Pixels"/><Run Text=":"/></TextBlock>
+                        <TextBlock x:Name="textBlock1_Copy4" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Width="114" HorizontalAlignment="Left"><Run Text="Y"/><Run Text=" Pixels per frame"/><Run Text=":"/></TextBlock>
                         <TextBox x:Name="PixelsY" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="256" Width="109" HorizontalAlignment="Left"/>
                         <TextBlock x:Name="textBlock1_Copy8" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="60.667"><Run Text="X "/><Run Text="Positions"/><Run Text=":"/></TextBlock>
                         <TextBox x:Name="PosX" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="20" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
@@ -151,9 +151,13 @@
                         <DataGridTextColumn Binding="{Binding Value}" Header="Value"  />
                     </DataGrid.Columns>
                 </DataGrid>
-                <Button Click="btnGetImage_Click" Content="Capture Image" Height="23" HorizontalAlignment="Left" Margin="20,20,0,0" x:Name="btnGetImage" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top"/>
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
-                    <Button Click="LoadnRecon_Click" Content="Load file and reconstruct" Height="23" HorizontalAlignment="Left" Margin="0,0,0,0" x:Name="LoadnRecon" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top"/>
+                    <CheckBox Content="DE slave mode" Height="18" Margin="0,0,0,0" Checked="DE_SlaveMode" Unchecked="DE_MasterMode"/>
+                    <Button Click="btnGetImage_Click" Content="Capture Image" Height="23" HorizontalAlignment="Left" Margin="20,0,0,0" x:Name="btnGetImage" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" IsEnabled="False"/>
+                </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
+                    <Button Click="LoadnRecon_Click" Content="Load SEQ and reconstruct" Height="23" HorizontalAlignment="Left" Margin="0,0,0,0" x:Name="LoadnRecon" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top"/>
                     <TextBox x:Name="EMDPath" Grid.Column="3" Height="23" Width="200" Margin="10,0,0,0" Text="D:/RawFrames" VerticalAlignment="Top"/>
                     <Button Click="EMDFilePath_Click" Content="Select EMD file path" Margin="10,0,0,0" x:Name="EMDFilePath" Visibility="Visible"  HorizontalAlignment="Right" Width="148" RenderTransformOrigin="0.439,3.913" Height="23" VerticalAlignment="Top"/>
 
@@ -164,6 +168,7 @@
                     <TextBox x:Name="EMDName" Margin="10,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="ExampleFile" Height="23" Width="200" VerticalAlignment="Top"/>
 
                 </StackPanel>
+                
             </StackPanel>
 
         </StackPanel>

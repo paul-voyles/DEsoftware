@@ -8,3 +8,7 @@ C++_CSharp_Client/examples/DeExampleCSharpWPF/.vs/DeExampleCSharpWPF/v15/Server/
 *.Cache
 *.cache
 C++_CSharp_Client/examples/DeExampleCSharpWPF/.vs/DeExampleCSharpWPF/v15/sqlite3/db.lock
+*.resources
+*.pdb
+*.cache
+*.resources

@@ -1029,18 +1029,47 @@ namespace DeExampleCSharpWPF
             NotifyPropertyChanged("Ilt");
         }
 
-        // change DE camera setting for number of pixels along x and y
-        // seems push property to DE server doesn't work well
+        // Configure AWG and digitizer based on current settings
         private void Submit_Setting_Click(object sender, RoutedEventArgs e)
         {
             string pxx = PixelsX.Text;
             string pxy = PixelsY.Text;
-            
+
+            // generate scan array with padding
+            float[] Xarray = new float[width * height * 2];
+            float[] Yarray = new float[width * height * 2];
+            GenerateScanArray( Xarray, Yarray);
+
+            // push settings to AWG and digitizer, waiting for Xu's API to communicate to hardware
+            PushAWGsetting(Xarray,Yarray);
+            PushDigitizerSetting();
+
             //_deInterface.SetProperty("ROI Dimension X", "512");
             //_deInterface.SetProperty("Image Size X", pxx);
             //_deInterface.SetProperty("Image Size Y", pxy);
 
         }
+
+        // Function used to generate two scan array for AWG channels based on current setting
+        // Save two arrays into Xarray and Yarray
+        public void GenerateScanArray(float[] Xarray, float[] Yarray)
+        {
+
+        }
+
+        // Function used to write AWG setting
+        public void PushAWGsetting(float[] Xarray, float[] Yarray)
+        {
+
+        }
+
+        // Function used to write digitizer setting
+        public void PushDigitizerSetting()
+        {
+
+        }
+
+
 
         private void EnableDetector_click(object sender, RoutedEventArgs e)
         {
@@ -1068,6 +1097,21 @@ namespace DeExampleCSharpWPF
         private void button_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        /// <summary>
+        /// Shift between slave mode and master mode using checkbox, acquire image button is enabled only in slave mode
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+
+        private void DE_SlaveMode(object sender, RoutedEventArgs e)
+        {
+            btnGetImage.IsEnabled = true;
+        }
+        private void DE_MasterMode(object sender, RoutedEventArgs e)
+        {
+            btnGetImage.IsEnabled = false;
         }
     }
 
