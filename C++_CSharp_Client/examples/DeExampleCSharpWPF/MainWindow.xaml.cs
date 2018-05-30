@@ -30,9 +30,7 @@ using System.Windows.Forms;
 
 namespace DeExampleCSharpWPF
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
 
@@ -324,20 +322,24 @@ namespace DeExampleCSharpWPF
         private void SEQFilePath_Click(object sender, RoutedEventArgs e)
         {
             string folder = SEQPath.Text;
-            System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            OpenFileDialog openFileDialog1 = new OpenFileDialog();
+            openFileDialog1.Filter = "Cursor Files|*.seq";
+            openFileDialog1.Title = "Select a Cursor File";
+            //System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
+            if (openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                folder = dlg.SelectedPath;
+                folder = openFileDialog1.FileName;
             }
             folder = folder.Replace("\\", "/");
-            EMDPath.Text = folder;
-            string filename = EMDName.Text;
-            string fullpath = folder + "/" + filename + ".emd";
+            SEQPath.Text = folder;
         }
 
         private void EMDFilePath_Click(object sender, RoutedEventArgs e)
         {
             string folder = EMDPath.Text;
+
+
+
             System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
@@ -560,6 +562,7 @@ namespace DeExampleCSharpWPF
         // Function used to write digitizer setting based on scan grid and frame rate setting
         public void PushDigitizerSetting()
         {
+
             int record_size;
             record_size = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 10;
             record_size = Convert.ToInt32(record_size * 1.3);
