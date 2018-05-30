@@ -12,3 +12,13 @@ C++_CSharp_Client/examples/DeExampleCSharpWPF/.vs/DeExampleCSharpWPF/v15/sqlite3
 *.pdb
 *.cache
 *.resources
+*.cache
+*.db
+*.db
+*.opendb
+*.ide
+*.resources
+*.cache
+*.baml
+*.ide
+*.cache

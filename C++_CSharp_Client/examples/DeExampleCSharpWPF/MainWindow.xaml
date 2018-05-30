@@ -103,7 +103,7 @@
                 </Grid>
 
                 <StackPanel  Orientation="Horizontal" Margin="0,20,0,0">
-                    <Button x:Name="button" Content="Reset Setting" Height="33" Width="132" Margin="20,0,0,0" Click="button_Click" FontSize="18"/>
+                    <Button x:Name="button" Content="Reset Setting" Height="33" Width="132" Margin="20,0,0,0" Click="Reset_settings" FontSize="18"/>
                     <Button x:Name="button_Copy" Content="Acquire" Height="33" Width="132" Margin="30,0,0,0" FontSize="18" Click="Single_Acquire"/>
                     <Button x:Name="Submit_Setting" Click="Submit_Setting_Click" Content="Submit Setting" Height="33" Margin="30,0,0,0" FontSize="18"  Width="132" />
                 </StackPanel>
@@ -116,6 +116,8 @@
                         <TextBox x:Name="StartX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0"  TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
                         <TextBlock x:Name="textBlock1_Copy" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="End X:" VerticalAlignment="Bottom" Width="42"/>
                         <TextBox x:Name="EndX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
+                        <TextBlock x:Name="FrameRate_text" HorizontalAlignment="Left" Height="18" Margin="0,10,0,0" TextWrapping="Wrap" Text="Frame rate (FPS):" VerticalAlignment="Bottom" Width="130"/>
+                        <TextBox x:Name="FrameRate" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Vertical" Margin="0,40,0,0">
@@ -142,10 +144,10 @@
                 </StackPanel>
             </StackPanel>
 
-            <Path Grid.Column="3" Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+            <Path Grid.Column="3" Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2"/>
 
             <StackPanel Grid.ColumnSpan="1" Orientation="Vertical" Margin="0,0,0,0" Width="587.953">
-                <DataGrid AutoGenerateColumns="False" Grid.Column="3" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,0" Grid.Row="1" Height="307" Width="500" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin">
+                <DataGrid AutoGenerateColumns="False" Grid.Column="3" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,0" Grid.Row="1" Height="307" Width="500" VerticalAlignment="Top">
                     <DataGrid.Columns>
                         <DataGridTextColumn Binding="{Binding Name}" CanUserReorder="True" CanUserResize="True" Header="Property" />
                         <DataGridTextColumn Binding="{Binding Value}" Header="Value"  />
@@ -157,16 +159,20 @@
                 </StackPanel>
                 
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
-                    <Button Click="LoadnRecon_Click" Content="Load SEQ and reconstruct" Height="23" HorizontalAlignment="Left" Margin="0,0,0,0" x:Name="LoadnRecon" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top"/>
-                    <TextBox x:Name="EMDPath" Grid.Column="3" Height="23" Width="200" Margin="10,0,0,0" Text="D:/RawFrames" VerticalAlignment="Top"/>
-                    <Button Click="EMDFilePath_Click" Content="Select EMD file path" Margin="10,0,0,0" x:Name="EMDFilePath" Visibility="Visible"  HorizontalAlignment="Right" Width="148" RenderTransformOrigin="0.439,3.913" Height="23" VerticalAlignment="Top"/>
-
+                    <Button Click="SEQFilePath_Click" Content="Select SEQ file loading path" Margin="0,0,0,0" x:Name="SEQFilePath" Visibility="Visible"  HorizontalAlignment="Right" Width="170" RenderTransformOrigin="0.439,3.913" Height="23" VerticalAlignment="Top"/>
+                    <TextBox x:Name="SEQPath" Grid.Column="3" Height="23" Width="200" Margin="10,0,0,0" Text="D:/RawFrames" VerticalAlignment="Top"/>
+                    <Button Click="LoadnRecon_Click" Content="Load SEQ and reconstruct" Height="23" HorizontalAlignment="Left" Margin="10,0,0,0" x:Name="LoadnRecon" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top"/>
                 </StackPanel>
+                
+                <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
+                    <Button Click="EMDFilePath_Click" Content="Select EMD file saving path" Margin="0,0,0,0" x:Name="EMDFilePath" Visibility="Visible"  HorizontalAlignment="Right" Width="170" RenderTransformOrigin="0.439,3.913" Height="23" VerticalAlignment="Top"/>
+                    <TextBox x:Name="EMDPath" Grid.Column="3" Height="23" Width="200" Margin="10,0,0,0" Text="D:/RawFrames" VerticalAlignment="Top"/>
+                </StackPanel>
+                
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
                     <Button Click="ResaveEMD_Click" Content="Save" Margin="0,0,0,0" x:Name="ResaveEMD" Visibility="Visible" HorizontalAlignment="Left" Width="73" Height="23" VerticalAlignment="Top"/>
                     <Button Click="DiscardEMD_Click" Content="Discard" Margin="5,0,0,0" x:Name="DiscardEMD" Visibility="Visible" HorizontalAlignment="Left" Width="70" Height="23" VerticalAlignment="Top"/>
-                    <TextBox x:Name="EMDName" Margin="10,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="ExampleFile" Height="23" Width="200" VerticalAlignment="Top"/>
-
+                    <TextBox x:Name="EMDName" Margin="10,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="EMDFileNameHere" Height="23" Width="200" VerticalAlignment="Top"/>
                 </StackPanel>
                 
             </StackPanel>
@@ -180,16 +186,16 @@
 
 
 
-        <Grid HorizontalAlignment="Left" Height="51" Margin="-125,79,0,0" Grid.Row="1" VerticalAlignment="Top" Width="45" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Grid HorizontalAlignment="Left" Height="51" Margin="-125,79,0,0" Grid.Row="1" VerticalAlignment="Top" Width="45" />
 
-        <Button Click="btnLiveCapture_Click" Content="Stream from DE" Height="23" HorizontalAlignment="Left" Margin="10,284,0,0" x:Name="btnLiveCapture" Width="148" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" Visibility="Hidden" />
+        <Button Click="btnLiveCapture_Click" Content="Stream from DE" Height="23" HorizontalAlignment="Left" Margin="10,284,0,0" x:Name="btnLiveCapture" Width="148" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" Visibility="Hidden" />
 
 
-        <Path Grid.Column="2" Data="M398,-1" HorizontalAlignment="Left" Height="1" Margin="1,-1,0,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Top" Width="1" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
-        <Rectangle Grid.ColumnSpan="4" Height="0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
+        <Path Grid.Column="2" Data="M398,-1" HorizontalAlignment="Left" Height="1" Margin="1,-1,0,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Top" Width="1"/>
+        <Rectangle Grid.ColumnSpan="4" Height="0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top" />
 
-        <Path Grid.ColumnSpan="4" Data="M0.5,46.5 L1592,47" Height="1.5" Margin="0.5,0,-1,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Bottom" StrokeThickness="2" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin"/>
-        <Ellipse x:Name="InnerAngle"  Height="400" Margin="7,7,7,0" Grid.Row="1" Stroke="Red" StrokeThickness="200" VerticalAlignment="Top" Visibility="Hidden" d:LayoutOverrides="LeftMargin, RightMargin, TopMargin, BottomMargin" Grid.ColumnSpan="2"/>
+        <Path Grid.ColumnSpan="4" Data="M0.5,46.5 L1592,47" Height="1.5" Margin="0.5,0,-1,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Bottom" StrokeThickness="2"/>
+        <Ellipse x:Name="InnerAngle"  Height="400" Margin="7,7,7,0" Grid.Row="1" Stroke="Red" StrokeThickness="200" VerticalAlignment="Top" Visibility="Hidden" Grid.ColumnSpan="2"/>
 
     </Grid>
 </Window>

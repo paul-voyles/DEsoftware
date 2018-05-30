@@ -35,6 +35,9 @@ namespace DeExampleCSharpWPF
     /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+
+        #region global variables
+
         private DeInterfaceNET _deInterface;
         private bool _liveModeEnabled;
         //private LiveModeView _liveView;   LiveViewWindow no longer a separate window
@@ -46,23 +49,184 @@ namespace DeExampleCSharpWPF
         public int height;
         public int width;
 
-        public ObservableCollection<Property> CameraProperties { get; private set; }
-
-        public MainWindow()
+        private int _imageCount = 0;
+        private bool _firstImage = true;
+        private DateTime _renderStart;
+        private System.Timers.Timer _updateTimer;
+        private WriteableBitmap _wBmp;
+        private WriteableBitmap _wBmpRecon;
+        private int nTickCount = 0;
+        private decimal dTickCountAvg = 0;
+        private int nCount = 0;
+        public decimal Fps
         {
-            InitializeComponent();
+            get { return Math.Round(Convert.ToDecimal(Convert.ToDouble(_imageCount) / TotalSeconds), 3); }
+            //get { return Convert.ToDecimal(TotalSeconds); }
+
         }
+
+        public int ImageCount
+        {
+            get { return _imageCount; }
+            set
+            {
+                _imageCount = value;
+                NotifyPropertyChanged("ImageCount");
+            }
+        }
+
+        public decimal Ilt
+        {
+            get
+            {
+                dTickCountAvg =
+                     ((dTickCountAvg * nCount + nTickCount) / (nCount + 1));
+
+                nCount++;
+                return Math.Round((dTickCountAvg / 1000), 3);
+            }
+        }
+
+        public double TotalSeconds
+        {
+            get
+            {
+                if (_firstImage == false)
+                    return Math.Round(((DateTime.Now - _renderStart).TotalMilliseconds) / 1000);
+                else
+                    return 1;   // return 0 would cause N/0 error
+            }
+        }
+
+        public ObservableCollection<Property> CameraProperties { get; private set; }
 
         System.Windows.Point _startPosition;
         bool _isResizing = false;
         bool _isResizing2 = false;
+        #endregion
 
+        #region initialize and close main window
+        // used to close main window
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
 
-        /// <summary>
-        ///  functions used to move or resize ROI with two resizing grips
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        }
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+        #endregion
+
+        #region connect to DE server
+
+        // Get Image Transfer Mode      
+        private ImageTransfer_Mode GetImageTransferMode()
+        {
+            string strHostName = Dns.GetHostName();
+            IPHostEntry ipEntry = Dns.GetHostEntry(strHostName);
+
+            bool bFind = false;
+            foreach (IPAddress ipaddr in ipEntry.AddressList)
+            {
+                if (ipaddr.ToString() == IPAddr.Text.Trim())
+                {
+                    bFind = true;
+                    break;
+                }
+            }
+            if (!bFind && IPAddr.Text.Trim() != "127.0.0.1")
+                return ImageTransfer_Mode.ImageTransfer_Mode_TCP;
+
+            /*
+             *  determine whether it is TCP mode or Memory map mode
+             */
+            using (MemoryMappedFile mmf = MemoryMappedFile.OpenExisting("ImageFileMappingObject"))
+            {
+                using (MemoryMappedViewAccessor viewAccessor = mmf.CreateViewAccessor())
+                {
+
+                    int imageSize = Marshal.SizeOf((typeof(Mapped_Image_Data_)));
+                    var imageDate = new Mapped_Image_Data_();
+                    viewAccessor.Read(0, out imageDate);
+
+                    if (imageDate.client_opened_mmf)
+                        return ImageTransfer_Mode.ImageTransfer_Mode_MMF;
+                }
+            }
+
+            return ImageTransfer_Mode.ImageTransfer_Mode_TCP;
+        }
+
+        private void btnConnect_Click(object sender, RoutedEventArgs e)
+        {
+            if (btnConnect.Content.ToString() == "Disconnect")
+            {
+                /*                if (_liveModeEnabled)
+                                {
+                                    _liveView.Close();
+                                }*/
+                _deInterface.close();
+                cmbCameras.Items.Clear();
+                cmbCameras.Text = "";
+                btnConnect.Content = "Connect";
+                slider_outerang.Value = 1;
+            }
+            else if (_deInterface.connect(IPAddr.Text, 48880, 48879))
+            {
+
+                DeError error = _deInterface.GetLastError();
+                Console.WriteLine(error.Description);
+                try
+                {
+                    //get the list of cameras for the combobox
+                    List<String> cameras = new List<String>();
+                    _deInterface.GetCameraNames(ref cameras);
+                    cmbCameras.Items.Clear();
+                    foreach (var camera in cameras)
+                    {
+                        cmbCameras.Items.Add(camera);
+                    }
+                    cmbCameras.SelectedIndex = 0;
+                }
+                catch (Exception exc)
+                {
+                    System.Windows.MessageBox.Show(exc.Message);
+                }
+
+                btnConnect.Content = "Disconnect";
+
+                switch (GetImageTransferMode())
+                {
+                    case ImageTransfer_Mode.ImageTransfer_Mode_MMF:
+                        cmbTransport.SelectedIndex = 0;
+                        break;
+                    case ImageTransfer_Mode.ImageTransfer_Mode_TCP:
+                        cmbTransport.SelectedIndex = 1;
+                        break;
+                    default:
+                        break;
+                }
+                cmbTransport.IsEnabled = false;
+                string xSize = "";
+                string ySize = "";
+                _deInterface.GetProperty("Image Size X", ref xSize);
+                _deInterface.GetProperty("Image Size Y", ref ySize);
+                PixelsX.Text = xSize;
+                PixelsY.Text = ySize;
+            }
+
+        }
+
+        #endregion
+
+        #region Acquire HAADF and choose ROI
+
+        // Function to acquire single HAADF image with default setting
+        public void Single_Acquire(object sender, RoutedEventArgs e)
+        {
+
+        }
+
         private void window_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (_isResizing)    // top left resizing grip
@@ -153,150 +317,22 @@ namespace DeExampleCSharpWPF
             }
         }
 
-        // used to close main window
-        private void Window_Closing(object sender, CancelEventArgs e)
+        #endregion
+
+        #region load seq/mrc and save as emd(h5) file
+
+        private void SEQFilePath_Click(object sender, RoutedEventArgs e)
         {
-            
-        }
-
-        // Get Image Transfer Mode      
-        private ImageTransfer_Mode GetImageTransferMode()
-        {
-            string strHostName = Dns.GetHostName();
-            IPHostEntry ipEntry = Dns.GetHostEntry(strHostName);
-
-            bool bFind = false;
-            foreach (IPAddress ipaddr in ipEntry.AddressList)
+            string folder = SEQPath.Text;
+            System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                if (ipaddr.ToString() == IPAddr.Text.Trim())
-                {
-                    bFind = true;
-                    break;
-                }
+                folder = dlg.SelectedPath;
             }
-            if (!bFind && IPAddr.Text.Trim() != "127.0.0.1")
-                return ImageTransfer_Mode.ImageTransfer_Mode_TCP;
-
-            /*
-             *  determine whether it is TCP mode or Memory map mode
-             */
-            using (MemoryMappedFile mmf = MemoryMappedFile.OpenExisting("ImageFileMappingObject"))
-            {
-                using (MemoryMappedViewAccessor viewAccessor = mmf.CreateViewAccessor())
-                {
-                    
-                    int imageSize = Marshal.SizeOf((typeof(Mapped_Image_Data_)));
-                    var imageDate = new Mapped_Image_Data_();
-                    viewAccessor.Read(0, out imageDate);
-
-                    if (imageDate.client_opened_mmf)
-                        return ImageTransfer_Mode.ImageTransfer_Mode_MMF;                    
-                }                
-            }            
-
-            return ImageTransfer_Mode.ImageTransfer_Mode_TCP;
-        }
-
-        private void btnConnect_Click(object sender, RoutedEventArgs e)
-        {
-            if (btnConnect.Content.ToString() == "Disconnect")
-            {
-/*                if (_liveModeEnabled)
-                {
-                    _liveView.Close();
-                }*/
-                _deInterface.close();
-                cmbCameras.Items.Clear();
-                cmbCameras.Text = "";
-                btnConnect.Content = "Connect";
-                slider_outerang.Value = 1;
-            }
-            else if (_deInterface.connect(IPAddr.Text, 48880, 48879))
-            {
-
-                DeError error = _deInterface.GetLastError();
-                Console.WriteLine(error.Description);
-                try
-                {
-                    //get the list of cameras for the combobox
-                    List<String> cameras = new List<String>();
-                    _deInterface.GetCameraNames(ref cameras);
-                    cmbCameras.Items.Clear();
-                    foreach (var camera in cameras)
-                    {
-                        cmbCameras.Items.Add(camera);
-                    }
-                    cmbCameras.SelectedIndex = 0;
-                }
-                catch (Exception exc)
-                {
-                    System.Windows.MessageBox.Show(exc.Message);
-                }
-
-                btnConnect.Content = "Disconnect";
-
-                switch (GetImageTransferMode())
-                { 
-                    case ImageTransfer_Mode.ImageTransfer_Mode_MMF:
-                        cmbTransport.SelectedIndex = 0;
-                        break;
-                    case ImageTransfer_Mode.ImageTransfer_Mode_TCP:
-                        cmbTransport.SelectedIndex = 1;
-                        break;
-                    default:
-                        break;
-                }
-                cmbTransport.IsEnabled = false;
-                string xSize = "";
-                string ySize = "";
-                _deInterface.GetProperty("Image Size X", ref xSize);
-                _deInterface.GetProperty("Image Size Y", ref ySize);
-                PixelsX.Text = xSize;
-                PixelsY.Text = ySize;
-            }
-
-    }
-
-
-        // Get a 16 bit gray scale image from the server and return a BitmapSource
-
-        private BitmapSource GetImage()
-        {
-            UInt16[] image;
-            _deInterface.GetImage(out image);
-            if (image == null)
-            {
-                DeError error = _deInterface.GetLastError();
-                Console.WriteLine(error.Description);
-                return null;
-            }
-            string xSize = "";
-            string ySize = "";
-            _deInterface.GetProperty("Image Size X", ref xSize);
-            _deInterface.GetProperty("Image Size Y", ref ySize);
-            width = Convert.ToInt32(xSize);
-            height = Convert.ToInt32(ySize);
-            int bytesPerPixel = (PixelFormats.Gray16.BitsPerPixel + 7) / 8;
-            int stride = 4 * ((width * bytesPerPixel + 3) / 4);
-
-            int length = width * height;
-            ushort min = image[0];
-            ushort max = image[0];
-            for (int i = 1; i < length; i++)
-            {
-                if (image[i] < min) min = image[i];
-                if (image[i] > max) max = image[i];
-            }
-            double gain = UInt16.MaxValue / Math.Max(max - min, 1);
-            UInt16[] image16 = new UInt16[length];
-            // load data into image16, 1D array for 2D image
-            for (int i = 0; i < length; i++)
-                image16[i] = (ushort)((image[i] - min) * gain);
-
-            byte[] imageBytes = new byte[stride * height];
-
-
-            return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
+            folder = folder.Replace("\\", "/");
+            EMDPath.Text = folder;
+            string filename = EMDName.Text;
+            string fullpath = folder + "/" + filename + ".emd";
         }
 
         private void EMDFilePath_Click(object sender, RoutedEventArgs e)
@@ -321,20 +357,6 @@ namespace DeExampleCSharpWPF
             File.Delete(fullpath);
         }
 
-        private void btnGetImage_Click(object sender, RoutedEventArgs e)
-        {
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-            SingleCapture();
-            stopWatch.Stop();
-            TimeSpan ts = stopWatch.Elapsed;
-            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-            ts.Hours, ts.Minutes, ts.Seconds,
-            ts.Milliseconds / 10);
-            Console.WriteLine("RunTime " + elapsedTime);
-            System.Windows.Forms.MessageBox.Show("Image acquisition finished.\n Total time: " + elapsedTime);
-        }
-
         // load mrc file that just acquired and do reconstrcution for BF/ABF
         public void LoadnRecon_Click(object sender, RoutedEventArgs e)
         {
@@ -345,8 +367,9 @@ namespace DeExampleCSharpWPF
                 slider_innerang.Value = 0;
                 slider_outerang.Value = 1;
             }
-            // call function to load MRC file and do reconstruction
-            ReadMRCfile();
+            // call function to load MRC file and do reconstruction, MRC file when using DE server, SEQ file when using Streampix
+            //ReadMRCfile();
+            ReadSEQfile();
         }
 
         // save the loaded mrc file to EMD format
@@ -355,27 +378,13 @@ namespace DeExampleCSharpWPF
            // HDF5.InitializeHDF(numpos, height, width);
         }
 
-        public void SingleCapture()
+        // function to load 4DSTEM dataset from SEQ file
+        public void ReadSEQfile()
         {
-            try
-            {
-                // old scheme of single acquisition in a new window
-                /*ImageView imageView = new ImageView();
-                imageView.image.Source = GetImage();    //return a BitmapSource
-                imageView.Show();*/
 
-                // image acquisition scheme adapted from live stream, display image in imagebox1
-                InitializeWBmp(GetImage());
-                Show();
-                //InitializeWBmp(GetImage()); // initialize image in picture box
-                                            //enable livemode on the server
-            }
-            catch (Exception exc)
-            {
-                System.Windows.MessageBox.Show(exc.Message);
-            }
         }
 
+        // function to load 4DSTEM dataset from mrc file, resave as h5, and reconstruct to 2D image with virtual aperture
         public void ReadMRCfile()
         {
             // start reading mrc file
@@ -511,78 +520,59 @@ namespace DeExampleCSharpWPF
             }
         }
 
-        // function used to extract 2D layer from 3D datacube, used for 1D array saving scheme
-        public UInt16[] ExtractArray(UInt16[,,] DataCube, int layernum, int width, int height)
+        #endregion
+
+        #region Set AWG and digitizer
+        // Configure AWG and digitizer based on current settings
+        private void Submit_Setting_Click(object sender, RoutedEventArgs e)
         {
-            UInt16[] layer = new UInt16[width*height];
-            for (var iy = 0; iy < width; iy++)
-            {
-                for (var ix = 0; ix < height; ix++)
-                {
-                    layer[iy*width+ix] = DataCube[ix,iy,layernum];
-                }
-            }
-            return layer;
+            string pxx = PixelsX.Text;
+            string pxy = PixelsY.Text;
+
+            // generate scan array with padding
+            float[] Xarray = new float[width * height * 2];
+            float[] Yarray = new float[width * height * 2];
+            GenerateScanArray(Xarray, Yarray);
+
+            // push settings to AWG and digitizer, waiting for Xu's API to communicate to hardware
+            PushAWGsetting(Xarray, Yarray);
+            PushDigitizerSetting();
+
+            //_deInterface.SetProperty("ROI Dimension X", "512");
+            //_deInterface.SetProperty("Image Size X", pxx);
+            //_deInterface.SetProperty("Image Size Y", pxy);
+
         }
 
-        // function used to extract 2D layer from 3D datacube
-        public UInt16[,] ExtractLayer(UInt16[,,] DataCube, int layernum, int width, int height)
+        // Function used to generate two scan array for AWG channels based on current setting
+        // Save two arrays into Xarray and Yarray
+        public void GenerateScanArray(float[] Xarray, float[] Yarray)
         {
-            UInt16[,] layer = new UInt16[width, height];
-            for (var iy = 0; iy < width; iy++)
-            {
-                for (var ix = 0; ix < height; ix++)
-                {
-                    layer[iy, ix] = DataCube[layernum,iy,ix];
-                }
-            }
-            return layer;
+
         }
 
-        public static void SaveClipboardImageToFile(string filePath)
+        // Function used to write AWG setting
+        public void PushAWGsetting(float[] Xarray, float[] Yarray)
         {
-            var image = System.Windows.Clipboard.GetImage();
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                BitmapEncoder encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(image));
-                encoder.Save(fileStream);
-            }
+
         }
 
-        // click to start using virtual detector to reconstrcut image
-        private void button1_Click(object sender, RoutedEventArgs e)
+        // Function used to write digitizer setting based on scan grid and frame rate setting
+        public void PushDigitizerSetting()
         {
-            SolidColorBrush strokeBrush = new SolidColorBrush(Colors.Red);
-            strokeBrush.Opacity = .25d;
-            InnerAngle.Visibility = Visibility.Visible;
-            InnerAngle.Stroke = strokeBrush;
-            InnerAngle.Height = 400;
-            InnerAngle.StrokeThickness = InnerAngle.Height / 2;
-            slider_outerang.Value = 1;
-            slider_innerang.Value = 0;
+            int record_size;
+            record_size = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 10;
+            record_size = Convert.ToInt32(record_size * 1.3);
+            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            double[] WaveformArray_Ch1 = { };
+            // this function can only be called when running on DE camera computer with Keysight libraries
+            Digitizer.Program.FetchData(record_size, recording_rate, WaveformArray_Ch1);
+
         }
 
-        // called by change on innerang slider, change the radius of inner angle ellipse
-        private void changeinnerang(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            double innerang = slider_innerang.Value;
-            InnerAngle.StrokeThickness = InnerAngle.Width / 2 * (1.0 - innerang);
-            
-        }
+        #endregion
 
-        // called by change on outerang slider, will simultaneously change ellipse thickness according to innerang
-        private void changeouterang(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            double outerang = slider_outerang.Value;
-            Thickness margin = InnerAngle.Margin;
-            margin.Top = 7.0 + 200.0 * (1.0 - outerang);
-            InnerAngle.Margin = margin;
-            InnerAngle.Height = 400.0 - margin.Top - margin.Top + 14.0;
-            InnerAngle.Width = InnerAngle.Height;
-            InnerAngle.StrokeThickness = InnerAngle.Width / 2 * (1.0 - slider_innerang.Value);
-        }
-        
+        #region old scheme to stream image from camera       
         // start live view by clicking 'stream from DE'
         public void btnLiveCapture_Click(object sender, RoutedEventArgs e)
         {
@@ -775,6 +765,168 @@ namespace DeExampleCSharpWPF
             }
         }
 
+        #endregion
+
+        #region start image acquisition in DE slave mode
+
+        private void btnGetImage_Click(object sender, RoutedEventArgs e)
+        {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            SingleCapture();
+            stopWatch.Stop();
+            TimeSpan ts = stopWatch.Elapsed;
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+            ts.Hours, ts.Minutes, ts.Seconds,
+            ts.Milliseconds / 10);
+            Console.WriteLine("RunTime " + elapsedTime);
+            System.Windows.Forms.MessageBox.Show("Image acquisition finished.\n Total time: " + elapsedTime);
+        }
+
+        private void DE_SlaveMode(object sender, RoutedEventArgs e)
+        {
+            btnGetImage.IsEnabled = true;
+        }
+        private void DE_MasterMode(object sender, RoutedEventArgs e)
+        {
+            btnGetImage.IsEnabled = false;
+        }
+
+        #endregion
+
+        public void SingleCapture()
+        // Get a 16 bit gray scale image from the server and return a BitmapSource
+        {
+            try
+            {
+                // old scheme of single acquisition in a new window
+                /*ImageView imageView = new ImageView();
+                imageView.image.Source = GetImage();    //return a BitmapSource
+                imageView.Show();*/
+
+                // image acquisition scheme adapted from live stream, display image in imagebox1
+                InitializeWBmp(GetImage());
+                Show();
+                //InitializeWBmp(GetImage()); // initialize image in picture box
+                //enable livemode on the server
+            }
+            catch (Exception exc)
+            {
+                System.Windows.MessageBox.Show(exc.Message);
+            }
+        }
+
+        private BitmapSource GetImage()
+        {
+            UInt16[] image;
+            _deInterface.GetImage(out image);
+            if (image == null)
+            {
+                DeError error = _deInterface.GetLastError();
+                Console.WriteLine(error.Description);
+                return null;
+            }
+            string xSize = "";
+            string ySize = "";
+            _deInterface.GetProperty("Image Size X", ref xSize);
+            _deInterface.GetProperty("Image Size Y", ref ySize);
+            width = Convert.ToInt32(xSize);
+            height = Convert.ToInt32(ySize);
+            int bytesPerPixel = (PixelFormats.Gray16.BitsPerPixel + 7) / 8;
+            int stride = 4 * ((width * bytesPerPixel + 3) / 4);
+
+            int length = width * height;
+            ushort min = image[0];
+            ushort max = image[0];
+            for (int i = 1; i < length; i++)
+            {
+                if (image[i] < min) min = image[i];
+                if (image[i] > max) max = image[i];
+            }
+            double gain = UInt16.MaxValue / Math.Max(max - min, 1);
+            UInt16[] image16 = new UInt16[length];
+            // load data into image16, 1D array for 2D image
+            for (int i = 0; i < length; i++)
+                image16[i] = (ushort)((image[i] - min) * gain);
+
+            byte[] imageBytes = new byte[stride * height];
+
+
+            return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
+        }
+
+        // function used to extract 2D layer from 3D datacube, used for 1D array saving scheme
+        public UInt16[] ExtractArray(UInt16[,,] DataCube, int layernum, int width, int height)
+        {
+            UInt16[] layer = new UInt16[width * height];
+            for (var iy = 0; iy < width; iy++)
+            {
+                for (var ix = 0; ix < height; ix++)
+                {
+                    layer[iy * width + ix] = DataCube[ix, iy, layernum];
+                }
+            }
+            return layer;
+        }
+
+        // function used to extract 2D layer from 3D datacube
+        public UInt16[,] ExtractLayer(UInt16[,,] DataCube, int layernum, int width, int height)
+        {
+            UInt16[,] layer = new UInt16[width, height];
+            for (var iy = 0; iy < width; iy++)
+            {
+                for (var ix = 0; ix < height; ix++)
+                {
+                    layer[iy, ix] = DataCube[layernum, iy, ix];
+                }
+            }
+            return layer;
+        }
+
+        public static void SaveClipboardImageToFile(string filePath)
+        {
+            var image = System.Windows.Clipboard.GetImage();
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                BitmapEncoder encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(image));
+                encoder.Save(fileStream);
+            }
+        }
+
+        // click to start using virtual detector to reconstrcut image
+        private void button1_Click(object sender, RoutedEventArgs e)
+        {
+            SolidColorBrush strokeBrush = new SolidColorBrush(Colors.Red);
+            strokeBrush.Opacity = .25d;
+            InnerAngle.Visibility = Visibility.Visible;
+            InnerAngle.Stroke = strokeBrush;
+            InnerAngle.Height = 400;
+            InnerAngle.StrokeThickness = InnerAngle.Height / 2;
+            slider_outerang.Value = 1;
+            slider_innerang.Value = 0;
+        }
+
+        // called by change on innerang slider, change the radius of inner angle ellipse
+        private void changeinnerang(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            double innerang = slider_innerang.Value;
+            InnerAngle.StrokeThickness = InnerAngle.Width / 2 * (1.0 - innerang);
+
+        }
+
+        // called by change on outerang slider, will simultaneously change ellipse thickness according to innerang
+        private void changeouterang(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            double outerang = slider_outerang.Value;
+            Thickness margin = InnerAngle.Margin;
+            margin.Top = 7.0 + 200.0 * (1.0 - outerang);
+            InnerAngle.Margin = margin;
+            InnerAngle.Height = 400.0 - margin.Top - margin.Top + 14.0;
+            InnerAngle.Width = InnerAngle.Height;
+            InnerAngle.StrokeThickness = InnerAngle.Width / 2 * (1.0 - slider_innerang.Value);
+        }
+
         public Bitmap CreateBitmap(ushort[] imagedata, int pxx, int pxy)
         {
             System.Drawing.Bitmap flag = new System.Drawing.Bitmap(pxx, pxy);
@@ -941,56 +1093,6 @@ namespace DeExampleCSharpWPF
             NotifyPropertyChanged("CameraProperties");
         }
 
-        private int _imageCount = 0;
-        private bool _firstImage = true;
-        private DateTime _renderStart;
-        private System.Timers.Timer _updateTimer;
-        private WriteableBitmap _wBmp;
-        private WriteableBitmap _wBmpRecon;
-        private int nTickCount = 0;
-        private decimal dTickCountAvg = 0;
-        private int nCount = 0;
-        public decimal Fps
-        {
-           get { return Math.Round(Convert.ToDecimal(Convert.ToDouble(_imageCount) / TotalSeconds), 3); }
-                        //get { return Convert.ToDecimal(TotalSeconds); }
-
-        }
-
-        public int ImageCount
-        {
-            get { return _imageCount; }
-            set
-            {
-                _imageCount = value;
-                NotifyPropertyChanged("ImageCount");
-            }
-        }
-
-        public decimal Ilt
-        {
-            get
-            {
-                dTickCountAvg =
-                     ((dTickCountAvg * nCount + nTickCount) / (nCount + 1));
-
-                nCount++;
-                return Math.Round((dTickCountAvg / 1000), 3);
-            }
-        }
-
-        public double TotalSeconds
-        {
-            get
-            {
-                if (_firstImage == false)
-                    return Math.Round(((DateTime.Now - _renderStart).TotalMilliseconds) / 1000);
-                else
-                    return 1;   // return 0 would cause N/0 error
-            }
-        }
-
-
         private void _updateTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             if (TotalSeconds > 1)   // add an extra criteria to avoid bugs when time is shorter than 1 second
@@ -1001,12 +1103,9 @@ namespace DeExampleCSharpWPF
 
         }
 
-        /// <summary>
-        /// Initialize the WriteableBitmap with a BitmapSource for the image specs
-        /// </summary>
-        /// <param name="bmpSource"></param>
         public void InitializeWBmp(BitmapSource bmpSource)
         {
+            // Initialize the WriteableBitmap with a BitmapSource for the image specs
             //_wBmp = new WriteableBitmap(bmpSource);
 
             _wBmp = new WriteableBitmap(bmpSource.PixelWidth, bmpSource.PixelHeight, bmpSource.DpiX, bmpSource.DpiY, bmpSource.Format, bmpSource.Palette);
@@ -1028,48 +1127,6 @@ namespace DeExampleCSharpWPF
             this.nTickCount = nTickCount;
             NotifyPropertyChanged("Ilt");
         }
-
-        // Configure AWG and digitizer based on current settings
-        private void Submit_Setting_Click(object sender, RoutedEventArgs e)
-        {
-            string pxx = PixelsX.Text;
-            string pxy = PixelsY.Text;
-
-            // generate scan array with padding
-            float[] Xarray = new float[width * height * 2];
-            float[] Yarray = new float[width * height * 2];
-            GenerateScanArray( Xarray, Yarray);
-
-            // push settings to AWG and digitizer, waiting for Xu's API to communicate to hardware
-            PushAWGsetting(Xarray,Yarray);
-            PushDigitizerSetting();
-
-            //_deInterface.SetProperty("ROI Dimension X", "512");
-            //_deInterface.SetProperty("Image Size X", pxx);
-            //_deInterface.SetProperty("Image Size Y", pxy);
-
-        }
-
-        // Function used to generate two scan array for AWG channels based on current setting
-        // Save two arrays into Xarray and Yarray
-        public void GenerateScanArray(float[] Xarray, float[] Yarray)
-        {
-
-        }
-
-        // Function used to write AWG setting
-        public void PushAWGsetting(float[] Xarray, float[] Yarray)
-        {
-
-        }
-
-        // Function used to write digitizer setting
-        public void PushDigitizerSetting()
-        {
-
-        }
-
-
 
         private void EnableDetector_click(object sender, RoutedEventArgs e)
         {
@@ -1094,25 +1151,11 @@ namespace DeExampleCSharpWPF
         {
         }
 
-        private void button_Click(object sender, RoutedEventArgs e)
+        private void Reset_settings(object sender, RoutedEventArgs e)
         {
 
         }
 
-        /// <summary>
-        /// Shift between slave mode and master mode using checkbox, acquire image button is enabled only in slave mode
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-
-        private void DE_SlaveMode(object sender, RoutedEventArgs e)
-        {
-            btnGetImage.IsEnabled = true;
-        }
-        private void DE_MasterMode(object sender, RoutedEventArgs e)
-        {
-            btnGetImage.IsEnabled = false;
-        }
     }
 
 
@@ -1153,12 +1196,3 @@ namespace DeExampleCSharpWPF
         public System.UInt32 image_size_;		// image size in bytes
         public System.UInt32 img_start_;	// first pixel of image buffer
     };
-
-    /// <summary>
-    /// Interaction logic for LiveModeView.xaml
-    /// </summary>
-/*    public partial class LiveModeView : Window, INotifyPropertyChanged
-    {
-       
-    }*/
-    
