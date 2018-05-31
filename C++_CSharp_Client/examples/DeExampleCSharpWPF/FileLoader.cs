@@ -6,8 +6,15 @@ using System.Text;
 
 // copied from HDF5DotNet-src/examples/CSharpExample/CSharpExample1, cz 7/14/17
 
-namespace CSharpExample1
+namespace FileLoader
 {
+    class SEQ
+    {
+        public static void LoadSEQ(string path)
+        {
+
+        }
+    }
     class HDF5
     {
         // This function is unsafe because it gets a void pointer as a

@@ -23,7 +23,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Net;
 using HDF5DotNet;
-using CSharpExample1;
+using FileLoader;
 using System.Timers;
 using System.Drawing;
 using System.Windows.Forms;
@@ -351,9 +351,6 @@ namespace DeExampleCSharpWPF
         private void EMDFilePath_Click(object sender, RoutedEventArgs e)
         {
             string folder = EMDPath.Text;
-
-
-
             System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
@@ -380,18 +377,19 @@ namespace DeExampleCSharpWPF
             if (EnableDetector.IsChecked == false)
             {
                 EnableDetector.IsChecked = true;
+                DisableDetector.IsChecked = false;
                 slider_innerang.Value = 0;
                 slider_outerang.Value = 1;
             }
             // call function to load MRC file and do reconstruction, MRC file when using DE server, SEQ file when using Streampix
             //ReadMRCfile();
-            ReadSEQfile();
+            FileLoader.SEQ.LoadSEQ(SEQPath.Text);
         }
 
         // save the loaded mrc file to EMD format
         private void ResaveEMD_Click(object sender, RoutedEventArgs e)
         {
-           // HDF5.InitializeHDF(numpos, height, width);
+            //HDF5.InitializeHDF(numpos, height, width);
         }
 
         // function to load 4DSTEM dataset from SEQ file
@@ -1207,21 +1205,22 @@ namespace DeExampleCSharpWPF
 
         private void EnableDetector_click(object sender, RoutedEventArgs e)
         {
-                SolidColorBrush strokeBrush = new SolidColorBrush(Colors.Red);
-                strokeBrush.Opacity = .25d;
-                InnerAngle.Visibility = Visibility.Visible;
-                InnerAngle.Stroke = strokeBrush;
-                InnerAngle.Height = 400;
-                InnerAngle.StrokeThickness = InnerAngle.Height / 2;
-                slider_outerang.Value = 1;
-                slider_innerang.Value = 0;
-            ReadMRCfile();
+            DisableDetector.IsChecked = false;
+            SolidColorBrush strokeBrush = new SolidColorBrush(Colors.Red);
+            strokeBrush.Opacity = .25d;
+            InnerAngle.Visibility = Visibility.Visible;
+            InnerAngle.Stroke = strokeBrush;
+            InnerAngle.Height = 400;
+            InnerAngle.StrokeThickness = InnerAngle.Height / 2;
+            slider_outerang.Value = 1;
+            slider_innerang.Value = 0;
+            //ReadMRCfile();
         }
 
         private void DisableDetector_click(object sender, RoutedEventArgs e)
         {
             InnerAngle.Visibility = Visibility.Hidden;
-            
+            EnableDetector.IsChecked = false;
         }
 
         private void EnableDetector_Checked(object sender, RoutedEventArgs e)

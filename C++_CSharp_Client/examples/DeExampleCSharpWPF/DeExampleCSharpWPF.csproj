@@ -121,7 +121,7 @@
     </ApplicationDefinition>
     <Compile Include="ScanControl.cs" />
     <Compile Include="DigitizerController.cs" />
-    <Compile Include="SaveHDF5.cs" />
+    <Compile Include="FileLoader.cs" />
     <Page Include="ImageView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
