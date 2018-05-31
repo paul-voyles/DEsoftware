@@ -113,18 +113,18 @@
                     <StackPanel Orientation="Vertical" Margin="50,40,0,0">
                         <TextBlock x:Name="textBlock1"  HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" Text="Region of Interest (ROI):" VerticalAlignment="Bottom" Width="130"/>
                         <TextBlock x:Name="textBlock1_Copy1" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start"/><Run Text=" X:"/></TextBlock>
-                        <TextBox x:Name="StartX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0"  TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
+                        <TextBox x:Name="StartX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0"  TextWrapping="Wrap" Text="100" VerticalAlignment="Bottom" Width="90"/>
                         <TextBlock x:Name="textBlock1_Copy" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="End X:" VerticalAlignment="Bottom" Width="42"/>
-                        <TextBox x:Name="EndX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
+                        <TextBox x:Name="EndX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="412" VerticalAlignment="Bottom" Width="90"/>
                         <TextBlock x:Name="FrameRate_text" HorizontalAlignment="Left" Height="18" Margin="0,10,0,0" TextWrapping="Wrap" Text="Frame rate (FPS):" VerticalAlignment="Bottom" Width="130"/>
                         <TextBox x:Name="FrameRate" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Vertical" Margin="0,40,0,0">
                         <TextBlock x:Name="textBlock1_Copy2" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,20,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start "/><Run Text="Y"/><Run Text=":"/></TextBlock>
-                        <TextBox x:Name="StartY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" Width="90"/>
+                        <TextBox x:Name="StartY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="100" Width="90"/>
                         <TextBlock x:Name="textBlock1_Copy3" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" "/><Run Text="Y"/><Run Text=":"/></TextBlock>
-                        <TextBox x:Name="EndY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="TextBox" Width="90"/>
+                        <TextBox x:Name="EndY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="412" Width="90"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Vertical" Margin="40,0,0,0">
@@ -174,7 +174,11 @@
                     <Button Click="DiscardEMD_Click" Content="Discard" Margin="5,0,0,0" x:Name="DiscardEMD" Visibility="Visible" HorizontalAlignment="Left" Width="70" Height="23" VerticalAlignment="Top"/>
                     <TextBox x:Name="EMDName" Margin="10,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="EMDFileNameHere" Height="23" Width="200" VerticalAlignment="Top"/>
                 </StackPanel>
-                
+
+                <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
+                    <TextBox x:Name="MessageBox" Margin="10,5,26,0" Grid.Row="1" TextWrapping="Wrap" Text="MessageBox" Height="300" Width="500" VerticalAlignment="Top"/>
+                </StackPanel>
+
             </StackPanel>
 
         </StackPanel>

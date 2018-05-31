@@ -61,9 +61,9 @@ namespace Digitizer
                 Console.WriteLine("Configuring Acquisition...");
                 Console.WriteLine("Number of records to acquire: 1000");
                 driver.Acquisition.NumRecordsToAcquire = 1; // maximum 1024 for external, 1 for immediate
-                Console.WriteLine("Number of record size: 1000");
+                Console.WriteLine("Number of record size: " + record_size + "\n");
                 driver.Acquisition.RecordSize = record_size; //minium is 2, maximun is 3.2e7
-                Console.WriteLine("Rate of the sample clock: 1000\n");
+                Console.WriteLine("Rate of the sample clock: " + recording_rate + "\n");
                 driver.Acquisition.SampleRate = recording_rate;
                 #endregion
 
@@ -101,17 +101,17 @@ namespace Digitizer
                 double InitialXTimeSeconds_Ch1 = 0.0;
                 double InitialXTimeFraction_Ch1 = 0.0;
                 double XIncrement_Ch1 = 0.0;
-                double[] WaveformArray_Ch2 = { };
+                /*double[] WaveformArray_Ch2 = { };
                 long ActualPoints_Ch2 = 0;
                 long FirstValidPoint_Ch2 = 0;
                 double InitialXOffset_Ch2 = 0;
                 double InitialXTimeSeconds_Ch2 = 0.0;
                 double InitialXTimeFraction_Ch2 = 0.0;
-                double XIncrement_Ch2 = 0.0;
+                double XIncrement_Ch2 = 0.0;*/
                 Console.WriteLine("Fetch Channel 1 acquired waveform...");
                 driver.Channels.get_Item("Channel1").Measurement.FetchWaveformReal64(ref WaveformArray_Ch1, ref ActualPoints_Ch1, ref FirstValidPoint_Ch1, ref InitialXOffset_Ch1, ref InitialXTimeSeconds_Ch1, ref InitialXTimeFraction_Ch1, ref XIncrement_Ch1);
-                Console.WriteLine("Fetch Channel 2 acquired waveform...");
-                driver.Channels.get_Item("Channel2").Measurement.FetchWaveformReal64(ref WaveformArray_Ch2, ref ActualPoints_Ch2, ref FirstValidPoint_Ch2, ref InitialXOffset_Ch2, ref InitialXTimeSeconds_Ch2, ref InitialXTimeFraction_Ch2, ref XIncrement_Ch2);
+                //Console.WriteLine("Fetch Channel 2 acquired waveform...");
+                //driver.Channels.get_Item("Channel2").Measurement.FetchWaveformReal64(ref WaveformArray_Ch2, ref ActualPoints_Ch2, ref FirstValidPoint_Ch2, ref InitialXOffset_Ch2, ref InitialXTimeSeconds_Ch2, ref InitialXTimeFraction_Ch2, ref XIncrement_Ch2);
                 #endregion
 
             }

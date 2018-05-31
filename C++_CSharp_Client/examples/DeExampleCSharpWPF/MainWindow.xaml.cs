@@ -101,6 +101,12 @@ namespace DeExampleCSharpWPF
         System.Windows.Point _startPosition;
         bool _isResizing = false;
         bool _isResizing2 = false;
+
+        // scan voltage range calibrated from FEI internal scan system
+        public double x_scan_max = 1.5;
+        public double y_scan_max = 1.9;
+        public double x_scan_min = -1.5;
+        public double y_scan_min = -1.9;
         #endregion
 
         #region initialize and close main window
@@ -112,6 +118,7 @@ namespace DeExampleCSharpWPF
         public MainWindow()
         {
             InitializeComponent();
+            MessageBox.Text += "\n";
         }
         #endregion
 
@@ -550,7 +557,7 @@ namespace DeExampleCSharpWPF
         // Save two arrays into Xarray and Yarray
         public void GenerateScanArray(float[] Xarray, float[] Yarray)
         {
-
+            double x_scan_low = double.Parse(StartX.Text);
         }
 
         // Function used to write AWG setting
@@ -563,10 +570,21 @@ namespace DeExampleCSharpWPF
         public void PushDigitizerSetting()
         {
 
+            string sent;
+            bool isNumeric = int.TryParse(FrameRate.Text, out int n);
+            if (!isNumeric)
+            {
+                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
             int record_size;
             record_size = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 10;
             record_size = Convert.ToInt32(record_size * 1.3);
+            sent = "A total " + record_size + "samples will be recorded by digitizer\n";
+            MessageBox.Text += sent ;
             int recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            sent = "Digitizer frame rate is " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent ;
             double[] WaveformArray_Ch1 = { };
             // this function can only be called when running on DE camera computer with Keysight libraries
             Digitizer.Program.FetchData(record_size, recording_rate, WaveformArray_Ch1);
