@@ -98,6 +98,9 @@
       <HintPath>D:\2018\4DSTEM\ScanSystem\GAC_32\Keysight.KtM9217.Interop\1.0.0.0__ced78d295d1e0f2b\Keysight.KtM9217.Interop.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
+    <Reference Include="KeysightSD1">
+      <HintPath>D:\2018\4DSTEM\ScanSystem\XuSources\ScanControl\ScanControl\bin\Release\KeysightSD1.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -116,6 +119,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ScanControl.cs" />
     <Compile Include="DigitizerController.cs" />
     <Compile Include="SaveHDF5.cs" />
     <Page Include="ImageView.xaml">

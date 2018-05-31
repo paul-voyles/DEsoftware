@@ -45,3 +45,5 @@ C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleC
 C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\App.baml
 C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.CoreCompileInputs.cache
 C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.CoreCompileInputs.cache
+C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\KeysightSD1.dll
+C:\Users\Chenyu\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\bin\x64\Debug\KeysightSD1.pdb
