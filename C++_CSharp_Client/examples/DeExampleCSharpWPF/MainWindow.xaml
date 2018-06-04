@@ -25,7 +25,7 @@
                 <ComboBoxItem Content="MMF"/>
                 <ComboBoxItem Content="TCP"/>
             </ComboBox>
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Width="315" Margin="0,13,0,0">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Width="315" Margin="0,20,0,0">
                 <TextBlock Text="FPS:" Margin="10,0,4,0" />
                 <TextBlock Text="{Binding Fps}" />
                 <TextBlock Margin="10,0,4,0" Text="Image Count:" />
@@ -87,8 +87,8 @@
                                 </Style>
                             </Border.Style>
                         </Border>
-                        <Border Focusable="True" Background="Black" BorderBrush="LightGray" BorderThickness="1" Opacity="1" x:Name="resizeGrip3" HorizontalAlignment="Right" Height="30" VerticalAlignment="Top" Width="27" 
-                    PreviewMouseLeftButtonDown="resizeGrip3_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="resizeGrip3_PreviewMouseLeftButtonUp" Margin="0,282,0,0"  >
+                        <Border Focusable="True" Background="Black" BorderBrush="LightGray" BorderThickness="1" Opacity="1" x:Name="resizeGrip3" HorizontalAlignment="Right" Height="30" VerticalAlignment="Bottom" Width="27" 
+                    PreviewMouseLeftButtonDown="resizeGrip3_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="resizeGrip3_PreviewMouseLeftButtonUp" Margin="0,0,0,0"  >
                             <Border.Style>
                                 <Style TargetType="Border">
                                     <Style.Triggers>

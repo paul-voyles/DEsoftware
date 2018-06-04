@@ -17,7 +17,7 @@ namespace Digitizer
     {
         [STAThread]
 
-        public static void FetchData( int record_size, int recording_rate, double[] WaveformArray_Ch1)
+        public static void FetchData( int record_size, int recording_rate, ref double[] WaveformArray_Ch1)
         {
             Console.WriteLine(" PrintProperties");
             Console.WriteLine();
@@ -53,13 +53,13 @@ namespace Digitizer
                 #endregion
 
                 #region ActiveSource Settings
-                Console.WriteLine("Configuring ActiveSource source to Immediate\n");
-                driver.Trigger.ActiveSource = ("Immediate");
+                Console.WriteLine("Configuring ActiveSource source to External\n");
+                driver.Trigger.ActiveSource = ("External");
                 #endregion
 
                 #region Acquisition Settings
                 Console.WriteLine("Configuring Acquisition...");
-                Console.WriteLine("Number of records to acquire: 1000");
+                Console.WriteLine("Number of records to acquire: 1");
                 driver.Acquisition.NumRecordsToAcquire = 1; // maximum 1024 for external, 1 for immediate
                 Console.WriteLine("Number of record size: " + record_size + "\n");
                 driver.Acquisition.RecordSize = record_size; //minium is 2, maximun is 3.2e7
@@ -130,8 +130,8 @@ namespace Digitizer
                 }
             }
 
-            Console.WriteLine("Done - Press Enter to Exit");
-            Console.ReadLine();
+            //Console.WriteLine("Done - Press Enter to Exit");
+            //Console.ReadLine();
 
         }
     }

@@ -42,8 +42,8 @@ namespace ScanControl
             module = new SD_AOU();
 
             string sModuleName = "M3201A";
-            int nChassis = 0;
-            int nSlot = 2;
+            int nChassis = 1;
+            int nSlot = 3;
 
             int status;
 
@@ -63,8 +63,16 @@ namespace ScanControl
             }
 
             //both channel AWG
+            module.channelAmplitude(1, 0.15);				// 1.2 Volts Peak
+            module.channelAmplitude(2, 0.15);				// 1.2 Volts Peak
             module.channelWaveShape(1, SD_Waveshapes.AOU_AWG);
             module.channelWaveShape(2, SD_Waveshapes.AOU_AWG);
+
+            // Set external trigger as input
+            module.triggerIOdirection(SD_TriggerDirections.AOU_TRG_IN);
+            // Config trigger as external trigger and rising edge
+            module.AWGtriggerExternalConfig(1, SD_TriggerExternalSources.TRIGGER_EXTERN, SD_TriggerBehaviors.TRIGGER_RISE);
+            module.AWGtriggerExternalConfig(2, SD_TriggerExternalSources.TRIGGER_EXTERN, SD_TriggerBehaviors.TRIGGER_RISE);
 
             return HW_STATUS_RETURNS.HW_SUCCESS;
         }
@@ -172,6 +180,10 @@ namespace ScanControl
         {
             int status;
 
+            // one shot
+            module.AWGqueueConfig(1, 0);
+            module.AWGqueueConfig(2, 0);
+
             // Start the AWG to reproduce the waveforms in the queue for ch1
             if (c1WFinQueueCount > 0)
             {
@@ -224,6 +236,8 @@ namespace ScanControl
             int status;
             SD_Wave tmpWaveform;
 
+            module.waveformFlush();
+
             // Remove all waveform from the channel 1 queue
             status = module.AWGflush(1);
             if (status >= 0)
@@ -251,7 +265,7 @@ namespace ScanControl
             WFinModuleCount = 0;
             for (int j = 0; j < ypoints.Count; j++)
             {
-                tmpWaveform = new SD_Wave(1, new double[] { ypoints[j] });
+                tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[j] });
 
                 status = module.waveformLoad(tmpWaveform, WFinModuleCount);
                 if (status >= 0)
@@ -267,7 +281,7 @@ namespace ScanControl
             for (int i = 0; i < xpoints.Count; i++)
             {
 
-                tmpWaveform = new SD_Wave(1, new double[] { xpoints[i] });
+                tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[i] });
 
                 status = module.waveformLoad(tmpWaveform, WFinModuleCount);
                 if (status >= 0)
@@ -292,7 +306,7 @@ namespace ScanControl
                 for (int i = 0; i < xpoints.Count; i++)
                 {
                     // Queue the waveform into the channel1 queue
-                    status = module.AWGqueueWaveform(1, ypoints.Count + i, 5, outputdelay, 1, 0); // cnannel1, waveform num, trigger (auto=0, ext=5), start delay, cycle, prescaleer
+                    status = module.AWGqueueWaveform(1, ypoints.Count + i, SD_TriggerModes.EXTTRIG, outputdelay, 1, 0); // cnannel1, waveform num, trigger (auto=0, ext=5), start delay, cycle, prescaleer
                     if (status >= 0)
                     {
                         c1WFinQueueCount++;
@@ -302,7 +316,7 @@ namespace ScanControl
                         return 1;
                     }
                     // Queue the waveform into the channel2 queue
-                    status = module.AWGqueueWaveform(2, j, 5, outputdelay, 1, 0); // cnannel, waveform num, trigger (auto=0, ext=5), start delay, cycle, prescaleer
+                    status = module.AWGqueueWaveform(2, j, SD_TriggerModes.EXTTRIG, outputdelay, 1, 0); // cnannel, waveform num, trigger (auto=0, ext=5), start delay, cycle, prescaleer
                     if (status >= 0)
                     {
                         c2WFinQueueCount++;
