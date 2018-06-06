@@ -54,6 +54,7 @@ namespace DeExampleCSharpWPF
         private WriteableBitmap _wBmp;
         private WriteableBitmap _wBmpRecon;
         private WriteableBitmap _wBmpHAADF;
+        private WriteableBitmap _wBmpHAADFROI;
         private int nTickCount = 0;
         private decimal dTickCountAvg = 0;
         private int nCount = 0;
@@ -282,28 +283,43 @@ namespace DeExampleCSharpWPF
             PushAWGsetting(Xarray, Yarray);
             PushDigitizerSetting_defaultHAADF(WaveformArray_Ch1);
 
-            HAADFreconstrcution(WaveformArray_Ch1, 512, 512);
+            HAADFreconstrcution(WaveformArray_Ch1, 512, 512,0);
 
         }
 
         // Function used to reconstruct 2D matrix from 1D array acquired from digitizer
         // Input: Array: 1D array acquired, currently hardcoded to 10 samples per probe position, array size must be larger than 10*size_x*size_y
         //        size_x/size_y: target 2D matrix size in pixel
+        //        option: 0 for reconstruction on default image window, 1 for reconstruction on ROI window
 
-        public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y)
+        public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option)
         {
-            Bitmap HAADFbmp = new Bitmap(size_x, size_y);   // bitmap for recon purpose
 
+            Bitmap HAADFbmp = new Bitmap(size_x, size_y);   // bitmap for recon purpose
             BitmapSource HAADFbmpSource = ConvertBitmapSource(HAADFbmp); // convert bitmap to bitmapsource, then can be used to generate writable bitmap
 
-            _wBmpHAADF = new WriteableBitmap(HAADFbmpSource.PixelWidth, HAADFbmpSource.PixelHeight, HAADFbmpSource.DpiX, HAADFbmpSource.DpiY, HAADFbmpSource.Format, HAADFbmpSource.Palette);
+            // invoke different image box source for different options
+            if (option == 0)
+            {
+                _wBmpHAADF = new WriteableBitmap(HAADFbmpSource.PixelWidth, HAADFbmpSource.PixelHeight, HAADFbmpSource.DpiX, HAADFbmpSource.DpiY, HAADFbmpSource.Format, HAADFbmpSource.Palette);
+                HAADF.Dispatcher.Invoke(
+                    (ThreadStart)delegate { HAADF.Source = _wBmpHAADF; }
+                );
+            }
 
-            HAADF.Dispatcher.Invoke(
-                (ThreadStart)delegate { HAADF.Source = _wBmpHAADF; }
-            );
+            if (option == 1)
+            {
+                _wBmpHAADFROI = new WriteableBitmap(HAADFbmpSource.PixelWidth, HAADFbmpSource.PixelHeight, HAADFbmpSource.DpiX, HAADFbmpSource.DpiY, HAADFbmpSource.Format, HAADFbmpSource.Palette);
+                HAADFacquisition.Dispatcher.Invoke(
+                    (ThreadStart)delegate { HAADFacquisition.Source = _wBmpHAADF; }
+                );
+            }
 
             // Generate new array for rescaled HAADF image
             UInt16[] HAADF_rescale = new UInt16[size_x * size_y];
+
+            // Generate csv file to save HAADF raw array
+            var csv = new StringBuilder();
 
             double Array_max = RawArray.Max();
             double Array_min = RawArray.Min();
@@ -316,6 +332,9 @@ namespace DeExampleCSharpWPF
                 subArray_list.Clear();
                 subArray_list = subArray.ToList();
                 double average = subArray_list.Average();
+                var average_string = average.ToString();
+                csv.AppendLine(average_string);
+
                 int row = (int) ( (i - i % size_x) / size_y );
                 if (row % 2 == 0)
                 {
@@ -325,13 +344,30 @@ namespace DeExampleCSharpWPF
                 {
                     HAADF_rescale[size_x * ( row + 1 ) - i % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min));
                 }
+
             }
 
-            this.Dispatcher.BeginInvoke(new Action(() =>
+            // write to different bitmap for different options
+            if (option == 0)
             {
-                _wBmpHAADF.WritePixels(new Int32Rect(0, 0, size_x, size_y), HAADF_rescale, size_x * 2, 0);
+                this.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    _wBmpHAADF.WritePixels(new Int32Rect(0, 0, size_x, size_y), HAADF_rescale, size_x * 2, 0);
 
-            }));
+                }));
+            }
+
+            if (option == 1)
+            {
+                this.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    _wBmpHAADFROI.WritePixels(new Int32Rect(0, 0, size_x, size_y), HAADF_rescale, size_x * 2, 0);
+
+                }));
+            }
+
+            string FullPath = HAADFPath.Text + "HAADF_Preview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h:mm:ss tt");
+            File.WriteAllText(FullPath, csv.ToString());
 
         }
 
@@ -479,6 +515,19 @@ namespace DeExampleCSharpWPF
             SEQPath.Text = folder;
         }
 
+
+        private void HAADFFilePath_Click(object sender, RoutedEventArgs e)
+        {
+            string folder = HAADFPath.Text;
+            System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                folder = dlg.SelectedPath;
+            }
+            folder = folder.Replace("\\", "/");
+            HAADFPath.Text = folder;
+        }
+
         private void EMDFilePath_Click(object sender, RoutedEventArgs e)
         {
             string folder = EMDPath.Text;
@@ -523,11 +572,6 @@ namespace DeExampleCSharpWPF
             //HDF5.InitializeHDF(numpos, height, width);
         }
 
-        // function to load 4DSTEM dataset from SEQ file
-        public void ReadSEQfile()
-        {
-
-        }
 
         // function to load 4DSTEM dataset from mrc file, resave as h5, and reconstruct to 2D image with virtual aperture
         public void ReadMRCfile()
@@ -789,6 +833,8 @@ namespace DeExampleCSharpWPF
             //double[] WaveformArray_Ch1 = { };
             // this function can only be called when running on DE camera computer with Keysight libraries
             Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+            // reconstruct and show image in ROI box
+            HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 1);
 
         }
 

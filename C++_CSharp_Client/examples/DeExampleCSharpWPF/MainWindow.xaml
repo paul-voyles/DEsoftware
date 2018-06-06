@@ -70,7 +70,7 @@
                 <TextBlock x:Name="textBlock" Grid.Column="2" Height="28" Margin="162,10,161,0" Grid.Row="1" TextWrapping="Wrap" Text="HAADF Detector Preview" VerticalAlignment="Top" TextAlignment="Center" FontSize="18"/>
 
                 <Grid>
-                    <Image x:Name="HAADF" Margin="0,0,0,0" Height="512" Width="512" HorizontalAlignment="Left" />
+                    <Image x:Name="HAADF" Margin="0,0,0,0" Height="512" Width="512" HorizontalAlignment="Left"  />
                     <Rectangle Stroke="Black" Margin="0,0,0,0" Height="512" Width="512" HorizontalAlignment="Left"/>
 
                     <Grid Background="BlueViolet" x:Name="gridResize"  Margin="100,100,100,100" Opacity="0.2" >
@@ -149,7 +149,7 @@
             <Path Grid.Column="3" Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2"/>
 
             <StackPanel Grid.ColumnSpan="1" Orientation="Vertical" Margin="0,0,0,0" Width="587.953">
-                <DataGrid AutoGenerateColumns="False" Grid.Column="3" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,0" Grid.Row="1" Height="307" Width="500" VerticalAlignment="Top">
+                <DataGrid AutoGenerateColumns="False" Grid.Column="3" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,0" Grid.Row="1" Height="200" Width="500" VerticalAlignment="Top">
                     <DataGrid.Columns>
                         <DataGridTextColumn Binding="{Binding Name}" CanUserReorder="True" CanUserResize="True" Header="Property" />
                         <DataGridTextColumn Binding="{Binding Value}" Header="Value"  />
@@ -172,10 +172,16 @@
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
+                    <Button Click="HAADFFilePath_Click" Content="Select HAADF file saving path" Margin="0,0,0,0" x:Name="HAADFFilePath" Visibility="Visible"  HorizontalAlignment="Right" Width="170" RenderTransformOrigin="0.439,3.913" Height="23" VerticalAlignment="Top"/>
+                    <TextBox x:Name="HAADFPath" Grid.Column="3" Height="23" Width="200" Margin="10,0,0,0" Text="D:/RawFrames" VerticalAlignment="Top"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
                     <Button Click="ResaveEMD_Click" Content="Save" Margin="0,0,0,0" x:Name="ResaveEMD" Visibility="Visible" HorizontalAlignment="Left" Width="73" Height="23" VerticalAlignment="Top"/>
                     <Button Click="DiscardEMD_Click" Content="Discard" Margin="5,0,0,0" x:Name="DiscardEMD" Visibility="Visible" HorizontalAlignment="Left" Width="70" Height="23" VerticalAlignment="Top"/>
                     <TextBox x:Name="EMDName" Margin="10,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="EMDFileNameHere" Height="23" Width="200" VerticalAlignment="Top"/>
                 </StackPanel>
+                
 
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
                     <TextBox x:Name="MessageBox" Margin="10,5,26,0" Grid.Row="1" TextWrapping="Wrap" Text="MessageBox" Height="300" Width="500" VerticalAlignment="Top"/>

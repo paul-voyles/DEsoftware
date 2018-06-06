@@ -1,8 +1,33 @@
-﻿
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections;
-using HDF5DotNet;
+using System.Diagnostics;
+using System.Linq;
 using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using DeInterface;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO.MemoryMappedFiles;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Net;
+using HDF5DotNet;
+using FileLoader;
+using System.Timers;
+using System.Drawing;
+using System.Windows.Forms;
+using HDF5DotNet;
 
 // copied from HDF5DotNet-src/examples/CSharpExample/CSharpExample1, cz 7/14/17
 
@@ -12,6 +37,36 @@ namespace FileLoader
     {
         public static void LoadSEQ(string path)
         {
+            using (var filestream = File.Open(@path, FileMode.Open))
+
+            using (var binaryStream = new BinaryReader(filestream))
+            {
+
+                for (var i = 0; i < 548; i++)    // Go through useless bytes at the beginning of file
+                {
+                    binaryStream.ReadByte();
+                }   // 548 bytes loaded
+                UInt32 x_dim = binaryStream.ReadUInt32();
+                UInt32 y_dim = binaryStream.ReadUInt32();
+                // 556 bytes loaded
+                for (var i = 0; i < 16; i++)    // useless bytes
+                {
+                    binaryStream.ReadByte();
+                }   // 572 bytes
+                UInt16 numFrame = binaryStream.ReadUInt16();    // 574 bytes read
+                for (var i = 0; i < 10; i++)    // useless bytes
+                {
+                    binaryStream.ReadByte();
+                }   // 584 bytes
+                double frameRate = binaryStream.ReadDouble();   // 592 bytes
+
+                //for (int iframe = 0; iframe < numFrame; int++)
+                for (var i = 0; i < 12; i++)    // 12 floating numbers, single
+                {
+                    binaryStream.ReadByte();
+                }
+                Console.WriteLine('\n');
+            }
 
         }
     }
