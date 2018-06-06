@@ -53,6 +53,7 @@ namespace DeExampleCSharpWPF
         private System.Timers.Timer _updateTimer;
         private WriteableBitmap _wBmp;
         private WriteableBitmap _wBmpRecon;
+        private WriteableBitmap _wBmpHAADF;
         private int nTickCount = 0;
         private decimal dTickCountAvg = 0;
         private int nCount = 0;
@@ -238,38 +239,99 @@ namespace DeExampleCSharpWPF
         #region Acquire HAADF and choose ROI
 
         // Function to acquire single HAADF image with default setting: max voltage range, 512*512 beam positions
+        // No DE camera is used together with beam scan, only collect data from digitizer.
+        // For DE camera in master mode, camera has to run to generate trigger signal
         public void Single_Acquire(object sender, RoutedEventArgs e)
         {
             int x_step_num = 512;
             int y_step_num = 512;
             double[] Xarray = new double[512 * 512 * 2];
             double[] Yarray = new double[512 * 512 * 2];
-            double x_step_size = (x_scan_max - x_scan_min) / 512;
-            double y_step_size = (y_scan_max - y_scan_min) / 512;
+            double x_step_size = (double)1 / (double)511;
+            double y_step_size = (double)1 / (double)511;
 
             for (int iy = 0; iy < y_step_num; iy++)
             {
                 for (int ix = 0; ix < x_step_num; ix++)
                 {
-                    Xarray[iy * Convert.ToInt32(x_step_num) + ix] = x_scan_min + x_step_size * ix;
-                    Yarray[iy * Convert.ToInt32(x_step_num) + ix] = y_scan_min + y_step_size * iy;
+                    if (iy % 2 == 0)
+                    {
+                        Xarray[iy * Convert.ToInt32(x_step_num) + ix] = -0.5 + x_step_size * (double)ix;
+                    }
+                    else
+                    {
+                        Xarray[iy * Convert.ToInt32(x_step_num) + ix] = 0.5 - x_step_size * (double)ix;
+                    }
+                    Yarray[iy * Convert.ToInt32(x_step_num) + ix] = -0.5 + y_step_size * (double)iy;
                 }
             }
 
             for (int ix = Convert.ToInt32(x_step_num) * Convert.ToInt32(y_step_num); ix < Xarray.Length; ix++)
             {
-                //Xarray[ix] = x_scan_max * 2;
-                Xarray[ix] = 0.99;
+                Xarray[ix] = 1;
+                //Xarray[ix] = 0.99;
             }
 
             for (int iy = Convert.ToInt32(y_step_num) * Convert.ToInt32(x_step_num); iy < Xarray.Length; iy++)
             {
-                //Yarray[iy] = y_scan_max * 2;
-                Yarray[iy] = 0.99;
+                Yarray[iy] = 1;
+                //Yarray[iy] = 0.99;
             }
             double[] WaveformArray_Ch1 = { };
+            // push 512*512*2 sized array to AWG
             PushAWGsetting(Xarray, Yarray);
             PushDigitizerSetting_defaultHAADF(WaveformArray_Ch1);
+
+            HAADFreconstrcution(WaveformArray_Ch1, 512, 512);
+
+        }
+
+        // Function used to reconstruct 2D matrix from 1D array acquired from digitizer
+        // Input: Array: 1D array acquired, currently hardcoded to 10 samples per probe position, array size must be larger than 10*size_x*size_y
+        //        size_x/size_y: target 2D matrix size in pixel
+
+        public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y)
+        {
+            Bitmap HAADFbmp = new Bitmap(size_x, size_y);   // bitmap for recon purpose
+
+            BitmapSource HAADFbmpSource = ConvertBitmapSource(HAADFbmp); // convert bitmap to bitmapsource, then can be used to generate writable bitmap
+
+            _wBmpHAADF = new WriteableBitmap(HAADFbmpSource.PixelWidth, HAADFbmpSource.PixelHeight, HAADFbmpSource.DpiX, HAADFbmpSource.DpiY, HAADFbmpSource.Format, HAADFbmpSource.Palette);
+
+            HAADF.Dispatcher.Invoke(
+                (ThreadStart)delegate { HAADF.Source = _wBmpHAADF; }
+            );
+
+            // Generate new array for rescaled HAADF image
+            UInt16[] HAADF_rescale = new UInt16[size_x * size_y];
+
+            double Array_max = RawArray.Max();
+            double Array_min = RawArray.Min();
+            double[] subArray = new double[9];
+            List<double> subArray_list = new List<double>();
+
+            for (int i = 0; i < size_x * size_y; i++)
+            {
+                Array.Copy(RawArray, i * 10 + 1, subArray, 0, 9);   // copy 9 elements from array each time
+                subArray_list.Clear();
+                subArray_list = subArray.ToList();
+                double average = subArray_list.Average();
+                int row = (int) ( (i - i % size_x) / size_y );
+                if (row % 2 == 0)
+                {
+                    HAADF_rescale[i] = (ushort)((average - Array_min) / (Array_max - Array_min));
+                }
+                else
+                {
+                    HAADF_rescale[size_x * ( row + 1 ) - i % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min));
+                }
+            }
+
+            this.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                _wBmpHAADF.WritePixels(new Int32Rect(0, 0, size_x, size_y), HAADF_rescale, size_x * 2, 0);
+
+            }));
 
         }
 

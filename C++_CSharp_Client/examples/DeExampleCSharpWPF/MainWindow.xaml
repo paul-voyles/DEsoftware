@@ -70,7 +70,7 @@
                 <TextBlock x:Name="textBlock" Grid.Column="2" Height="28" Margin="162,10,161,0" Grid.Row="1" TextWrapping="Wrap" Text="HAADF Detector Preview" VerticalAlignment="Top" TextAlignment="Center" FontSize="18"/>
 
                 <Grid>
-                    <Image Margin="0,0,0,0" Height="512" Width="512" HorizontalAlignment="Left" />
+                    <Image x:Name="HAADF" Margin="0,0,0,0" Height="512" Width="512" HorizontalAlignment="Left" />
                     <Rectangle Stroke="Black" Margin="0,0,0,0" Height="512" Width="512" HorizontalAlignment="Left"/>
 
                     <Grid Background="BlueViolet" x:Name="gridResize"  Margin="100,100,100,100" Opacity="0.2" >
