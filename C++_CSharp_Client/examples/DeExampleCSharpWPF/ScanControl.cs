@@ -89,6 +89,16 @@ namespace ScanControl
             xpoints.Clear();
             ypoints.Clear();
 
+            // normalzie scan array to [-1 1] and use the maximum value as amplitute
+            double xpoints_max = x.Select(z => Math.Abs(z)).Max();
+            double ypoints_max = y.Select(z => Math.Abs(z)).Max();
+
+            x_amp = xpoints_max;
+            y_amp = ypoints_max;
+
+            x.Select(d => d / xpoints_max);
+            y.Select(d => d / ypoints_max);
+
             xpoints = x.ToList();
             ypoints = y.ToList();
 
@@ -231,6 +241,7 @@ namespace ScanControl
             return HW_STATUS_RETURNS.HW_SUCCESS;
         }
 
+        // Called by SetScanParameter to generate WaveForm and queue to AWG
         private int prepareScan()
         {
             int status;
@@ -259,15 +270,26 @@ namespace ScanControl
             {
                 return 1;
             }
+            // set trigger direction to input
+            module.triggerIOdirection(SD_TriggerDirections.AOU_TRG_IN);
+            // set trigger configuration to external, rising edge
+            module.AWGtriggerExternalConfig(1, SD_TriggerExternalSources.TRIGGER_EXTERN, SD_TriggerBehaviors.TRIGGER_RISE);
+
+            // set wave shape and amplitude
+            module.channelAmplitude(1, y_amp);				// 1.2 Volts Peak
+            module.channelWaveShape(1, SD_Waveshapes.AOU_AWG);
+            module.channelAmplitude(2, x_amp);				// 1.2 Volts Peak
+            module.channelWaveShape(2, SD_Waveshapes.AOU_AWG);
 
             // generate waveforms.
             // Notes: waveform number is from 0 to y_length-1 for y direction, then frm y_length to y_length + x_length -1;
+            // Note2: SD_wave must have even amount of points to enable padding option 1
             WFinModuleCount = 0;
             for (int j = 0; j < ypoints.Count; j++)
             {
-                tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[j] });
+                tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[j], ypoints[j] });
 
-                status = module.waveformLoad(tmpWaveform, WFinModuleCount);
+                status = module.waveformLoad(tmpWaveform, WFinModuleCount, 1);
                 if (status >= 0)
                 {
                     WFinModuleCount++;
@@ -281,9 +303,9 @@ namespace ScanControl
             for (int i = 0; i < xpoints.Count; i++)
             {
 
-                tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[i] });
+                tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[i], xpoints[i] });
 
-                status = module.waveformLoad(tmpWaveform, WFinModuleCount);
+                status = module.waveformLoad(tmpWaveform, WFinModuleCount, 1);
                 if (status >= 0)
                 {
                     WFinModuleCount++;
@@ -347,5 +369,8 @@ namespace ScanControl
         int WFinModuleCount = 0;
         int c1WFinQueueCount = 0;
         int c2WFinQueueCount = 0;
+
+        double x_amp;
+        double y_amp;
     }
 }

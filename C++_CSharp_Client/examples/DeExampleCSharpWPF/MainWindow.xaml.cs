@@ -660,7 +660,7 @@ namespace DeExampleCSharpWPF
             double x_step_size = (x_scan_high - x_scan_low) / x_step_num;
             double y_step_size = (y_scan_high - y_scan_low) / y_step_num;
 
-
+            // current scheme uses sawtooth shaped wave
             for (int iy = 0; iy < y_step_num ; iy++)
             {
                 for (int ix = 0; ix < x_step_num; ix++)
@@ -672,14 +672,12 @@ namespace DeExampleCSharpWPF
 
             for (int ix = Convert.ToInt32(x_step_num) * Convert.ToInt32(y_step_num); ix < Xarray.Length; ix++)
             {
-                //Xarray[ix] = x_scan_max * 2;
-                Xarray[ix] = 0.99;
+                Xarray[ix] = x_scan_max * 2;
             }
 
             for (int iy = Convert.ToInt32(y_step_num) * Convert.ToInt32(x_step_num); iy < Xarray.Length; iy++)
             {
-                //Yarray[iy] = y_scan_max * 2;
-                Yarray[iy] = 0.99;
+                Yarray[iy] = y_scan_max * 2;
             }
         }
 

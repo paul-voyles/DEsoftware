@@ -119,6 +119,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AWGtest.cs" />
     <Compile Include="ScanControl.cs" />
     <Compile Include="DigitizerController.cs" />
     <Compile Include="FileLoader.cs" />
