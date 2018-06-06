@@ -56,6 +56,14 @@ namespace DeExampleCSharpWPF
         private int nTickCount = 0;
         private decimal dTickCountAvg = 0;
         private int nCount = 0;
+
+        // scan voltage range calibrated from FEI internal scan system
+        public double x_scan_max = 1.5;
+        public double y_scan_max = 1.9;
+        public double x_scan_min = -1.5;
+        public double y_scan_min = -1.9;
+
+
         public decimal Fps
         {
             get { return Math.Round(Convert.ToDecimal(Convert.ToDouble(_imageCount) / TotalSeconds), 3); }
@@ -102,11 +110,7 @@ namespace DeExampleCSharpWPF
         bool _isResizing = false;
         bool _isResizing2 = false;
 
-        // scan voltage range calibrated from FEI internal scan system
-        public double x_scan_max = 1.5;
-        public double y_scan_max = 1.9;
-        public double x_scan_min = -1.5;
-        public double y_scan_min = -1.9;
+
 
         // status return from hardware
         public enum HW_STATUS_RETURNS
@@ -642,30 +646,39 @@ namespace DeExampleCSharpWPF
         // Save two arrays into Xarray and Yarray
         public void GenerateScanArray(ref double[] Xarray, ref double[] Yarray)
         {
-            double x_scan_low = double.Parse(StartX.Text)/512;  // scan range in pct
-            double x_scan_high = double.Parse(EndX.Text)/512;
-            double y_scan_low = double.Parse(StartY.Text)/512;
-            double y_scan_high = double.Parse(EndY.Text)/512;
+            // fractional scan range between [-0.5, 0.5]
+            double x_scan_low = (256 - double.Parse(StartX.Text))/256/2;
+            double x_scan_high = (double.Parse(EndX.Text) - 256)/256/2;
+            double y_scan_low = (256 - double.Parse(StartY.Text))/256/2;
+            double y_scan_high = (double.Parse(EndY.Text) - 256)/256/2;
 
-            // scan range in volt
+/*            // scan range in volt
             x_scan_low = x_scan_min + (x_scan_max - x_scan_min) * x_scan_low;
             x_scan_high = x_scan_min + (x_scan_max - x_scan_min) * x_scan_high;
             y_scan_low = y_scan_min + (y_scan_max - y_scan_min) * y_scan_low;
             y_scan_high = y_scan_min + (y_scan_max - y_scan_min) * y_scan_high;
-
+*/
             double x_step_num = double.Parse(PosX.Text);
             double y_step_num = double.Parse(PosY.Text);
 
-            // step size in volt
-            double x_step_size = (x_scan_high - x_scan_low) / x_step_num;
-            double y_step_size = (y_scan_high - y_scan_low) / y_step_num;
+            // step size in fraction
+            double x_step_size = (x_scan_high - x_scan_low) / (x_step_num - 1);
+            double y_step_size = (y_scan_high - y_scan_low) / (y_step_num - 1);
 
             // current scheme uses sawtooth shaped wave
             for (int iy = 0; iy < y_step_num ; iy++)
             {
                 for (int ix = 0; ix < x_step_num; ix++)
                 {
-                    Xarray[iy * Convert.ToInt32(x_step_num) + ix] = x_scan_low + x_step_size * ix;
+                    if (iy%2 == 0)
+                    {
+                        Xarray[iy * Convert.ToInt32(x_step_num) + ix] = x_scan_low + x_step_size * ix;
+                    }
+                    else
+                    {
+                        Xarray[iy * Convert.ToInt32(x_step_num) + ix] = x_scan_high - x_step_size * ix;
+                    }
+                    
                     Yarray[iy * Convert.ToInt32(x_step_num) + ix] = y_scan_low + y_step_size * iy;
                 }
             }
@@ -681,13 +694,15 @@ namespace DeExampleCSharpWPF
             }
         }
 
-        // Function used to write AWG setting onto Xu's API
+        // Function used to write AWG setting onto Xu's API or Chenyu's API
         public void PushAWGsetting(double[] Xarray, double[] Yarray)
         {
-            ScanControl.ScanControl status = new ScanControl.ScanControl();
-            status.ScanControlInitialize();
-            status.SetScanParameter(Xarray, Yarray, 0); // Xarray, Yarray, delay (x10ns)
-            status.StartScan();                         // start scan and wait for trigger signals
+            ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
+            status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray, Yarray, 0);
+
+            //status.ScanControlInitialize();
+            //status.SetScanParameter(Xarray, Yarray, 0); // Xarray, Yarray, delay (x10ns)
+            //status.StartScan();                         // start scan and wait for trigger signals
         }
 
         // Function used to write digitizer setting based on scan grid and frame rate setting
