@@ -20,8 +20,10 @@ namespace ScanControl_cz
     {
         private List<double> xpoints;
         private List<double> ypoints;
+        private List<int> xindex;
+        private List<int> yindex;
 
-        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] x_array, double[] y_array, double delay)
+        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay)
         {
             int status;
             // Channel 1 for y scan and channel 2 for x scan
@@ -47,53 +49,79 @@ namespace ScanControl_cz
             moduleAOU.channelWaveShape(2, SD_Waveshapes.AOU_AWG);
 
             // Convert array into list
+
+            xpoints = new List<double>();
+            ypoints = new List<double>();
+            xindex = new List<int>();
+            yindex = new List<int>();
+
             xpoints.Clear();
             ypoints.Clear();
-            xpoints = x_array.ToList();
-            ypoints = y_array.ToList();
+            xindex.Clear();
+            yindex.Clear();
+            xpoints = Xarray_vol.ToList();
+            ypoints = Yarray_vol.ToList();
+            xindex = Xarray_index.ToList();
+            yindex = Yarray_index.ToList();
 
             // Set external trigger as input
             moduleAOU.triggerIOdirection(SD_TriggerDirections.AOU_TRG_IN);
             // Config trigger as external trigger and rising edge
             moduleAOU.AWGtriggerExternalConfig(1, SD_TriggerExternalSources.TRIGGER_EXTERN, SD_TriggerBehaviors.TRIGGER_RISE);
+            moduleAOU.AWGtriggerExternalConfig(2, SD_TriggerExternalSources.TRIGGER_EXTERN, SD_TriggerBehaviors.TRIGGER_RISE);
             // flush both channels
             status = moduleAOU.AWGflush(1);
             status = moduleAOU.AWGflush(2);
 
-            int WFinModuleCount;
-            for (WFinModuleCount = 0; WFinModuleCount < ypoints.Count; WFinModuleCount++)
-            {
-                var tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[WFinModuleCount], ypoints[WFinModuleCount] });   // WaveForm has to contain even number of points to activate padding option 1
-                status = moduleAOU.waveformLoad(tmpWaveform, WFinModuleCount, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
-                if (status < 0)
-                {
-                    Console.WriteLine("Error while loading " + WFinModuleCount + " point from y array");
-                }
-                status = moduleAOU.AWGqueueWaveform(1, WFinModuleCount, SD_TriggerModes.EXTTRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
-                if (status < 0)
-                {
-                    Console.WriteLine("Error while queuing " + WFinModuleCount + " point from y array");
-                }
-            }
 
+            int WFinModuleCount;
+
+
+            // load waveform for channel 2 (X)
             for (WFinModuleCount = 0; WFinModuleCount < xpoints.Count; WFinModuleCount++)
             {
-                var tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[WFinModuleCount], xpoints[WFinModuleCount] });   // WaveForm has to contain even number of points to activate padding option 1
-                status = moduleAOU.waveformLoad(tmpWaveform, WFinModuleCount, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
+                // with 16 reps when generate wave form, AWG generates the desired scan pattern, not sure why
+                var tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount] });   // WaveForm has to contain even number of points to activate padding option 1
+                status = moduleAOU.waveformLoad(tmpWaveform, WFinModuleCount + ypoints.Count, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
                 if (status < 0)
                 {
                     Console.WriteLine("Error while loading " + WFinModuleCount + " point from x array");
                 }
-                status = moduleAOU.AWGqueueWaveform(2, WFinModuleCount, SD_TriggerModes.EXTTRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
+            }
+            for (WFinModuleCount = 0; WFinModuleCount < xindex.Count; WFinModuleCount++)
+            {
+                status = moduleAOU.AWGqueueWaveform(2, xindex[WFinModuleCount] + ypoints.Count, SD_TriggerModes.EXTTRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
                 if (status < 0)
                 {
                     Console.WriteLine("Error while queuing " + WFinModuleCount + " point from x array");
                 }
             }
 
+            // load waveform for channel 1 (Y)
+
+            for (WFinModuleCount = 0; WFinModuleCount < ypoints.Count; WFinModuleCount++)
+            {
+                var tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount] });   // WaveForm has to contain even number of points to activate padding option 1
+                status = moduleAOU.waveformLoad(tmpWaveform, WFinModuleCount, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
+                if (status < 0)
+                {
+                    Console.WriteLine("Error while loading " + WFinModuleCount + " point from y array, error code " + status);
+                }
+            }
+            // queue waveform for channel 1
+            for (WFinModuleCount = 0; WFinModuleCount < yindex.Count; WFinModuleCount++)
+            {
+                status = moduleAOU.AWGqueueWaveform(1, yindex[WFinModuleCount], SD_TriggerModes.EXTTRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
+                if (status < 0)
+                {
+                    Console.WriteLine("Error while queuing " + WFinModuleCount + " point from y array, error code " + status);
+                }
+            }
+
+
             // Configure queue to only one shot
-            moduleAOU.AWGqueueConfig(1, 0);
-            moduleAOU.AWGqueueConfig(2, 0);
+            moduleAOU.AWGqueueConfig(1, 1);
+            moduleAOU.AWGqueueConfig(2, 1);
 
             // Start both channel and wait for triggers
             moduleAOU.AWGstart(1);
