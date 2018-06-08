@@ -244,9 +244,39 @@ namespace DeExampleCSharpWPF
         // For DE camera in master mode, camera has to run to generate trigger signal
         public void Single_Acquire(object sender, RoutedEventArgs e)
         {
+            // test for passive mode scan control
             int x_step_num = 256;
             int y_step_num = 256;
-            int[] Xarray_index = new int[x_step_num * x_step_num * 2];
+            int[] Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
+            int[] Yarray_index = new int[y_step_num + 2];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away
+            double[] Xarray_vol = new double[x_step_num];
+            double[] Yarray_vol = new double[y_step_num + 1];
+            double x_step_size = 1 / (x_step_num - 1);
+            double y_step_size = 1 / (y_step_num - 1);
+
+            for (int ix = 0; ix < x_step_num * 2; ix++)
+            {
+                if (ix < x_step_num)
+                {
+                    Xarray_vol[ix] = -0.5 + x_step_size * ix;
+                    Xarray_index[ix] = ix;
+                }
+                else
+                {
+                    Xarray_index[ix] = x_step_num * 2 - ix - 1;
+                }
+            }
+
+            for (int iy = 0; iy < y_step_num; iy++)
+            {
+                Yarray_index[iy] = iy;
+                Yarray_vol[iy+1] = -0.5 + y_step_size * iy;
+            }
+            Yarray_vol[0] = 1;
+            Yarray_vol[y_step_num + 1] = 1;
+
+
+            /*int[] Xarray_index = new int[x_step_num * x_step_num * 2];
             int[] Yarray_index = new int[y_step_num * y_step_num * 2];
             double[] Xarray_vol = new double[x_step_num + 1];
             double[] Yarray_vol = new double[y_step_num + 1];
@@ -290,7 +320,7 @@ namespace DeExampleCSharpWPF
             }
 
             Xarray_vol[x_step_num] = 1;
-            Yarray_vol[y_step_num] = 1;
+            Yarray_vol[y_step_num] = 1;*/
 
             double[] WaveformArray_Ch1 = { };
             // push 512*512*2 sized array to AWG
@@ -888,7 +918,9 @@ namespace DeExampleCSharpWPF
         // 2* x/y_scan_max will always be used as amplitute for two channels, in order to drive beam away in the end
         public void PushAWGsetting(int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol)
         {
-            ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
+            //ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
+            // Test for passive mode scan control
+            ScanControl_cz_passive.ScanControl_cz status = new ScanControl_cz_passive.ScanControl_cz(); 
             status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0);
 
             //status.ScanControlInitialize();
