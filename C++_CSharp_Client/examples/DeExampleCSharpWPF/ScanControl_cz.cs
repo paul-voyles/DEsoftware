@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using KeysightSD1;
 
-
 // AWG test code copied from Keysight with a few modifications
 namespace ScanControl_cz
 {
@@ -47,7 +46,8 @@ namespace ScanControl_cz
             moduleAOU.channelWaveShape(1, SD_Waveshapes.AOU_AWG);
             moduleAOU.channelAmplitude(2, x_amp);
             moduleAOU.channelWaveShape(2, SD_Waveshapes.AOU_AWG);
-
+            moduleAOU.waveformFlush();
+            
             // Convert array into list
 
             xpoints = new List<double>();
@@ -81,8 +81,8 @@ namespace ScanControl_cz
             for (WFinModuleCount = 0; WFinModuleCount < xpoints.Count; WFinModuleCount++)
             {
                 // with 16 reps when generate wave form, AWG generates the desired scan pattern, not sure why
-                var tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount] });   // WaveForm has to contain even number of points to activate padding option 1
-                status = moduleAOU.waveformLoad(tmpWaveform, WFinModuleCount + ypoints.Count, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
+                var tmpWaveform_X = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount] });   // WaveForm has to contain even number of points to activate padding option 1
+                status = moduleAOU.waveformLoad(tmpWaveform_X, WFinModuleCount, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
                 if (status < 0)
                 {
                     Console.WriteLine("Error while loading " + WFinModuleCount + " point from x array");
@@ -90,19 +90,23 @@ namespace ScanControl_cz
             }
             for (WFinModuleCount = 0; WFinModuleCount < xindex.Count; WFinModuleCount++)
             {
-                status = moduleAOU.AWGqueueWaveform(2, xindex[WFinModuleCount] + ypoints.Count, SD_TriggerModes.EXTTRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
+                status = moduleAOU.AWGqueueWaveform(2, xindex[WFinModuleCount], SD_TriggerModes.EXTTRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
                 if (status < 0)
                 {
                     Console.WriteLine("Error while queuing " + WFinModuleCount + " point from x array");
                 }
+                /*if (WFinModuleCount > 1023)
+                {
+                    Console.WriteLine(xindex[WFinModuleCount] + " Status: " + status + "\n");
+                }*/
             }
 
             // load waveform for channel 1 (Y)
 
             for (WFinModuleCount = 0; WFinModuleCount < ypoints.Count; WFinModuleCount++)
             {
-                var tmpWaveform = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount] });   // WaveForm has to contain even number of points to activate padding option 1
-                status = moduleAOU.waveformLoad(tmpWaveform, WFinModuleCount, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
+                var tmpWaveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount] });   // WaveForm has to contain even number of points to activate padding option 1
+                status = moduleAOU.waveformLoad(tmpWaveform_Y, WFinModuleCount, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
                 if (status < 0)
                 {
                     Console.WriteLine("Error while loading " + WFinModuleCount + " point from y array, error code " + status);
@@ -120,12 +124,18 @@ namespace ScanControl_cz
 
 
             // Configure queue to only one shot
-            moduleAOU.AWGqueueConfig(1, 1);
-            moduleAOU.AWGqueueConfig(2, 1);
+            moduleAOU.AWGqueueConfig(1, 0);
+            moduleAOU.AWGqueueConfig(2, 0);
 
             // Start both channel and wait for triggers
             moduleAOU.AWGstart(1);
             moduleAOU.AWGstart(2);
+
+            /*while (moduleAOU.AWGisRunning(1)==1)
+            {
+                Console.WriteLine(moduleAOU.AWGnWFplaying(1));
+                Thread.Sleep(10);
+            }*/
 
             return HW_STATUS_RETURNS.HW_SUCCESS;
 

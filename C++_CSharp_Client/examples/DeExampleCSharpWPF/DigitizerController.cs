@@ -69,8 +69,8 @@ namespace Digitizer
 
                 #region Channels Settings - Channel 1
                 Console.WriteLine("Configuring Channel 1...");
-                Console.WriteLine("Voltage range: 16V");
-                driver.Channels.get_Item("Channel1").Range = 16;
+                Console.WriteLine("Voltage range: 8V");
+                driver.Channels.get_Item("Channel1").Range = 8;
                 Console.WriteLine("Coupling: DC\n");
                 driver.Channels.get_Item("Channel1").Coupling = KtM9217VerticalCouplingEnum.KtM9217VerticalCouplingDC;
                 #endregion

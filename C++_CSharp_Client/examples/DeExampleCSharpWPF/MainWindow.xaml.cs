@@ -244,8 +244,8 @@ namespace DeExampleCSharpWPF
         // For DE camera in master mode, camera has to run to generate trigger signal
         public void Single_Acquire(object sender, RoutedEventArgs e)
         {
-            int x_step_num = 512;
-            int y_step_num = 512;
+            int x_step_num = 256;
+            int y_step_num = 256;
             int[] Xarray_index = new int[x_step_num * x_step_num * 2];
             int[] Yarray_index = new int[y_step_num * y_step_num * 2];
             double[] Xarray_vol = new double[x_step_num + 1];
@@ -263,7 +263,7 @@ namespace DeExampleCSharpWPF
                     }
                     else
                     {
-                        Xarray_index[iy * Convert.ToInt32(x_step_num) + ix] = 512 - ix - 1;
+                        Xarray_index[iy * Convert.ToInt32(x_step_num) + ix] = 256 - ix - 1;
                     }
                     Yarray_index[iy * Convert.ToInt32(x_step_num) + ix] = iy;
                 }
@@ -295,9 +295,9 @@ namespace DeExampleCSharpWPF
             double[] WaveformArray_Ch1 = { };
             // push 512*512*2 sized array to AWG
             PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol);
-            PushDigitizerSetting_defaultHAADF(WaveformArray_Ch1);
+            PushDigitizerSetting_defaultHAADF(ref WaveformArray_Ch1);
 
-            HAADFreconstrcution(WaveformArray_Ch1, 512, 512,0);
+            HAADFreconstrcution(WaveformArray_Ch1, 256, 256, 0);
 
         }
 
@@ -345,31 +345,26 @@ namespace DeExampleCSharpWPF
 
             // write to different bitmap for different options
 
-            int bytesPerPixel = (PixelFormats.Gray16.BitsPerPixel + 7) / 8;
-            int stride = 4 * (((int)size_x * bytesPerPixel + 3) / 4);
-            BitmapSource HAADFbmpSource = BitmapSource.Create((int)size_x, (int)size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
-            
+            int bytesPerPixel = 2;
+            int stride = size_x * bytesPerPixel;
+            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
+
+
 
             // invoke different image box source for different options
             if (option == 0)
             {
-                _wBmpHAADF = new WriteableBitmap(HAADFbmpSource.PixelWidth, HAADFbmpSource.PixelHeight, HAADFbmpSource.DpiX, HAADFbmpSource.DpiY, HAADFbmpSource.Format, HAADFbmpSource.Palette);
-                HAADF.Dispatcher.Invoke(
-                    (ThreadStart)delegate { HAADF.Source = _wBmpHAADF; }
-                );
+                HAADF.Source = HAADFbmpSource;
             }
 
             if (option == 1)
             {
-                _wBmpHAADFROI = new WriteableBitmap(HAADFbmpSource.PixelWidth, HAADFbmpSource.PixelHeight, HAADFbmpSource.DpiX, HAADFbmpSource.DpiY, HAADFbmpSource.Format, HAADFbmpSource.Palette);
-                HAADFacquisition.Dispatcher.Invoke(
-                    (ThreadStart)delegate { HAADFacquisition.Source = _wBmpHAADF; }
-                );
+                HAADFacquisition.Source = HAADFbmpSource;
             }
 
             // save HAADF raw data to csv file
 
-            string FullPath = HAADFPath.Text + "HAADF_Preview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h:mm:ss tt");
+ /*           string FullPath = HAADFPath.Text + "HAADF_Preview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h:mm:ss tt");
 
             System.IO.FileInfo fi = null;
             try
@@ -387,18 +382,18 @@ namespace DeExampleCSharpWPF
             else
             {
                 File.WriteAllText(FullPath, csv.ToString());
-            }
+            }*/
 
         }
 
         // Function used to write digitizer setting for default single HAADF acquisition
-        public void PushDigitizerSetting_defaultHAADF(double[] WaveformArray_Ch1)
+        public void PushDigitizerSetting_defaultHAADF(ref double[] WaveformArray_Ch1)
         {
 
             string sent;
             bool isNumeric = int.TryParse(FrameRate.Text, out int n);
             int record_size;
-            record_size = 512 * 512 * 10;
+            record_size = 256 * 256 * 10;
             record_size = Convert.ToInt32(record_size * 1.3);
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent;
