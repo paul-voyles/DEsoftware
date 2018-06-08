@@ -1,0 +1,15 @@
+SEQ file fomrat
+
+
+Starting Position(byte)	Length(format)	Meaning
+
+549			UINT32		dimension_x
+550			UINT32		dimension_y
+551			UINT32		bitdepth
+552			UINT32		bitdepth_real
+553			UINT32		image size in bytes
+573			UINT16		allocated number of frames
+581			UINT32		size of each image in bytes
+585			FLOAT32		frame rate
+592			INT32		description format
+8192			UINT16		data in each frame

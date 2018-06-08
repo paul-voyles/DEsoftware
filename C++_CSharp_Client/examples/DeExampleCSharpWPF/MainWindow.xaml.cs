@@ -246,10 +246,12 @@ namespace DeExampleCSharpWPF
         {
             int x_step_num = 512;
             int y_step_num = 512;
-            double[] Xarray = new double[512 * 512 * 2];
-            double[] Yarray = new double[512 * 512 * 2];
-            double x_step_size = (double)1 / (double)511;
-            double y_step_size = (double)1 / (double)511;
+            int[] Xarray_index = new int[x_step_num * x_step_num * 2];
+            int[] Yarray_index = new int[y_step_num * y_step_num * 2];
+            double[] Xarray_vol = new double[x_step_num + 1];
+            double[] Yarray_vol = new double[y_step_num + 1];
+            double x_step_size = 1 / (x_step_num - 1);
+            double y_step_size = 1 / (y_step_num - 1);
 
             for (int iy = 0; iy < y_step_num; iy++)
             {
@@ -257,30 +259,42 @@ namespace DeExampleCSharpWPF
                 {
                     if (iy % 2 == 0)
                     {
-                        Xarray[iy * Convert.ToInt32(x_step_num) + ix] = -0.5 + x_step_size * (double)ix;
+                        Xarray_index[iy * Convert.ToInt32(x_step_num) + ix] = ix;
                     }
                     else
                     {
-                        Xarray[iy * Convert.ToInt32(x_step_num) + ix] = 0.5 - x_step_size * (double)ix;
+                        Xarray_index[iy * Convert.ToInt32(x_step_num) + ix] = 512 - ix - 1;
                     }
-                    Yarray[iy * Convert.ToInt32(x_step_num) + ix] = -0.5 + y_step_size * (double)iy;
+                    Yarray_index[iy * Convert.ToInt32(x_step_num) + ix] = iy;
                 }
             }
 
-            for (int ix = Convert.ToInt32(x_step_num) * Convert.ToInt32(y_step_num); ix < Xarray.Length; ix++)
+            for (int ix = Convert.ToInt32(x_step_num) * Convert.ToInt32(y_step_num); ix < Xarray_index.Length; ix++)
             {
-                Xarray[ix] = 1;
-                //Xarray[ix] = 0.99;
+                Xarray_index[ix] = 1;
             }
 
-            for (int iy = Convert.ToInt32(y_step_num) * Convert.ToInt32(x_step_num); iy < Xarray.Length; iy++)
+            for (int iy = Convert.ToInt32(y_step_num) * Convert.ToInt32(x_step_num); iy < Yarray_index.Length; iy++)
             {
-                Yarray[iy] = 1;
-                //Yarray[iy] = 0.99;
+                Yarray_index[iy] = 1;
             }
+
+            for (int ix = 0; ix < x_step_num; ix++)
+            {
+                Xarray_vol[ix] = -0.5 + x_step_size * ix;
+            }
+
+            for (int iy = 0; iy < y_step_num; iy++)
+            {
+                Yarray_vol[iy] = -0.5 + y_step_size * iy;
+            }
+
+            Xarray_vol[x_step_num] = 1;
+            Yarray_vol[y_step_num] = 1;
+
             double[] WaveformArray_Ch1 = { };
             // push 512*512*2 sized array to AWG
-            // PushAWGsetting(Xarray, Yarray);  // needs to be modified to new AWG setting function
+            PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol);
             PushDigitizerSetting_defaultHAADF(WaveformArray_Ch1);
 
             HAADFreconstrcution(WaveformArray_Ch1, 512, 512,0);
@@ -290,13 +304,51 @@ namespace DeExampleCSharpWPF
         // Function used to reconstruct 2D matrix from 1D array acquired from digitizer
         // Input: Array: 1D array acquired, currently hardcoded to 10 samples per probe position, array size must be larger than 10*size_x*size_y
         //        size_x/size_y: target 2D matrix size in pixel
-        //        option: 0 for reconstruction on default image window, 1 for reconstruction on ROI window
+        //        option: 0 for reconstruction on default image window (512 px), 1 for reconstruction on ROI window (customized size)
 
         public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option)
         {
 
-            Bitmap HAADFbmp = new Bitmap(size_x, size_y);   // bitmap for recon purpose
-            BitmapSource HAADFbmpSource = ConvertBitmapSource(HAADFbmp); // convert bitmap to bitmapsource, then can be used to generate writable bitmap
+            // Generate new array for rescaled HAADF image
+            UInt16[] HAADF_rescale = new UInt16[size_x * size_y];
+
+            // Generate csv file to save HAADF raw array
+            var csv = new StringBuilder();
+
+            double Array_max = RawArray.Max();
+            double Array_min = RawArray.Min();
+            double scale = 65535 / (Array_max - Array_min);
+            double[] subArray = new double[9];
+            List<double> subArray_list = new List<double>();
+
+            for (int i = 0; i < size_x * size_y; i++)
+            {
+                Array.Copy(RawArray, i * 10 + 1, subArray, 0, 9);   // copy 9 elements from array each time
+                subArray_list.Clear();
+                subArray_list = subArray.ToList();
+                double average = subArray_list.Average();
+                var average_string = average.ToString();
+                csv.AppendLine(average_string);
+
+                // rescale each point to [0 65535]
+                int row = ( (i - i % size_x) / size_y );
+                if (row % 2 == 0)
+                {
+                    HAADF_rescale[i] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                }
+                else
+                {
+                    HAADF_rescale[size_x * ( row + 1 ) - i % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                }
+
+            }
+
+            // write to different bitmap for different options
+
+            int bytesPerPixel = (PixelFormats.Gray16.BitsPerPixel + 7) / 8;
+            int stride = 4 * (((int)size_x * bytesPerPixel + 3) / 4);
+            BitmapSource HAADFbmpSource = BitmapSource.Create((int)size_x, (int)size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
+            
 
             // invoke different image box source for different options
             if (option == 0)
@@ -315,59 +367,27 @@ namespace DeExampleCSharpWPF
                 );
             }
 
-            // Generate new array for rescaled HAADF image
-            UInt16[] HAADF_rescale = new UInt16[size_x * size_y];
-
-            // Generate csv file to save HAADF raw array
-            var csv = new StringBuilder();
-
-            double Array_max = RawArray.Max();
-            double Array_min = RawArray.Min();
-            double[] subArray = new double[9];
-            List<double> subArray_list = new List<double>();
-
-            for (int i = 0; i < size_x * size_y; i++)
-            {
-                Array.Copy(RawArray, i * 10 + 1, subArray, 0, 9);   // copy 9 elements from array each time
-                subArray_list.Clear();
-                subArray_list = subArray.ToList();
-                double average = subArray_list.Average();
-                var average_string = average.ToString();
-                csv.AppendLine(average_string);
-
-                int row = (int) ( (i - i % size_x) / size_y );
-                if (row % 2 == 0)
-                {
-                    HAADF_rescale[i] = (ushort)((average - Array_min) / (Array_max - Array_min));
-                }
-                else
-                {
-                    HAADF_rescale[size_x * ( row + 1 ) - i % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min));
-                }
-
-            }
-
-            // write to different bitmap for different options
-            if (option == 0)
-            {
-                this.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    _wBmpHAADF.WritePixels(new Int32Rect(0, 0, size_x, size_y), HAADF_rescale, size_x * 2, 0);
-
-                }));
-            }
-
-            if (option == 1)
-            {
-                this.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    _wBmpHAADFROI.WritePixels(new Int32Rect(0, 0, size_x, size_y), HAADF_rescale, size_x * 2, 0);
-
-                }));
-            }
+            // save HAADF raw data to csv file
 
             string FullPath = HAADFPath.Text + "HAADF_Preview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h:mm:ss tt");
-            //File.WriteAllText(FullPath, csv.ToString());
+
+            System.IO.FileInfo fi = null;
+            try
+            {
+                fi = new System.IO.FileInfo(FullPath);
+            }
+            catch (ArgumentException) { }
+            catch (System.IO.PathTooLongException) { }
+            catch (NotSupportedException) { }
+            if (ReferenceEquals(fi, null))
+            {
+                System.Windows.Forms.MessageBox.Show("HAADF saving path is not valid!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            else
+            {
+                File.WriteAllText(FullPath, csv.ToString());
+            }
 
         }
 
@@ -562,8 +582,58 @@ namespace DeExampleCSharpWPF
                 slider_outerang.Value = 1;
             }
             // call function to load MRC file and do reconstruction, MRC file when using DE server, SEQ file when using Streampix
+            
+            UInt32 sizex = 0;
+            UInt32 sizey = 0;
+            UInt16 numframe = 0;
+
             //ReadMRCfile();
-            FileLoader.SEQ.LoadSEQ(SEQPath.Text);
+            SEQ.LoadSEQheader(SEQPath.Text, ref sizex, ref sizey, ref numframe);
+            string sent;
+            sent = "A total " + numframe + " frames acquired on DE camera in " + SEQPath.Text + " .\n";
+            MessageBox.Text += sent;
+            sent = " Each frame has " + sizex + " by " + sizey + " pixels.\n";
+            MessageBox.Text += sent;
+            UInt16[] FirstFrame = new UInt16[sizex * sizey];
+            SEQ.LoadFirstFrame(SEQPath.Text, ref FirstFrame);
+
+
+            // downsampling and rescale first frame before display in 400x400 px image box
+            int ratio = (int)Math.Ceiling((double)sizex / 400);
+            int sizex_resize = (int)Math.Floor((double)sizex / (double)ratio);
+            int sizey_resize = (int)Math.Floor((double)sizey / (double)ratio);
+            UInt16[] FirstFrame_resize = new UInt16[sizex_resize * sizey_resize];
+            double[] subArray = new double[ratio];
+            List<double> subArray_list = new List<double>();
+
+            for (int j = 0; j < sizey_resize ; j++)
+            {
+                for (int i = 0; i < sizex_resize; i++)
+                {
+                    Array.Copy(FirstFrame, j * sizex + i * ratio, subArray, 0, ratio);
+                    subArray_list.Clear();
+                    subArray_list = subArray.ToList();
+                    if ((UInt16)subArray_list.Average() < 1500)
+                    {
+                        FirstFrame_resize[j * sizex_resize + i] = (UInt16)subArray_list.Average();
+                    }
+                }
+            }
+
+            UInt16 maxint = FirstFrame_resize.Max();
+            UInt16 minint = FirstFrame_resize.Min();
+            FirstFrame_resize = FirstFrame_resize.Select(r => (UInt16)( (double)r / (maxint - minint) * 65535)).ToArray();
+
+
+            int bytesPerPixel = 2;
+            int stride = sizex_resize * bytesPerPixel;
+            BitmapSource FirstFramebmpSource = BitmapSource.Create(sizex_resize, sizey_resize, 96,96, PixelFormats.Gray16, null, FirstFrame_resize, stride);
+            pictureBox1.Source = FirstFramebmpSource;
+        }
+
+        private void ReconFromSEQ_Click(object sender, RoutedEventArgs e)
+        {
+
         }
 
         // save the loaded mrc file to EMD format
@@ -744,7 +814,7 @@ namespace DeExampleCSharpWPF
 
             // push settings to AWG and digitizer, waiting for Xu's API to communicate to hardware
             // Must set AWG first otherwise software will pulse after push settings to digitizer
-            PushAWGsetting(Xarray, Yarray, Xarray_index, Yarray_index, Xarray_vol, Yarray_vol);
+            PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol);
             PushDigitizerSetting(WaveformArray_Ch1);
 
             //_deInterface.SetProperty("ROI Dimension X", "512");
@@ -764,12 +834,6 @@ namespace DeExampleCSharpWPF
             double y_scan_low = (double.Parse(StartY.Text) - 256)/256/2;
             double y_scan_high = (double.Parse(EndY.Text) - 256)/256/2;
 
-/*            // scan range in volt
-            x_scan_low = x_scan_min + (x_scan_max - x_scan_min) * x_scan_low;
-            x_scan_high = x_scan_min + (x_scan_max - x_scan_min) * x_scan_high;
-            y_scan_low = y_scan_min + (y_scan_max - y_scan_min) * y_scan_low;
-            y_scan_high = y_scan_min + (y_scan_max - y_scan_min) * y_scan_high;
-*/
             double x_step_num = double.Parse(PosX.Text);
             double y_step_num = double.Parse(PosY.Text);
 
@@ -779,8 +843,8 @@ namespace DeExampleCSharpWPF
 
 
             // current scheme uses sawtooth shaped wave
-
             // array that holds real voltage fraction for each index, final one saves 1
+
             for (int ix = 0; ix < x_step_num; ix++)
             {
                 Xarray_vol[ix] = x_scan_low + x_step_size * ix;
@@ -788,7 +852,7 @@ namespace DeExampleCSharpWPF
 
             for (int iy = 0; iy < y_step_num; iy++)
             {
-                Yarray_vol[iy] = y_scan_low + x_step_size * iy;
+                Yarray_vol[iy] = y_scan_low + y_step_size * iy;
             }
             Xarray_vol[(int)x_step_num] = (double)1;
             Yarray_vol[(int)y_step_num] = (double)1;
@@ -816,19 +880,18 @@ namespace DeExampleCSharpWPF
 
             for (int ix = Convert.ToInt32(x_step_num) * Convert.ToInt32(y_step_num); ix < Xarray.Length; ix++)
             {
-                //Xarray[ix] = 1;
                 Xarray_index[ix] = (int)x_step_num;
             }
 
             for (int iy = Convert.ToInt32(y_step_num) * Convert.ToInt32(x_step_num); iy < Xarray.Length; iy++)
             {
-                //Yarray[iy] = 1;
                 Yarray_index[iy] = (int)y_step_num;
             }
         }
 
         // Function used to write AWG setting onto Xu's API or Chenyu's API
-        public void PushAWGsetting(double[] Xarray, double[] Yarray, int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol)
+        // 2* x/y_scan_max will always be used as amplitute for two channels, in order to drive beam away in the end
+        public void PushAWGsetting(int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol)
         {
             ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
             status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0);
@@ -860,7 +923,7 @@ namespace DeExampleCSharpWPF
             //double[] WaveformArray_Ch1 = { };
             // this function can only be called when running on DE camera computer with Keysight libraries
             Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
-            // reconstruct and show image in ROI box
+            // reconstruct and show image in ROI box when data fetched from digitizer
             HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 1);
 
         }
@@ -1089,6 +1152,7 @@ namespace DeExampleCSharpWPF
 
         #endregion
 
+        #region old scheme to capture single image from DE camera
         public void SingleCapture()
         // Get a 16 bit gray scale image from the server and return a BitmapSource
         {
@@ -1149,6 +1213,9 @@ namespace DeExampleCSharpWPF
 
             return BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray16, null, image16, stride);
         }
+        #endregion
+
+        #region other functions related to image display and GUI
 
         // function used to extract 2D layer from 3D datacube, used for 1D array saving scheme
         public UInt16[] ExtractArray(UInt16[,,] DataCube, int layernum, int width, int height)
@@ -1450,26 +1517,28 @@ namespace DeExampleCSharpWPF
         {
 
         }
+        #endregion
+
 
     }
 
 
 
 
-        /*        #region INotifyPropertyChanged
+    /*        #region INotifyPropertyChanged
 
-                public event PropertyChangedEventHandler PropertyChanged;
-                private void NotifyPropertyChanged(String info)
+            public event PropertyChangedEventHandler PropertyChanged;
+            private void NotifyPropertyChanged(String info)
+            {
+                if (PropertyChanged != null)
                 {
-                    if (PropertyChanged != null)
-                    {
-                        PropertyChanged(this, new PropertyChangedEventArgs(info));
-                    }
+                    PropertyChanged(this, new PropertyChangedEventArgs(info));
                 }
+            }
 
-                #endregion
-        */
-    }
+            #endregion
+    */
+}
 
     public class Property
     {

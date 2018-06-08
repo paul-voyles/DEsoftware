@@ -27,45 +27,49 @@ using FileLoader;
 using System.Timers;
 using System.Drawing;
 using System.Windows.Forms;
-using HDF5DotNet;
 
-// copied from HDF5DotNet-src/examples/CSharpExample/CSharpExample1, cz 7/14/17
+// HDF5 part copied from HDF5DotNet-src/examples/CSharpExample/CSharpExample1, cz 7/14/17
 
 namespace FileLoader
 {
     class SEQ
     {
-        public static void LoadSEQ(string path)
+        public static void LoadSEQheader(string path, ref UInt32 sizex, ref UInt32 sizey, ref UInt16 numframes)
         {
             using (var filestream = File.Open(@path, FileMode.Open))
 
             using (var binaryStream = new BinaryReader(filestream))
             {
 
-                for (var i = 0; i < 548; i++)    // Go through useless bytes at the beginning of file
-                {
-                    binaryStream.ReadByte();
-                }   // 548 bytes loaded
-                UInt32 x_dim = binaryStream.ReadUInt32();
-                UInt32 y_dim = binaryStream.ReadUInt32();
-                // 556 bytes loaded
-                for (var i = 0; i < 16; i++)    // useless bytes
-                {
-                    binaryStream.ReadByte();
-                }   // 572 bytes
-                UInt16 numFrame = binaryStream.ReadUInt16();    // 574 bytes read
-                for (var i = 0; i < 10; i++)    // useless bytes
-                {
-                    binaryStream.ReadByte();
-                }   // 584 bytes
+                binaryStream.BaseStream.Seek(548, SeekOrigin.Begin);   // 548 bytes loaded
+                sizex = binaryStream.ReadUInt32();
+                sizey = binaryStream.ReadUInt32();
+                binaryStream.BaseStream.Seek(552, SeekOrigin.Begin);
+                UInt32 FrameSize = binaryStream.ReadUInt32();
+                binaryStream.BaseStream.Seek(572, SeekOrigin.Begin);
+                numframes = binaryStream.ReadUInt16();    // 574 bytes read
+                binaryStream.BaseStream.Seek(584, SeekOrigin.Begin);
                 double frameRate = binaryStream.ReadDouble();   // 592 bytes
+            }
 
-                //for (int iframe = 0; iframe < numFrame; int++)
-                for (var i = 0; i < 12; i++)    // 12 floating numbers, single
+        }
+
+        public static void LoadFirstFrame(string path, ref UInt16[] FirstFrame)
+        {
+            using (var filestream = File.Open(@path, FileMode.Open))
+
+            using (var binaryStream = new BinaryReader(filestream))
+            {
+                UInt32 framesize = 2105344; // number of bytes occupied by one frame
+                UInt32 pos = 8192 + framesize * 0;
+                int target = FirstFrame.GetUpperBound(0);
+                int count = 0;
+                binaryStream.BaseStream.Seek(pos, SeekOrigin.Begin);
+                while (count < target)
                 {
-                    binaryStream.ReadByte();
+                    FirstFrame[count] = binaryStream.ReadUInt16();
+                    count++;
                 }
-                Console.WriteLine('\n');
             }
 
         }
