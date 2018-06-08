@@ -55,6 +55,9 @@ namespace Digitizer
                 #region ActiveSource Settings
                 Console.WriteLine("Configuring ActiveSource source to External\n");
                 driver.Trigger.ActiveSource = ("External");
+                //driver.Trigger.PretriggerSamples = 0;
+                //driver.Trigger.Delay = 0;
+                //driver.Trigger.Holdoff = 0;
                 #endregion
 
                 #region Acquisition Settings
@@ -94,24 +97,15 @@ namespace Digitizer
                 #endregion
 
                 #region Fetch waveform data
-                //double[] WaveformArray_Ch1 = { };   // final wave will be saved here
                 long ActualPoints_Ch1 = 0;
                 long FirstValidPoint_Ch1 = 0;
                 double InitialXOffset_Ch1 = 0;
                 double InitialXTimeSeconds_Ch1 = 0.0;
                 double InitialXTimeFraction_Ch1 = 0.0;
                 double XIncrement_Ch1 = 0.0;
-                /*double[] WaveformArray_Ch2 = { };
-                long ActualPoints_Ch2 = 0;
-                long FirstValidPoint_Ch2 = 0;
-                double InitialXOffset_Ch2 = 0;
-                double InitialXTimeSeconds_Ch2 = 0.0;
-                double InitialXTimeFraction_Ch2 = 0.0;
-                double XIncrement_Ch2 = 0.0;*/
+
                 Console.WriteLine("Fetch Channel 1 acquired waveform...");
                 driver.Channels.get_Item("Channel1").Measurement.FetchWaveformReal64(ref WaveformArray_Ch1, ref ActualPoints_Ch1, ref FirstValidPoint_Ch1, ref InitialXOffset_Ch1, ref InitialXTimeSeconds_Ch1, ref InitialXTimeFraction_Ch1, ref XIncrement_Ch1);
-                //Console.WriteLine("Fetch Channel 2 acquired waveform...");
-                //driver.Channels.get_Item("Channel2").Measurement.FetchWaveformReal64(ref WaveformArray_Ch2, ref ActualPoints_Ch2, ref FirstValidPoint_Ch2, ref InitialXOffset_Ch2, ref InitialXTimeSeconds_Ch2, ref InitialXTimeFraction_Ch2, ref XIncrement_Ch2);
                 #endregion
 
             }

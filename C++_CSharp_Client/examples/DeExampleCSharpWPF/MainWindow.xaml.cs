@@ -248,11 +248,12 @@ namespace DeExampleCSharpWPF
             int x_step_num = 256;
             int y_step_num = 256;
             int[] Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
-            int[] Yarray_index = new int[y_step_num + 2];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away
-            double[] Xarray_vol = new double[x_step_num];
-            double[] Yarray_vol = new double[y_step_num + 1];
-            double x_step_size = 1 / (x_step_num - 1);
-            double y_step_size = 1 / (y_step_num - 1);
+            // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
+            int[] Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away
+            double[] Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
+            double[] Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
+            double x_step_size = 1 / (double)(x_step_num - 1);
+            double y_step_size = 1 / (double)(y_step_num - 1);
 
             for (int ix = 0; ix < x_step_num * 2; ix++)
             {
@@ -269,11 +270,13 @@ namespace DeExampleCSharpWPF
 
             for (int iy = 0; iy < y_step_num; iy++)
             {
-                Yarray_index[iy] = iy;
-                Yarray_vol[iy+1] = -0.5 + y_step_size * iy;
+                Yarray_index[iy+1] = iy;
+                Yarray_vol[iy] = -0.5 + y_step_size * iy;
             }
-            Yarray_vol[0] = 1;
-            Yarray_vol[y_step_num + 1] = 1;
+            Yarray_index[0] = y_step_num;
+            Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
+            Yarray_index[y_step_num + 2] = y_step_num;
+            Yarray_vol[y_step_num] = 1;
 
 
             /*int[] Xarray_index = new int[x_step_num * x_step_num * 2];
@@ -323,8 +326,14 @@ namespace DeExampleCSharpWPF
             Yarray_vol[y_step_num] = 1;*/
 
             double[] WaveformArray_Ch1 = { };
+            int recording_rate = Int32.Parse(FrameRate.Text);
             // push 512*512*2 sized array to AWG
-            PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol);
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, recording_rate);
+
+            }).Start();
             PushDigitizerSetting_defaultHAADF(ref WaveformArray_Ch1);
 
             HAADFreconstrcution(WaveformArray_Ch1, 256, 256, 0);
@@ -821,26 +830,47 @@ namespace DeExampleCSharpWPF
                 return;
             }
 
+            // passive scan settings
+            int[] Xarray_index = new int[Int32.Parse(PosX.Text) * 2];   // Xarray_index contains one round scan
+            // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
+            int[] Yarray_index = new int[Int32.Parse(PosY.Text) + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away
+            double[] Xarray_vol = new double[Int32.Parse(PosX.Text)];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
+            double[] Yarray_vol = new double[Int32.Parse(PosX.Text) + 1];   // Yarray_vol contains one more protection voltage
+            double x_step_size = 1 / (double)(Int32.Parse(PosX.Text) - 1);
+            double y_step_size = 1 / (double)(Int32.Parse(PosY.Text) - 1);
+
             // generate scan array padded to 2x size
-            double[] Xarray = new double[int.Parse(pxx) * int.Parse(pxy) * 2];
-            double[] Yarray = new double[int.Parse(pxx) * int.Parse(pxy) * 2];
-            // array that holds voltage index of each scan position
-            int[] Xarray_index = new int[Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 2];
-            int[] Yarray_index = new int[Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 2];
-            double[] Xarray_vol = new double[Int32.Parse(PosX.Text) + 1];
-            double[] Yarray_vol = new double[Int32.Parse(PosY.Text) + 1];
+             double[] Xarray = new double[int.Parse(pxx) * int.Parse(pxy) * 2];
+             double[] Yarray = new double[int.Parse(pxx) * int.Parse(pxy) * 2];
+             /*
+             // array that holds voltage index of each scan position
+             int[] Xarray_index = new int[Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 2];
+             int[] Yarray_index = new int[Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 2];
+             double[] Xarray_vol = new double[Int32.Parse(PosX.Text) + 1];
+             double[] Yarray_vol = new double[Int32.Parse(PosY.Text) + 1];*/
 
             double[] WaveformArray_Ch1 = { };
 
             sent = "A total " + pxx + " by " + pxy + "scan positions will be generated by arbitrary wave generator.\n";
             MessageBox.Text += sent;
 
+
+
             GenerateScanArray(ref Xarray, ref Yarray, ref Xarray_index, ref Yarray_index, ref Xarray_vol, ref Yarray_vol);
 
             // push settings to AWG and digitizer, waiting for Xu's API to communicate to hardware
-            // Must set AWG first otherwise software will pulse after push settings to digitizer
-            PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol);
+            // Push digitizer setting in a separate thread
+            
+            
+            int recording_rate = Int32.Parse(FrameRate.Text);
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol,recording_rate);
+
+            }).Start();
             PushDigitizerSetting(WaveformArray_Ch1);
+
 
             //_deInterface.SetProperty("ROI Dimension X", "512");
             //_deInterface.SetProperty("Image Size X", pxx);
@@ -859,69 +889,96 @@ namespace DeExampleCSharpWPF
             double y_scan_low = (double.Parse(StartY.Text) - 256)/256/2;
             double y_scan_high = (double.Parse(EndY.Text) - 256)/256/2;
 
-            double x_step_num = double.Parse(PosX.Text);
-            double y_step_num = double.Parse(PosY.Text);
+            int x_step_num = int.Parse(PosX.Text);
+            int y_step_num = int.Parse(PosY.Text);
 
             // step size in fraction
-            double x_step_size = (x_scan_high - x_scan_low) / (double)(x_step_num - 1);
-            double y_step_size = (y_scan_high - y_scan_low) / (double)(y_step_num - 1);
+            double x_step_size = (x_scan_high - x_scan_low) / (x_step_num - 1);
+            double y_step_size = (y_scan_high - y_scan_low) / (y_step_num - 1);
+
+            // passive scan setting
+
+            for (int ix = 0; ix < x_step_num * 2; ix++)
+            {
+                if (ix < x_step_num)
+                {
+                    Xarray_vol[ix] = x_scan_low + x_step_size * ix;
+                    Xarray_index[ix] = ix;
+                }
+                else
+                {
+                    Xarray_index[ix] = x_step_num * 2 - ix - 1;
+                }
+            }
+
+            for (int iy = 0; iy < y_step_num; iy++)
+            {
+                Yarray_index[iy + 1] = iy;
+                Yarray_vol[iy] = y_scan_low + y_step_size * iy;
+            }
+            Yarray_index[0] = y_step_num;
+            Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
+            Yarray_index[y_step_num + 2] = y_step_num;
+            Yarray_vol[y_step_num] = 1;
 
 
             // current scheme uses sawtooth shaped wave
             // array that holds real voltage fraction for each index, final one saves 1
 
-            for (int ix = 0; ix < x_step_num; ix++)
-            {
-                Xarray_vol[ix] = x_scan_low + x_step_size * ix;
-            }
+            /*           for (int ix = 0; ix < x_step_num; ix++)
+                       {
+                           Xarray_vol[ix] = x_scan_low + x_step_size * ix;
+                       }
 
-            for (int iy = 0; iy < y_step_num; iy++)
-            {
-                Yarray_vol[iy] = y_scan_low + y_step_size * iy;
-            }
-            Xarray_vol[(int)x_step_num] = (double)1;
-            Yarray_vol[(int)y_step_num] = (double)1;
+                       for (int iy = 0; iy < y_step_num; iy++)
+                       {
+                           Yarray_vol[iy] = y_scan_low + y_step_size * iy;
+                       }
+                       Xarray_vol[(int)x_step_num] = (double)1;
+                       Yarray_vol[(int)y_step_num] = (double)1;
 
 
-            for (int iy = 0; iy < y_step_num ; iy++)
-            {
-                for (int ix = 0; ix < x_step_num; ix++)
-                {
-                    if (iy%2 == 0)
-                    {
-                        //Xarray[iy * Convert.ToInt32(x_step_num) + ix] = x_scan_low + x_step_size * (double)ix;
-                        Xarray_index[iy * Convert.ToInt32(x_step_num) + ix] = ix;
-                    }
-                    else
-                    {
-                        //Xarray[iy * Convert.ToInt32(x_step_num) + ix] = x_scan_high - x_step_size * (double)ix;
-                        Xarray_index[iy * Convert.ToInt32(x_step_num) + ix] = Int32.Parse(PosX.Text) - ix - 1;
-                    }
-                    
-                    //Yarray[iy * Convert.ToInt32(x_step_num) + ix] = y_scan_low + y_step_size * (double)iy;
-                    Yarray_index[iy * Convert.ToInt32(x_step_num) + ix] = iy;
-                }
-            }
+                       for (int iy = 0; iy < y_step_num ; iy++)
+                       {
+                           for (int ix = 0; ix < x_step_num; ix++)
+                           {
+                               if (iy%2 == 0)
+                               {
+                                   //Xarray[iy * Convert.ToInt32(x_step_num) + ix] = x_scan_low + x_step_size * (double)ix;
+                                   Xarray_index[iy * Convert.ToInt32(x_step_num) + ix] = ix;
+                               }
+                               else
+                               {
+                                   //Xarray[iy * Convert.ToInt32(x_step_num) + ix] = x_scan_high - x_step_size * (double)ix;
+                                   Xarray_index[iy * Convert.ToInt32(x_step_num) + ix] = Int32.Parse(PosX.Text) - ix - 1;
+                               }
 
-            for (int ix = Convert.ToInt32(x_step_num) * Convert.ToInt32(y_step_num); ix < Xarray.Length; ix++)
-            {
-                Xarray_index[ix] = (int)x_step_num;
-            }
+                               //Yarray[iy * Convert.ToInt32(x_step_num) + ix] = y_scan_low + y_step_size * (double)iy;
+                               Yarray_index[iy * Convert.ToInt32(x_step_num) + ix] = iy;
+                           }
+                       }
 
-            for (int iy = Convert.ToInt32(y_step_num) * Convert.ToInt32(x_step_num); iy < Xarray.Length; iy++)
-            {
-                Yarray_index[iy] = (int)y_step_num;
-            }
+                       for (int ix = Convert.ToInt32(x_step_num) * Convert.ToInt32(y_step_num); ix < Xarray.Length; ix++)
+                       {
+                           Xarray_index[ix] = (int)x_step_num;
+                       }
+
+                       for (int iy = Convert.ToInt32(y_step_num) * Convert.ToInt32(x_step_num); iy < Xarray.Length; iy++)
+                       {
+                           Yarray_index[iy] = (int)y_step_num;
+                       }*/
         }
 
         // Function used to write AWG setting onto Xu's API or Chenyu's API
         // 2* x/y_scan_max will always be used as amplitute for two channels, in order to drive beam away in the end
-        public void PushAWGsetting(int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol)
+        public void PushAWGsetting(int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol, int recording_rate)
         {
             //ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
             // Test for passive mode scan control
-            ScanControl_cz_passive.ScanControl_cz status = new ScanControl_cz_passive.ScanControl_cz(); 
-            status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0);
+            
+            ScanControl_passive.ScanControl_cz status = new ScanControl_passive.ScanControl_cz(); 
+            status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate);
+            //status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0);
 
             //status.ScanControlInitialize();
             //status.SetScanParameter(Xarray, Yarray, 0); // Xarray, Yarray, delay (x10ns)

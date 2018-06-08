@@ -124,6 +124,7 @@
     <Compile Include="FileLoader.cs" />
     <Compile Include="ScanControl_cz.cs" />
     <Compile Include="ScanControl_cz_passive.cs" />
+    <Compile Include="ScanControl_passive.cs" />
     <Page Include="ImageView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
