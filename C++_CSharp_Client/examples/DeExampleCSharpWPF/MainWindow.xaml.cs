@@ -229,8 +229,8 @@ namespace DeExampleCSharpWPF
                 string ySize = "";
                 _deInterface.GetProperty("Image Size X", ref xSize);
                 _deInterface.GetProperty("Image Size Y", ref ySize);
-                PixelsX.Text = xSize;
-                PixelsY.Text = ySize;
+                //PixelsX.Text = xSize;
+                //PixelsY.Text = ySize;
             }
 
         }
@@ -386,18 +386,20 @@ namespace DeExampleCSharpWPF
 
             int bytesPerPixel = 2;
             int stride = size_x * bytesPerPixel;
-            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
+            
 
 
 
             // invoke different image box source for different options
             if (option == 0)
             {
+                BitmapSource HAADFbmpSource = BitmapSource.Create(512, 512, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
                 HAADF.Source = HAADFbmpSource;
             }
 
             if (option == 1)
             {
+                BitmapSource HAADFbmpSource = BitmapSource.Create(int.Parse(EndX.Text) - int.Parse(StartX.Text), int.Parse(EndY.Text) - int.Parse(StartY.Text), 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
                 HAADFacquisition.Source = HAADFbmpSource;
             }
 
@@ -567,6 +569,54 @@ namespace DeExampleCSharpWPF
             }
             folder = folder.Replace("\\", "/");
             SEQPath.Text = folder;
+            // call function to load MRC file and do reconstruction, MRC file when using DE server, SEQ file when using Streampix
+
+            UInt32 sizex = 0;
+            UInt32 sizey = 0;
+            UInt16 numframe = 0;
+
+            //ReadSEQfile();
+            SEQ.LoadSEQheader(SEQPath.Text, ref sizex, ref sizey, ref numframe);
+            string sent;
+            sent = "A total " + numframe + " frames acquired on DE camera in " + SEQPath.Text + " .\n";
+            MessageBox.Text += sent;
+            sent = " Each frame has " + sizex + " by " + sizey + " pixels.\n";
+            MessageBox.Text += sent;
+            UInt16[] FirstFrame = new UInt16[sizex * sizey];
+            SEQ.LoadFirstFrame(SEQPath.Text, ref FirstFrame);
+
+
+            // downsampling and rescale first frame before display in 400x400 px image box
+            int ratio = (int)Math.Ceiling((double)sizex / 400);
+            int sizex_resize = (int)Math.Floor((double)sizex / (double)ratio);
+            int sizey_resize = (int)Math.Floor((double)sizey / (double)ratio);
+            UInt16[] FirstFrame_resize = new UInt16[sizex_resize * sizey_resize];
+            double[] subArray = new double[ratio];
+            List<double> subArray_list = new List<double>();
+
+            for (int j = 0; j < sizey_resize; j++)
+            {
+                for (int i = 0; i < sizex_resize; i++)
+                {
+                    Array.Copy(FirstFrame, j * sizex + i * ratio, subArray, 0, ratio);
+                    subArray_list.Clear();
+                    subArray_list = subArray.ToList();
+                    if ((UInt16)subArray_list.Average() < 1500)
+                    {
+                        FirstFrame_resize[j * sizex_resize + i] = (UInt16)subArray_list.Average();
+                    }
+                }
+            }
+
+            UInt16 maxint = FirstFrame_resize.Max();
+            UInt16 minint = FirstFrame_resize.Min();
+            FirstFrame_resize = FirstFrame_resize.Select(r => (UInt16)((double)r / (maxint - minint) * 65535)).ToArray();
+
+
+            int bytesPerPixel = 2;
+            int stride = sizex_resize * bytesPerPixel;
+            BitmapSource FirstFramebmpSource = BitmapSource.Create(sizex_resize, sizey_resize, 96, 96, PixelFormats.Gray16, null, FirstFrame_resize, stride);
+            pictureBox1.Source = FirstFramebmpSource;
         }
 
 
@@ -621,7 +671,7 @@ namespace DeExampleCSharpWPF
             UInt32 sizey = 0;
             UInt16 numframe = 0;
 
-            //ReadMRCfile();
+            //ReadSEQfile();
             SEQ.LoadSEQheader(SEQPath.Text, ref sizex, ref sizey, ref numframe);
             string sent;
             sent = "A total " + numframe + " frames acquired on DE camera in " + SEQPath.Text + " .\n";
