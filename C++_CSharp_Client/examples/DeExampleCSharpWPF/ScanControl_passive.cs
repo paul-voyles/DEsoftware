@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using KeysightSD1;
+using DeExampleCSharpWPF;
 
 // 6/8/2018: test suggesting that there might be a limit on waveforms queued into AWG, try to get around this problem
 
@@ -27,6 +28,7 @@ namespace ScanControl_passive
         public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay, int recording_rate)
         {
             int status;
+            string sent;
             // Channel 1 for y scan and channel 2 for x scan
 
             //Create an instance of the AOU module

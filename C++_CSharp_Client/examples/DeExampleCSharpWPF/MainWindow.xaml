@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" 
         x:Class="DeExampleCSharpWPF.MainWindow"
         DataContext="{Binding RelativeSource={RelativeSource Self}}"
-        Title="MainWindow" Height="1000" Width="1600" Closing="Window_Closing" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen"
+        Title="ScanSoftware" Height="1000" Width="1600" Closing="Window_Closing" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen"
         PreviewMouseMove="window_PreviewMouseMove">
 
     <Grid Style="{DynamicResource SimpleButtonFocusVisual}">
@@ -13,8 +13,23 @@
             <RowDefinition Height="54*" />
             <RowDefinition Height="815*" />
         </Grid.RowDefinitions>
-
-        <StackPanel Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,0">
+        <StackPanel Orientation="Vertical" Grid.ColumnSpan="4">
+            <StackPanel Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,0" Height="30">
+                <MenuItem Header="File">
+                    <MenuItem Header="Close"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="Save">
+                    <MenuItem Header="Save HAADF image"></MenuItem>
+                    <MenuItem Header="Save HDF5 file"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="Load">
+                    <MenuItem Header="Load SEQ file" Click="SEQFilePath_Click"></MenuItem>
+                    <MenuItem Header="Load MRC file"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="About"></MenuItem>
+        </StackPanel>
+        
+        <StackPanel Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,0" Height="23">
             <TextBlock Margin="10,0,4,0" Text="IP:" VerticalAlignment="Center"/>
             <TextBox Margin="0,0,4,0" Text="127.0.0.1" VerticalAlignment="Center"  Width="75" x:Name="IPAddr" />
             <Button Click="btnConnect_Click" Content="Connect" Height="23" Margin="8,0,32,0" x:Name="btnConnect" Width="75" />
@@ -33,6 +48,8 @@
                 <TextBlock Margin="10,0,4,0" Text="Seconds:" />
                 <TextBlock Text="{Binding TotalSeconds}" />
             </StackPanel>
+
+        </StackPanel>
         </StackPanel>
 
         <StackPanel Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,0" Grid.Row="2">
@@ -109,8 +126,8 @@
 
                 <StackPanel  Orientation="Horizontal" Margin="0,20,0,0">
                     <Button x:Name="button" Content="Reset Setting" Height="33" Width="132" Margin="20,0,0,0" Click="Reset_settings" FontSize="18"/>
-                    <Button x:Name="button_Copy" Content="Acquire" Height="33" Width="132" Margin="30,0,0,0" FontSize="18" Click="Single_Acquire"/>
-                    <Button x:Name="Submit_Setting" Click="Submit_Setting_Click" Content="Submit Setting" Height="33" Margin="30,0,0,0" FontSize="18"  Width="132" />
+                    <Button x:Name="button_Copy" Content="Default Acquire" Height="33" Width="132" Margin="30,0,0,0" FontSize="18" Click="Single_Acquire"/>
+                    <Button x:Name="Submit_Setting" Click="Submit_Setting_Click" Content="ROI Acquire" Height="33" Margin="30,0,0,0" FontSize="18"  Width="132" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
@@ -134,10 +151,7 @@
 
                     <StackPanel Orientation="Vertical" Margin="40,0,0,0">
                         <TextBlock x:Name="textBlock1_Copy6" Height="20" Margin="0,40,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Scan grid setting:" VerticalAlignment="Bottom" Width="152"/>
-                        <TextBlock x:Name="textBlock1_Copy5"  Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Width="109.667" Text="X Pixels per frame:" HorizontalAlignment="Left"/>
-                        <TextBox x:Name="PixelsX" Height="20" Margin="0,0,0,0"  TextWrapping="Wrap" Text="256" Width="109" HorizontalAlignment="Left"/>
-                        <TextBlock x:Name="textBlock1_Copy4" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Width="114" HorizontalAlignment="Left"><Run Text="Y"/><Run Text=" Pixels per frame"/><Run Text=":"/></TextBlock>
-                        <TextBox x:Name="PixelsY" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="256" Width="109" HorizontalAlignment="Left"/>
+                        
                         <TextBlock x:Name="textBlock1_Copy8" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="60.667"><Run Text="X "/><Run Text="Positions"/><Run Text=":"/></TextBlock>
                         <TextBox x:Name="PosX" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="20" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
                         <TextBlock x:Name="textBlock1_Copy7" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="62" Text="Y Positions:"/>
