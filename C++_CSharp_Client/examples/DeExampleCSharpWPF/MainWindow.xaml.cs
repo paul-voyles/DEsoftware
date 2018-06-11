@@ -60,10 +60,10 @@ namespace DeExampleCSharpWPF
         private int nCount = 0;
 
         // scan voltage range calibrated from FEI internal scan system
-        public double x_scan_max = 1.5;
-        public double y_scan_max = 1.9;
-        public double x_scan_min = -1.5;
-        public double y_scan_min = -1.9;
+        public double x_scan_max = 0.15;
+        public double y_scan_max = 0.15;
+        public double x_scan_min = -0.15;
+        public double y_scan_min = -0.15;
 
 
         public decimal Fps
@@ -245,8 +245,8 @@ namespace DeExampleCSharpWPF
         public void Single_Acquire(object sender, RoutedEventArgs e)
         {
             // test for passive mode scan control
-            int x_step_num = 256;
-            int y_step_num = 256;
+            int x_step_num = Int32.Parse(PosX.Text);
+            int y_step_num = Int32.Parse(PosY.Text);
             int[] Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
             // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
             int[] Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away
@@ -336,7 +336,7 @@ namespace DeExampleCSharpWPF
             }).Start();
             PushDigitizerSetting_defaultHAADF(ref WaveformArray_Ch1);
 
-            HAADFreconstrcution(WaveformArray_Ch1, 256, 256, 0);
+            HAADFreconstrcution(WaveformArray_Ch1, x_step_num, y_step_num, 0);
 
         }
 
@@ -356,7 +356,7 @@ namespace DeExampleCSharpWPF
 
             double Array_max = RawArray.Max();
             double Array_min = RawArray.Min();
-            double scale = 65535 / (Array_max - Array_min);
+            double scale = 65535 / (Array_max - Array_min) /4;
             double[] subArray = new double[9];
             List<double> subArray_list = new List<double>();
 
@@ -371,7 +371,7 @@ namespace DeExampleCSharpWPF
 
                 // rescale each point to [0 65535]
                 int row = ( (i - i % size_x) / size_y );
-                if (row % 2 == 0)
+                if (row % 2 == 1)
                 {
                     HAADF_rescale[i] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
                 }
@@ -386,20 +386,18 @@ namespace DeExampleCSharpWPF
 
             int bytesPerPixel = 2;
             int stride = size_x * bytesPerPixel;
-            
+            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
 
 
 
             // invoke different image box source for different options
             if (option == 0)
             {
-                BitmapSource HAADFbmpSource = BitmapSource.Create(512, 512, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
                 HAADF.Source = HAADFbmpSource;
             }
 
             if (option == 1)
             {
-                BitmapSource HAADFbmpSource = BitmapSource.Create(int.Parse(EndX.Text) - int.Parse(StartX.Text), int.Parse(EndY.Text) - int.Parse(StartY.Text), 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
                 HAADFacquisition.Source = HAADFbmpSource;
             }
 
@@ -434,7 +432,7 @@ namespace DeExampleCSharpWPF
             string sent;
             bool isNumeric = int.TryParse(FrameRate.Text, out int n);
             int record_size;
-            record_size = 256 * 256 * 10;
+            record_size = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 10;
             record_size = Convert.ToInt32(record_size * 1.3);
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent;
@@ -569,54 +567,6 @@ namespace DeExampleCSharpWPF
             }
             folder = folder.Replace("\\", "/");
             SEQPath.Text = folder;
-            // call function to load MRC file and do reconstruction, MRC file when using DE server, SEQ file when using Streampix
-
-            UInt32 sizex = 0;
-            UInt32 sizey = 0;
-            UInt16 numframe = 0;
-
-            //ReadSEQfile();
-            SEQ.LoadSEQheader(SEQPath.Text, ref sizex, ref sizey, ref numframe);
-            string sent;
-            sent = "A total " + numframe + " frames acquired on DE camera in " + SEQPath.Text + " .\n";
-            MessageBox.Text += sent;
-            sent = " Each frame has " + sizex + " by " + sizey + " pixels.\n";
-            MessageBox.Text += sent;
-            UInt16[] FirstFrame = new UInt16[sizex * sizey];
-            SEQ.LoadFirstFrame(SEQPath.Text, ref FirstFrame);
-
-
-            // downsampling and rescale first frame before display in 400x400 px image box
-            int ratio = (int)Math.Ceiling((double)sizex / 400);
-            int sizex_resize = (int)Math.Floor((double)sizex / (double)ratio);
-            int sizey_resize = (int)Math.Floor((double)sizey / (double)ratio);
-            UInt16[] FirstFrame_resize = new UInt16[sizex_resize * sizey_resize];
-            double[] subArray = new double[ratio];
-            List<double> subArray_list = new List<double>();
-
-            for (int j = 0; j < sizey_resize; j++)
-            {
-                for (int i = 0; i < sizex_resize; i++)
-                {
-                    Array.Copy(FirstFrame, j * sizex + i * ratio, subArray, 0, ratio);
-                    subArray_list.Clear();
-                    subArray_list = subArray.ToList();
-                    if ((UInt16)subArray_list.Average() < 1500)
-                    {
-                        FirstFrame_resize[j * sizex_resize + i] = (UInt16)subArray_list.Average();
-                    }
-                }
-            }
-
-            UInt16 maxint = FirstFrame_resize.Max();
-            UInt16 minint = FirstFrame_resize.Min();
-            FirstFrame_resize = FirstFrame_resize.Select(r => (UInt16)((double)r / (maxint - minint) * 65535)).ToArray();
-
-
-            int bytesPerPixel = 2;
-            int stride = sizex_resize * bytesPerPixel;
-            BitmapSource FirstFramebmpSource = BitmapSource.Create(sizex_resize, sizey_resize, 96, 96, PixelFormats.Gray16, null, FirstFrame_resize, stride);
-            pictureBox1.Source = FirstFramebmpSource;
         }
 
 
@@ -671,7 +621,7 @@ namespace DeExampleCSharpWPF
             UInt32 sizey = 0;
             UInt16 numframe = 0;
 
-            //ReadSEQfile();
+            //ReadMRCfile();
             SEQ.LoadSEQheader(SEQPath.Text, ref sizex, ref sizey, ref numframe);
             string sent;
             sent = "A total " + numframe + " frames acquired on DE camera in " + SEQPath.Text + " .\n";
@@ -1048,7 +998,7 @@ namespace DeExampleCSharpWPF
             }
             int record_size;
             record_size = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 10;
-            record_size = Convert.ToInt32(record_size * 1.3);
+            record_size = Convert.ToInt32(record_size );
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent ;
             int recording_rate = Int32.Parse(FrameRate.Text) * 10;

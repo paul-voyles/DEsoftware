@@ -147,10 +147,11 @@ namespace ScanControl_passive
 
             int ncycle = 0;
             Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1));
-            while (moduleAOU.AWGnWFplaying(2)==0)
+            while (moduleAOU.AWGnWFplaying(2)==0)   // x channel may not be at zero when no trigger come, replace with AWGisRunning
             {
                 // Empty loop wait for trigger to come
             }
+
             // Now cycle start
             moduleAOU.AWGtrigger(1);    // trigger Y channel to first value
             Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1));
@@ -158,25 +159,23 @@ namespace ScanControl_passive
 
             while ((ncycle < yindex.Count - 2) && Convert.ToBoolean(moduleAOU.AWGisRunning(2)))
             {
-                //Console.WriteLine(moduleAOU.AWGnWFplaying(2));
-                if(moduleAOU.AWGnWFplaying(2)==ypoints.Count - 2 )
+                while(moduleAOU.AWGnWFplaying(2) != ypoints.Count - 2)
                 {
-                    // moduleAOU.AWGjumpNextWaveform(1);
-                    ncycle++;
-                    moduleAOU.AWGtrigger(1);
-                    Console.WriteLine("Jump to cycle "+ ncycle + " now on Y channel: " + moduleAOU.AWGnWFplaying(1) + " now on X channel : " + moduleAOU.AWGnWFplaying(2));
-                    System.Threading.Thread.Sleep(pause_ms*2);
+                   // empty loop wait for x channel to play last waveform
                 }
-                if (moduleAOU.AWGnWFplaying(2)==0)
+                ncycle++;
+                moduleAOU.AWGtrigger(1);
+                Console.WriteLine("Jump to cycle " + ncycle + " now on Y channel: " + moduleAOU.AWGnWFplaying(1) + " now on X channel : " + moduleAOU.AWGnWFplaying(2));
+                System.Threading.Thread.Sleep(pause_ms * 2);
+                while ( moduleAOU.AWGnWFplaying(2) != 0 )
                 {
-                    //moduleAOU.AWGjumpNextWaveform(1);
-                    ncycle++;
-                    moduleAOU.AWGtrigger(1);
-                    Console.WriteLine("Jump to cycle " + ncycle + " now on Y channel: " + moduleAOU.AWGnWFplaying(1) + " now on X channel : " + moduleAOU.AWGnWFplaying(2));
-                    System.Threading.Thread.Sleep(pause_ms*2);
+                    // empty loop wait for x channel to play first waveform
                 }
+                ncycle++;
+                moduleAOU.AWGtrigger(1);
+                Console.WriteLine("Jump to cycle " + ncycle + " now on Y channel: " + moduleAOU.AWGnWFplaying(1) + " now on X channel : " + moduleAOU.AWGnWFplaying(2));
+                System.Threading.Thread.Sleep(pause_ms * 2);
             }
-            //moduleAOU.AWGtrigger(1);    // when all cycles are finished, send a trigger to Y channel to generate protection voltage
 
 
             // after all cycles finished, sleep for 5 sec before stop AWG
