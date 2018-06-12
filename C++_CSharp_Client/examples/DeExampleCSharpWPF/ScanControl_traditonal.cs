@@ -96,10 +96,6 @@ namespace ScanControl_traditional
                 {
                     Console.WriteLine("Error while queuing " + WFinModuleCount + " point from x array");
                 }
-                /*if (WFinModuleCount > 1023)
-                {
-                    Console.WriteLine(xindex[WFinModuleCount] + " Status: " + status + "\n");
-                }*/
             }
 
             // load waveform for channel 1 (Y)
@@ -133,6 +129,8 @@ namespace ScanControl_traditional
             // Start both channel and wait for triggers
             moduleAOU.AWGstart(1);
             moduleAOU.AWGstart(2);
+
+            Console.WriteLine("Scanning in traditional way with " + Xarray_index.Count() + " points.");
 
             int ncycle = 0;
             while (ncycle<256)
