@@ -5,10 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using KeysightSD1;
 
-// 6/8/2018: test suggesting that there might be a limit on waveforms queued into AWG, try to get around this problem
-
+// 6/11/2018: Modified this scan control procedure to do conventional scan
 // AWG test code copied from Keysight with a few modifications
-namespace ScanControl_cz_passive
+namespace ScanControl_traditional
 {
     public enum HW_STATUS_RETURNS
     {
@@ -24,7 +23,7 @@ namespace ScanControl_cz_passive
         private List<int> xindex;
         private List<int> yindex;
 
-        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay)
+        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay, int recording_rate)
         {
             int status;
             // Channel 1 for y scan and channel 2 for x scan
@@ -129,6 +128,7 @@ namespace ScanControl_cz_passive
             // Configure X channel to cyclic mode
             moduleAOU.AWGqueueConfig(1, 0);
             moduleAOU.AWGqueueConfig(2, 1);
+
 
             // Start both channel and wait for triggers
             moduleAOU.AWGstart(1);

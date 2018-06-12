@@ -65,6 +65,9 @@ namespace DeExampleCSharpWPF
         public double x_scan_min = -0.15;
         public double y_scan_min = -0.15;
 
+        // scan scheme, 0 for conventional, 1 for serpentine
+        public int scan_scheme = 0;
+
 
         public decimal Fps
         {
@@ -247,87 +250,73 @@ namespace DeExampleCSharpWPF
             // test for passive mode scan control
             int x_step_num = Int32.Parse(PosX.Text);
             int y_step_num = Int32.Parse(PosY.Text);
-            int[] Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
-            // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
-            int[] Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away
-            double[] Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
-            double[] Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
+            int[] Xarray_index;
+            int[] Yarray_index;
+            double[] Xarray_vol;
+            double[] Yarray_vol;
             double x_step_size = 1 / (double)(x_step_num - 1);
             double y_step_size = 1 / (double)(y_step_num - 1);
 
-            for (int ix = 0; ix < x_step_num * 2; ix++)
+            // Conventional scan scheme, without compensate for flyback error, also no protection voltage used here\
+            if (scan_scheme == 0)
             {
-                if (ix < x_step_num)
+                Xarray_index = new int[x_step_num];
+                Yarray_index = new int[y_step_num];
+                Xarray_vol = new double[x_step_num];
+                Yarray_vol = new double[y_step_num + 1];
+
+                for (int ix = 0; ix < x_step_num * 2; ix++)
                 {
-                    Xarray_vol[ix] = -0.5 + x_step_size * ix;
                     Xarray_index[ix] = ix;
+                    Xarray_vol[ix] = -0.5 + x_step_size * ix;
                 }
-                else
+
+                for (int iy = 0; iy < y_step_num; iy++)
                 {
-                    Xarray_index[ix] = x_step_num * 2 - ix - 1;
+                    Yarray_index[iy] = iy;
+                    Yarray_vol[iy] = -0.5 + y_step_size * iy;
                 }
+
             }
 
-            for (int iy = 0; iy < y_step_num; iy++)
+            // serpentine scan scheme
+            else
             {
-                Yarray_index[iy+1] = iy;
-                Yarray_vol[iy] = -0.5 + y_step_size * iy;
-            }
-            Yarray_index[0] = y_step_num;
-            Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
-            Yarray_index[y_step_num + 2] = y_step_num;
-            Yarray_vol[y_step_num] = 1;
+                Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
+                // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
+                Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away, not sure whether this +3 is causing problem
+                Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
+                Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
 
-
-            /*int[] Xarray_index = new int[x_step_num * x_step_num * 2];
-            int[] Yarray_index = new int[y_step_num * y_step_num * 2];
-            double[] Xarray_vol = new double[x_step_num + 1];
-            double[] Yarray_vol = new double[y_step_num + 1];
-            double x_step_size = 1 / (x_step_num - 1);
-            double y_step_size = 1 / (y_step_num - 1);
-
-            for (int iy = 0; iy < y_step_num; iy++)
-            {
-                for (int ix = 0; ix < x_step_num; ix++)
+                for (int ix = 0; ix < x_step_num * 2; ix++)
                 {
-                    if (iy % 2 == 0)
+                    if (ix < x_step_num)
                     {
-                        Xarray_index[iy * Convert.ToInt32(x_step_num) + ix] = ix;
+                        Xarray_vol[ix] = -0.5 + x_step_size * ix;
+                        Xarray_index[ix] = ix;
                     }
                     else
                     {
-                        Xarray_index[iy * Convert.ToInt32(x_step_num) + ix] = 256 - ix - 1;
+                        Xarray_index[ix] = x_step_num * 2 - ix - 1;
                     }
-                    Yarray_index[iy * Convert.ToInt32(x_step_num) + ix] = iy;
                 }
+
+                for (int iy = 0; iy < y_step_num; iy++)
+                {
+                    Yarray_index[iy + 1] = iy;
+                    Yarray_vol[iy] = -0.5 + y_step_size * iy;
+                }
+                Yarray_index[0] = y_step_num;
+                Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
+                Yarray_index[y_step_num + 2] = y_step_num;
+                Yarray_vol[y_step_num] = 1;
+
             }
 
-            for (int ix = Convert.ToInt32(x_step_num) * Convert.ToInt32(y_step_num); ix < Xarray_index.Length; ix++)
-            {
-                Xarray_index[ix] = 1;
-            }
-
-            for (int iy = Convert.ToInt32(y_step_num) * Convert.ToInt32(x_step_num); iy < Yarray_index.Length; iy++)
-            {
-                Yarray_index[iy] = 1;
-            }
-
-            for (int ix = 0; ix < x_step_num; ix++)
-            {
-                Xarray_vol[ix] = -0.5 + x_step_size * ix;
-            }
-
-            for (int iy = 0; iy < y_step_num; iy++)
-            {
-                Yarray_vol[iy] = -0.5 + y_step_size * iy;
-            }
-
-            Xarray_vol[x_step_num] = 1;
-            Yarray_vol[y_step_num] = 1;*/
+            // AWG and Digitizer setting part is same for conventional and serpentine scan
 
             double[] WaveformArray_Ch1 = { };
             int recording_rate = Int32.Parse(FrameRate.Text);
-            // push 512*512*2 sized array to AWG
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
@@ -975,14 +964,17 @@ namespace DeExampleCSharpWPF
         {
             //ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
             // Test for passive mode scan control
-            
-            ScanControl_passive.ScanControl_cz status = new ScanControl_passive.ScanControl_cz(); 
-            status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate);
-            //status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0);
 
-            //status.ScanControlInitialize();
-            //status.SetScanParameter(Xarray, Yarray, 0); // Xarray, Yarray, delay (x10ns)
-            //status.StartScan();                         // start scan and wait for trigger signals
+            if (scan_scheme == 1)
+            {
+                ScanControl_passive.ScanControl_cz status = new ScanControl_passive.ScanControl_cz();
+                status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate);
+            }
+            else
+            {
+                ScanControl_traditional.ScanControl_cz status = new ScanControl_traditional.ScanControl_cz();
+                status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate);
+            }
         }
 
         // Function used to write digitizer setting based on scan grid and frame rate setting
