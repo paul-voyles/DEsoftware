@@ -263,9 +263,9 @@ namespace DeExampleCSharpWPF
                 Xarray_index = new int[x_step_num];
                 Yarray_index = new int[y_step_num];
                 Xarray_vol = new double[x_step_num];
-                Yarray_vol = new double[y_step_num + 1];
+                Yarray_vol = new double[y_step_num];
 
-                for (int ix = 0; ix < x_step_num * 2; ix++)
+                for (int ix = 0; ix < x_step_num; ix++)
                 {
                     Xarray_index[ix] = ix;
                     Xarray_vol[ix] = -0.5 + x_step_size * ix;
@@ -345,7 +345,7 @@ namespace DeExampleCSharpWPF
 
             double Array_max = RawArray.Max();
             double Array_min = RawArray.Min();
-            double scale = 65535 / (Array_max - Array_min) /4;
+            double scale = 65535 / (Array_max - Array_min)/4;
             double[] subArray = new double[9];
             List<double> subArray_list = new List<double>();
 
@@ -360,13 +360,20 @@ namespace DeExampleCSharpWPF
 
                 // rescale each point to [0 65535]
                 int row = ( (i - i % size_x) / size_y );
-                if (row % 2 == 1)
+                if (scan_scheme == 1)
                 {
-                    HAADF_rescale[i] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                    if (row % 2 == 1)
+                    {
+                        HAADF_rescale[i] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                    }
+                    else
+                    {
+                        HAADF_rescale[size_x * (row + 1) - i % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                    }
                 }
                 else
                 {
-                    HAADF_rescale[size_x * ( row + 1 ) - i % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                    HAADF_rescale[size_x * (row + 1) - i % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
                 }
 
             }
@@ -375,7 +382,7 @@ namespace DeExampleCSharpWPF
 
             int bytesPerPixel = 2;
             int stride = size_x * bytesPerPixel;
-            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
+            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);    // flip LR to match TIA display, didn't flip UD
 
 
 
@@ -392,8 +399,9 @@ namespace DeExampleCSharpWPF
 
             // save HAADF raw data to csv file
 
- /*           string FullPath = HAADFPath.Text + "HAADF_Preview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h:mm:ss tt");
+            string FullPath = HAADFPath.Text + "HAADF_Preview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h_mm_ss_tt") + ".csv";
 
+            
             System.IO.FileInfo fi = null;
             try
             {
@@ -410,7 +418,7 @@ namespace DeExampleCSharpWPF
             else
             {
                 File.WriteAllText(FullPath, csv.ToString());
-            }*/
+            }
 
         }
 
@@ -422,7 +430,7 @@ namespace DeExampleCSharpWPF
             bool isNumeric = int.TryParse(FrameRate.Text, out int n);
             int record_size;
             record_size = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 10;
-            record_size = Convert.ToInt32(record_size * 1.3);
+            record_size = Convert.ToInt32(record_size * 1.01);
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent;
             int recording_rate = Int32.Parse(FrameRate.Text) * 10;

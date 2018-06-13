@@ -190,7 +190,7 @@
 
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
                     <Button Click="HAADFFilePath_Click" Content="Select HAADF file saving path" Margin="0,0,0,0" x:Name="HAADFFilePath" Visibility="Visible"  HorizontalAlignment="Right" Width="170" RenderTransformOrigin="0.439,3.913" Height="23" VerticalAlignment="Top"/>
-                    <TextBox x:Name="HAADFPath" Grid.Column="3" Height="23" Width="200" Margin="10,0,0,0" Text="D:/RawFrames" VerticalAlignment="Top"/>
+                    <TextBox x:Name="HAADFPath" Grid.Column="3" Height="23" Width="200" Margin="10,0,0,0" Text="D:/Archive/ScanSystem/HAADFpreview/" VerticalAlignment="Top"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">

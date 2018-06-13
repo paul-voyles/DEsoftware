@@ -125,30 +125,43 @@ namespace ScanControl_traditional
             moduleAOU.AWGqueueConfig(1, 0);
             moduleAOU.AWGqueueConfig(2, 1);
 
+            // determine how long to pause after each jump based on frame rate
+            int pause_ms = 1;
+            double frametime = 1000 / (double)recording_rate;
+            if (frametime > 1)
+            {
+                pause_ms = (int)Math.Ceiling(frametime);
+            }
+            int ncycle = 0;
 
             // Start both channel and wait for triggers
             moduleAOU.AWGstart(1);
-            moduleAOU.AWGstart(2);
+            moduleAOU.AWGstart(2);  // after AWGstart(2), AWGisRunning(2) = 1, AWGnWFplaying(2) = 0, same for channel 1
+
+            Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1) + " Now on X channel: " + moduleAOU.AWGnWFplaying(2) + "_" + moduleAOU.AWGisRunning(2));
+            while (moduleAOU.AWGnWFplaying(2) == 0)   // x channel may not be at zero when no trigger come, replace with AWGisRunning
+            {
+                // Empty loop wait for trigger to come
+            }
+
+            // Now cycle start
+            Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1));
+            ncycle++;   // ncycle=1, currently working on cycle 1
 
             Console.WriteLine("Scanning in traditional way with " + Xarray_index.Count() + " points.");
 
-            int ncycle = 0;
-            while (ncycle<256)
+            while (ncycle < yindex.Count())
             {
-                if(moduleAOU.AWGnWFplaying(1)==255)
+                if(moduleAOU.AWGnWFplaying(2)==yindex.Count()-1)
                 {
-                    moduleAOU.AWGjumpNextWaveform(2);
                     ncycle++;
-                }
-                if (moduleAOU.AWGnWFplaying(1)==0)
-                {
-                    moduleAOU.AWGjumpNextWaveform(2);
-                    ncycle++;
+                    moduleAOU.AWGtrigger(1);
+                    Console.WriteLine("Jump to cycle " + ncycle + " now on Y channel: " + moduleAOU.AWGnWFplaying(1) + " now on X channel : " + moduleAOU.AWGnWFplaying(2));
+                    System.Threading.Thread.Sleep(pause_ms * 2);
                 }
             }
 
-            // after all cycles finished, sleep for 5 sec before stop AWG
-            //Thread.Sleep(5000);
+            // after all cycles finished
             moduleAOU.AWGstop(1);
             moduleAOU.AWGstop(2);
 
