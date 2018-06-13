@@ -78,7 +78,7 @@ namespace ScanControl_traditional
             int WFinModuleCount;
 
 
-            // load waveform for channel 2 (X)
+            /// load waveform for channel 2 (X)
             for (WFinModuleCount = 0; WFinModuleCount < xpoints.Count; WFinModuleCount++)
             {
                 // with 16 reps when generate wave form, AWG generates the desired scan pattern, not sure why
@@ -91,14 +91,16 @@ namespace ScanControl_traditional
             }
             for (WFinModuleCount = 0; WFinModuleCount < xindex.Count; WFinModuleCount++)
             {
-                status = moduleAOU.AWGqueueWaveform(2, xindex[WFinModuleCount], SD_TriggerModes.EXTTRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
+                // loop x array
+                status = moduleAOU.AWGqueueWaveform(2, xindex[WFinModuleCount], SD_TriggerModes.EXTTRIG, 0, Yarray_index.Count(), 0);// AWG, waveform#, trigger, delay, cycle,prescaler
                 if (status < 0)
                 {
                     Console.WriteLine("Error while queuing " + WFinModuleCount + " point from x array");
                 }
             }
+            // after waveform queued, it doesn't matter what is inside waveform pool
 
-            // load waveform for channel 1 (Y)
+            /// load waveform for channel 1 (Y)
 
             for (WFinModuleCount = 0; WFinModuleCount < ypoints.Count; WFinModuleCount++)
             {
@@ -119,6 +121,16 @@ namespace ScanControl_traditional
                     Console.WriteLine("Error while queuing " + WFinModuleCount + " point from y array, error code " + status);
                 }
             }
+
+            // create protection waveform for x and y
+            // x protection waveform runs 1024 cycles with trigger
+            var protWaveform_X = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { 1 });
+            status = moduleAOU.waveformLoad(protWaveform_X, 0, 1);  // use pos 0 at waveform pool
+            status = moduleAOU.AWGqueueWaveform(2, 0, SD_TriggerModes.EXTTRIG, 0, 1024, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
+            // y protection waveform runs only once controlled by software
+            var protWaveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { 1 });
+            status = moduleAOU.waveformLoad(protWaveform_Y, 0, 1);  // use pos 0 at waveform pool
+            status = moduleAOU.AWGqueueWaveform(1, 0, SD_TriggerModes.EXTTRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
 
 
             // Configure X channel to cyclic mode
