@@ -316,16 +316,37 @@ namespace DeExampleCSharpWPF
             // AWG and Digitizer setting part is same for conventional and serpentine scan
 
             double[] WaveformArray_Ch1 = { };
-            int recording_rate = Int32.Parse(FrameRate.Text);
+
+            string sent;
+            bool isNumeric = int.TryParse(FrameRate.Text, out int n);
+            if (!isNumeric)
+            {
+                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            int record_size;
+            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            int SamplesPerFrame;
+
+            recording_rate = RecordingRateLookup(recording_rate);
+            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent;
+
+            SamplesPerFrame = (int)Math.Floor((double)(recording_rate / Int32.Parse(FrameRate.Text)));
+            record_size = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * SamplesPerFrame;
+            record_size = Convert.ToInt32(record_size * 1.01);
+            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
+            MessageBox.Text += sent;
+
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
                 PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, recording_rate);
 
             }).Start();
-            PushDigitizerSetting_defaultHAADF(ref WaveformArray_Ch1);
+            PushDigitizerSetting(WaveformArray_Ch1);
 
-            HAADFreconstrcution(WaveformArray_Ch1, x_step_num, y_step_num, 0);
+            HAADFreconstrcution(WaveformArray_Ch1, x_step_num, y_step_num, 0, SamplesPerFrame);
 
         }
 
@@ -334,7 +355,7 @@ namespace DeExampleCSharpWPF
         //        size_x/size_y: target 2D matrix size in pixel
         //        option: 0 for reconstruction on default image window (512 px), 1 for reconstruction on ROI window (customized size)
 
-        public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option)
+        public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option, int SamplesPerFrame)
         {
 
             // Generate new array for rescaled HAADF image
@@ -351,7 +372,8 @@ namespace DeExampleCSharpWPF
 
             for (int i = 0; i < size_x * size_y; i++)
             {
-                Array.Copy(RawArray, i * 10 + 1, subArray, 0, 9);   // copy 9 elements from array each time
+                // Now we assume dead time is shorter than first frame expo time, may need to change in the future
+                Array.Copy(RawArray, i * SamplesPerFrame + 1, subArray, 0, SamplesPerFrame - 1);   // copy SamplesPerFrame-1 elements from array each time
                 subArray_list.Clear();
                 subArray_list = subArray.ToList();
                 double average = subArray_list.Average();
@@ -419,25 +441,6 @@ namespace DeExampleCSharpWPF
             {
                 File.WriteAllText(FullPath, csv.ToString());
             }
-
-        }
-
-        // Function used to write digitizer setting for default single HAADF acquisition
-        public void PushDigitizerSetting_defaultHAADF(ref double[] WaveformArray_Ch1)
-        {
-
-            string sent;
-            bool isNumeric = int.TryParse(FrameRate.Text, out int n);
-            int record_size;
-            record_size = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 10;
-            record_size = Convert.ToInt32(record_size * 1.01);
-            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
-            MessageBox.Text += sent;
-            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
-            sent = "Digitizer frame rate is set to " + recording_rate + " samples per second.\n";
-            MessageBox.Text += sent;
-            // this function can only be called when running on DE camera computer with Keysight libraries
-            Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
 
         }
 
@@ -997,19 +1000,59 @@ namespace DeExampleCSharpWPF
                 return;
             }
             int record_size;
-            record_size = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * 10;
-            record_size = Convert.ToInt32(record_size );
+            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            int SamplesPerFrame;
+
+            recording_rate = RecordingRateLookup(recording_rate);
+            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent;
+
+            SamplesPerFrame = (int)Math.Floor((double)(recording_rate / Int32.Parse(FrameRate.Text)));
+            record_size = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * SamplesPerFrame;
+            record_size = Convert.ToInt32(record_size * 1.01 );
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent ;
-            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
-            sent = "Digitizer frame rate is set to " + recording_rate + " samples per second.\n";
-            MessageBox.Text += sent ;
-            //double[] WaveformArray_Ch1 = { };
+            
+
             // this function can only be called when running on DE camera computer with Keysight libraries
             Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
             // reconstruct and show image in ROI box when data fetched from digitizer
-            HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 1);
+            HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 1, SamplesPerFrame);
 
+        }
+
+        public int RecordingRateLookup(int recording_rate)
+        {
+            int refined_rate = recording_rate;
+            if (recording_rate < 1000)
+            {
+                refined_rate = 1000;
+            }
+            else if (recording_rate < 2000)
+            {
+                refined_rate = 2000;
+            }
+            else if (recording_rate < 5000)
+            {
+                refined_rate = 5000;
+            }
+            else if (recording_rate < 10000)
+            {
+                refined_rate = 10000;
+            }
+            else if (recording_rate < 20000)
+            {
+                refined_rate = 20000;
+            }
+            else if (recording_rate < 50000)
+            {
+                refined_rate = 50000;
+            }
+            else
+            {
+                refined_rate = 100000;
+            }
+            return refined_rate;
         }
 
         #endregion
