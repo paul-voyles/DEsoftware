@@ -40,7 +40,7 @@ namespace Digitizer
                 driver.Initialize(resourceDesc, idquery, reset, initOptions);
                 Console.WriteLine("Driver Initialized\n");
                 #endregion
-
+/*
                 #region Print Driver Properties
                 Console.WriteLine("Identifier: {0}", driver.Identity.Identifier);
                 Console.WriteLine("Revision: {0}", driver.Identity.Revision);
@@ -51,7 +51,7 @@ namespace Digitizer
                 Console.WriteLine("Serial #: {0}", driver.System.SerialNumber);
                 Console.WriteLine("\nSimulate: {0}\n", driver.DriverOperation.Simulate);
                 #endregion
-
+*/
                 #region ActiveSource Settings
                 Console.WriteLine("Configuring ActiveSource source to External\n");
                 driver.Trigger.ActiveSource = ("External");

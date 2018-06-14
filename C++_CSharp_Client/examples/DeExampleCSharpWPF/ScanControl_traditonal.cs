@@ -75,62 +75,67 @@ namespace ScanControl_traditional
             status = moduleAOU.AWGflush(2);
 
 
-            int WFinModuleCount;
+            int WFinModuleCount = 0;
 
 
             /// load waveform for channel 2 (X)
-            for (WFinModuleCount = 0; WFinModuleCount < xpoints.Count; WFinModuleCount++)
+            for (int ix = 0; ix < xpoints.Count; ix++)
             {
                 // with 16 reps when generate wave form, AWG generates the desired scan pattern, not sure why
-                var tmpWaveform_X = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount], xpoints[WFinModuleCount] });   // WaveForm has to contain even number of points to activate padding option 1
+                var tmpWaveform_X = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix] });
                 status = moduleAOU.waveformLoad(tmpWaveform_X, WFinModuleCount, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
                 if (status < 0)
                 {
-                    Console.WriteLine("Error while loading " + WFinModuleCount + " point from x array");
+                    Console.WriteLine("Error while loading " + ix + " point from x array");
                 }
+                WFinModuleCount++;
             }
-            for (WFinModuleCount = 0; WFinModuleCount < xindex.Count; WFinModuleCount++)
+            // queue x channel, for x, WFinModuleCount is the same as ix
+            for (int ix = 0; ix < xindex.Count; ix++)
             {
                 // loop x array
-                status = moduleAOU.AWGqueueWaveform(2, xindex[WFinModuleCount], SD_TriggerModes.EXTTRIG, 0, Yarray_index.Count(), 0);// AWG, waveform#, trigger, delay, cycle,prescaler
+                status = moduleAOU.AWGqueueWaveform(2, xindex[ix], SD_TriggerModes.EXTTRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
                 if (status < 0)
                 {
-                    Console.WriteLine("Error while queuing " + WFinModuleCount + " point from x array");
+                    Console.WriteLine("Error while queuing " + ix + " point from x array");
                 }
             }
-            // after waveform queued, it doesn't matter what is inside waveform pool
 
             /// load waveform for channel 1 (Y)
 
-            for (WFinModuleCount = 0; WFinModuleCount < ypoints.Count; WFinModuleCount++)
+            for (int iy = 0; iy < ypoints.Count; iy++)
             {
-                var tmpWaveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount], ypoints[WFinModuleCount] });   // WaveForm has to contain even number of points to activate padding option 1
+                var tmpWaveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy] });
                 status = moduleAOU.waveformLoad(tmpWaveform_Y, WFinModuleCount, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
                 if (status < 0)
                 {
-                    Console.WriteLine("Error while loading " + WFinModuleCount + " point from y array, error code " + status);
+                    Console.WriteLine("Error while loading " + iy + " point from y array, error code " + status);
                 }
+                WFinModuleCount++;
             }
             // queue waveform for channel 1
-            for (WFinModuleCount = 0; WFinModuleCount < yindex.Count; WFinModuleCount++)
+            for (int iy = 0; iy < yindex.Count; iy++)
             {
                 // use software trigger for Y channel
-                status = moduleAOU.AWGqueueWaveform(1, yindex[WFinModuleCount], SD_TriggerModes.SWHVITRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
+                status = moduleAOU.AWGqueueWaveform(1, yindex[iy] + xpoints.Count, SD_TriggerModes.EXTTRIG_CYCLE, 0, xindex.Count, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
                 if (status < 0)
                 {
-                    Console.WriteLine("Error while queuing " + WFinModuleCount + " point from y array, error code " + status);
+                    Console.WriteLine("Error while queuing " + iy + " point from y array, error code " + status);
                 }
             }
 
-            // create protection waveform for x and y
-            // x protection waveform runs 1024 cycles with trigger
-            var protWaveform_X = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { 1 });
-            status = moduleAOU.waveformLoad(protWaveform_X, 0, 1);  // use pos 0 at waveform pool
-            status = moduleAOU.AWGqueueWaveform(2, 0, SD_TriggerModes.EXTTRIG, 0, 1024, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
             // y protection waveform runs only once controlled by software
-            var protWaveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { 1 });
-            status = moduleAOU.waveformLoad(protWaveform_Y, 0, 1);  // use pos 0 at waveform pool
-            status = moduleAOU.AWGqueueWaveform(1, 0, SD_TriggerModes.EXTTRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
+            var protWaveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { -0.99, -0.99 });
+            status = moduleAOU.waveformLoad(protWaveform_Y, xpoints.Count + ypoints.Count, 1);  // use pos xpoints.Count + ypoints.Count at waveform pool, can be shared by both x and y
+            if (status < 0)
+            {
+                Console.WriteLine("Error while loading protection point from y array, error code " + status);
+            }
+            status = moduleAOU.AWGqueueWaveform(1, xpoints.Count + ypoints.Count, SD_TriggerModes.SWHVITRIG, 0, 2, 0);// AWG, waveform#, trigger, delay, cycle, prescaler
+            if (status < 0)
+            {
+                Console.WriteLine("Error while queuing protection point from y array, error code " + status);
+            }
 
 
             // Configure X channel to cyclic mode
@@ -150,21 +155,21 @@ namespace ScanControl_traditional
             moduleAOU.AWGstart(1);
             moduleAOU.AWGstart(2);  // after AWGstart(2), AWGisRunning(2) = 1, AWGnWFplaying(2) = 0, same for channel 1
 
-            Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1) + " Now on X channel: " + moduleAOU.AWGnWFplaying(2) + "_" + moduleAOU.AWGisRunning(2));
+ /*           Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1) + " Now on X channel: " + moduleAOU.AWGnWFplaying(2) + "_" + moduleAOU.AWGisRunning(2));
             while (moduleAOU.AWGnWFplaying(2) == 0)   // x channel may not be at zero when no trigger come, replace with AWGisRunning
             {
                 // Empty loop wait for trigger to come
             }
 
             // Now cycle start
-            Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1));
+            Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1) + " Now on X channel " + moduleAOU.AWGnWFplaying(2));
             ncycle++;   // ncycle=1, currently working on cycle 1
 
             Console.WriteLine("Scanning in traditional way with " + Xarray_index.Count() + " points.");
 
             while (ncycle < yindex.Count())
             {
-                if(moduleAOU.AWGnWFplaying(2)==yindex.Count()-1)
+                if(moduleAOU.AWGnWFplaying(2)==xindex.Count()-1)
                 {
                     ncycle++;
                     moduleAOU.AWGtrigger(1);
@@ -172,10 +177,27 @@ namespace ScanControl_traditional
                     System.Threading.Thread.Sleep(pause_ms * 2);
                 }
             }
-
-            // after all cycles finished
-            moduleAOU.AWGstop(1);
+            moduleAOU.AWGtrigger(1);    // trigger y to protection position and stop x scan
+            Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1));
             moduleAOU.AWGstop(2);
+            System.Threading.Thread.Sleep(5000);    // sleep 5 secs with beam in protection position for user to block beam and stop acquisition
+*/
+
+            while (moduleAOU.AWGnWFplaying(1) != xpoints.Count + ypoints.Count)
+            {
+                
+            }
+            //System.Threading.Thread.Sleep(100);
+           // moduleAOU.AWGtrigger(1);
+            Console.WriteLine("Acquisition finished");
+            //System.Threading.Thread.Sleep(5000);
+            moduleAOU.AWGstop(2);
+            moduleAOU.AWGstop(1);
+            //moduleAOU.AWGtrigger(1);    // trigger y to protection position and stop x scan
+            //
+
+            //System.Threading.Thread.Sleep(5000);
+
 
             return HW_STATUS_RETURNS.HW_SUCCESS;
 
