@@ -149,8 +149,8 @@ namespace ScanControl_traditional
             {
                 pause_ms = (int)Math.Ceiling(frametime);
             }
-            int ncycle = 0;
-
+            //int ncycle = 0;
+            Console.WriteLine("Scanning in traditional way with " + Xarray_index.Count() + " by " + Yarray_index.Count() + " beam positions.");
             // Start both channel and wait for triggers
             moduleAOU.AWGstart(1);
             moduleAOU.AWGstart(2);  // after AWGstart(2), AWGisRunning(2) = 1, AWGnWFplaying(2) = 0, same for channel 1
@@ -165,7 +165,7 @@ namespace ScanControl_traditional
             Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1) + " Now on X channel " + moduleAOU.AWGnWFplaying(2));
             ncycle++;   // ncycle=1, currently working on cycle 1
 
-            Console.WriteLine("Scanning in traditional way with " + Xarray_index.Count() + " points.");
+            
 
             while (ncycle < yindex.Count())
             {

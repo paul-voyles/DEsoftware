@@ -329,9 +329,7 @@ namespace DeExampleCSharpWPF
             int SamplesPerFrame;
 
             recording_rate = RecordingRateLookup(recording_rate);
-            SamplesPerFrame = (int)Math.Floor((double)(recording_rate / Int32.Parse(FrameRate.Text)));
-
-            
+            SamplesPerFrame = (int)Math.Floor((double)(recording_rate / Int32.Parse(FrameRate.Text)));           
             PushDigitizerSetting(WaveformArray_Ch1, 0);
 
         }
@@ -352,38 +350,57 @@ namespace DeExampleCSharpWPF
 
             double Array_max = RawArray.Max();
             double Array_min = RawArray.Min();
-            double scale = 65535 / (Array_max - Array_min)/4;
-            double[] subArray = new double[SamplesPerFrame - 1];
+            double scale = 65535 / (Array_max - Array_min)/1;
+            double average;
+
             List<double> subArray_list = new List<double>();
+            int total_px = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text);
+            int cycle = 0;
+            int pos = 0;
+            double DE_time = 1/ (double)Int32.Parse(FrameRate.Text);
+            double Digi_time = 0;
 
-            for (int i = 0; i < size_x * size_y; i++)
+            // currently we assume the dead time won't take more than two samples from digitizer
+
+            while (pos < RawArray.Count())
             {
-                // Now we assume dead time is shorter than first frame expo time, may need to change in the future
-                Array.Copy(RawArray, i * SamplesPerFrame + 1, subArray, 0, SamplesPerFrame - 1);   // copy SamplesPerFrame-1 elements from array each time
-                subArray_list.Clear();
-                subArray_list = subArray.ToList();
-                double average = subArray_list.Average();
-                var average_string = average.ToString();
-                csv.AppendLine(average_string);
-
-                // rescale each point to [0 65535]
-                int row = ( (i - i % size_x) / size_x );
-                if (scan_scheme == 1)
+                if (DE_time <= Digi_time)
                 {
-                    if (row % 2 == 1)
+                    DE_time += (1 / (double)Int32.Parse(FrameRate.Text));
+                    cycle++;
+                    if (cycle == total_px)
                     {
-                        HAADF_rescale[i] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                        break;
+                    }
+                    average = subArray_list.Average();
+                    subArray_list.Clear();
+                    //pos++;  // skip one more px
+                    //Digi_time += 1 / (double)SamplesPerFrame;
+
+                    // put aveaged value to correct position of the array
+                    int row = ((cycle - cycle % size_x) / size_x);
+                    if (scan_scheme == 1)
+                    {
+                        if (row % 2 == 1)
+                        {
+                            HAADF_rescale[cycle] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                        }
+                        else
+                        {
+                            HAADF_rescale[size_x * (row + 1) - cycle % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                        }
                     }
                     else
                     {
-                        HAADF_rescale[size_x * (row + 1) - i % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                        HAADF_rescale[size_x * (row + 1) - cycle % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
                     }
                 }
                 else
                 {
-                    HAADF_rescale[size_x * (row + 1) - i % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                    subArray_list.Add(RawArray[pos]);
                 }
-
+                pos++;
+                Digi_time += 1 / (double)SamplesPerFrame;
             }
 
             // write to different bitmap for different options
@@ -966,15 +983,13 @@ namespace DeExampleCSharpWPF
             }
             int record_size;
             int recording_rate = Int32.Parse(FrameRate.Text) * 10;
-            int SamplesPerFrame;
 
             recording_rate = RecordingRateLookup(recording_rate);
             sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
             MessageBox.Text += sent;
 
-            SamplesPerFrame = (int)Math.Floor((double)(recording_rate / Int32.Parse(FrameRate.Text)));
-            record_size = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text) * SamplesPerFrame;
-            record_size = Convert.ToInt32(record_size * 1.01 );
+            record_size = (int)((double)Int32.Parse(PosX.Text) * (double)Int32.Parse(PosY.Text) / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
+            record_size = (int)(record_size * 1.01);
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent ;
             
@@ -982,7 +997,7 @@ namespace DeExampleCSharpWPF
             // this function can only be called when running on DE camera computer with Keysight libraries
             Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
             // reconstruct and show image in ROI box when data fetched from digitizer
-            HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), option, SamplesPerFrame);
+            HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), option, recording_rate);
 
         }
 
