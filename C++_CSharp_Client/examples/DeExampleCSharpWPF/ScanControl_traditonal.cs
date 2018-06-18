@@ -116,7 +116,7 @@ namespace ScanControl_traditional
             // queue waveform for channel 1
             for (int iy = 0; iy < yindex.Count; iy++)
             {
-                // use software trigger for Y channel
+                // use external trigger and cycles for Y channel
                 status = moduleAOU.AWGqueueWaveform(1, yindex[iy] + xpoints.Count, SD_TriggerModes.EXTTRIG_CYCLE, 0, xindex.Count, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
                 if (status < 0)
                 {
@@ -124,79 +124,74 @@ namespace ScanControl_traditional
                 }
             }
 
-            // y protection waveform runs only once controlled by software
+            // y protection waveform runs only once
             var protWaveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { -0.99, -0.99 });
-            status = moduleAOU.waveformLoad(protWaveform_Y, xpoints.Count + ypoints.Count, 1);  // use pos xpoints.Count + ypoints.Count at waveform pool, can be shared by both x and y
+            status = moduleAOU.waveformLoad(protWaveform_Y, WFinModuleCount, 1);  // use pos xpoints.Count + ypoints.Count at waveform pool, can be shared by both x and y
             if (status < 0)
             {
                 Console.WriteLine("Error while loading protection point from y array, error code " + status);
             }
-            status = moduleAOU.AWGqueueWaveform(1, xpoints.Count + ypoints.Count, SD_TriggerModes.SWHVITRIG, 0, 2, 0);// AWG, waveform#, trigger, delay, cycle, prescaler
+            status = moduleAOU.AWGqueueWaveform(1, xpoints.Count + ypoints.Count, SD_TriggerModes.EXTTRIG, 0, 2, 4095);// AWG, waveform#, trigger, delay, cycle, prescaler
             if (status < 0)
             {
                 Console.WriteLine("Error while queuing protection point from y array, error code " + status);
             }
 
 
-            // Configure X channel to cyclic mode
+            // Configure X channel to cyclic mode， Y to single shot
             moduleAOU.AWGqueueConfig(1, 0);
             moduleAOU.AWGqueueConfig(2, 1);
 
+
+            Console.WriteLine("Scanning in traditional way with " + Xarray_index.Count() + " by " + Yarray_index.Count() + " beam positions.");
+            // Start both channel and wait for triggers
+            moduleAOU.AWGstart(1);
+            moduleAOU.AWGstart(2);  // after AWGstart(2), AWGisRunning(2) = 1, AWGnWFplaying(2) = 0, same for channel 1, there might be 1 px offset
+            #region previous scheme to jump on Y channel
+
             // determine how long to pause after each jump based on frame rate
-            int pause_ms = 1;
+            /*int pause_ms = 1;
             double frametime = 1000 / (double)recording_rate;
             if (frametime > 1)
             {
                 pause_ms = (int)Math.Ceiling(frametime);
             }
-            //int ncycle = 0;
-            Console.WriteLine("Scanning in traditional way with " + Xarray_index.Count() + " by " + Yarray_index.Count() + " beam positions.");
-            // Start both channel and wait for triggers
-            moduleAOU.AWGstart(1);
-            moduleAOU.AWGstart(2);  // after AWGstart(2), AWGisRunning(2) = 1, AWGnWFplaying(2) = 0, same for channel 1
+            int ncycle = 0;
+                       Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1) + " Now on X channel: " + moduleAOU.AWGnWFplaying(2) + "_" + moduleAOU.AWGisRunning(2));
+                       while (moduleAOU.AWGnWFplaying(2) == 0)   // x channel may not be at zero when no trigger come, replace with AWGisRunning
+                       {
+                           // Empty loop wait for trigger to come
+                       }
 
- /*           Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1) + " Now on X channel: " + moduleAOU.AWGnWFplaying(2) + "_" + moduleAOU.AWGisRunning(2));
-            while (moduleAOU.AWGnWFplaying(2) == 0)   // x channel may not be at zero when no trigger come, replace with AWGisRunning
-            {
-                // Empty loop wait for trigger to come
-            }
+                       // Now cycle start
+                       Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1) + " Now on X channel " + moduleAOU.AWGnWFplaying(2));
+                       ncycle++;   // ncycle=1, currently working on cycle 1
 
-            // Now cycle start
-            Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1) + " Now on X channel " + moduleAOU.AWGnWFplaying(2));
-            ncycle++;   // ncycle=1, currently working on cycle 1
 
-            
 
-            while (ncycle < yindex.Count())
-            {
-                if(moduleAOU.AWGnWFplaying(2)==xindex.Count()-1)
-                {
-                    ncycle++;
-                    moduleAOU.AWGtrigger(1);
-                    Console.WriteLine("Jump to cycle " + ncycle + " now on Y channel: " + moduleAOU.AWGnWFplaying(1) + " now on X channel : " + moduleAOU.AWGnWFplaying(2));
-                    System.Threading.Thread.Sleep(pause_ms * 2);
-                }
-            }
-            moduleAOU.AWGtrigger(1);    // trigger y to protection position and stop x scan
-            Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1));
-            moduleAOU.AWGstop(2);
-            System.Threading.Thread.Sleep(5000);    // sleep 5 secs with beam in protection position for user to block beam and stop acquisition
-*/
-
+                       while (ncycle < yindex.Count())
+                       {
+                           if(moduleAOU.AWGnWFplaying(2)==xindex.Count()-1)
+                           {
+                               ncycle++;
+                               moduleAOU.AWGtrigger(1);
+                               Console.WriteLine("Jump to cycle " + ncycle + " now on Y channel: " + moduleAOU.AWGnWFplaying(1) + " now on X channel : " + moduleAOU.AWGnWFplaying(2));
+                               System.Threading.Thread.Sleep(pause_ms * 2);
+                           }
+                       }
+                       moduleAOU.AWGtrigger(1);    // trigger y to protection position and stop x scan
+                       Console.WriteLine("Now on Y channel " + moduleAOU.AWGnWFplaying(1));
+                       moduleAOU.AWGstop(2);
+                       System.Threading.Thread.Sleep(5000);    // sleep 5 secs with beam in protection position for user to block beam and stop acquisition
+           */
+            #endregion
             while (moduleAOU.AWGnWFplaying(1) != xpoints.Count + ypoints.Count)
             {
                 
             }
-            //System.Threading.Thread.Sleep(100);
-           // moduleAOU.AWGtrigger(1);
-            Console.WriteLine("Acquisition finished");
-            //System.Threading.Thread.Sleep(5000);
+            Console.WriteLine("Acquisition finished, stop camera now");
             moduleAOU.AWGstop(2);
             moduleAOU.AWGstop(1);
-            //moduleAOU.AWGtrigger(1);    // trigger y to protection position and stop x scan
-            //
-
-            //System.Threading.Thread.Sleep(5000);
 
 
             return HW_STATUS_RETURNS.HW_SUCCESS;

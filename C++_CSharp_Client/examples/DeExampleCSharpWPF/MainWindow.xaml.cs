@@ -317,6 +317,10 @@ namespace DeExampleCSharpWPF
 
             double[] WaveformArray_Ch1 = { };
             int fps = Int32.Parse(FrameRate.Text);
+            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            int SamplesPerFrame;
+            recording_rate = RecordingRateLookup(recording_rate);
+            SamplesPerFrame = (int)Math.Floor((double)(recording_rate / Int32.Parse(FrameRate.Text)));
 
             new Thread(() =>
             {
@@ -324,13 +328,12 @@ namespace DeExampleCSharpWPF
                 PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps);
 
             }).Start();
-            ;
-            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
-            int SamplesPerFrame;
-
-            recording_rate = RecordingRateLookup(recording_rate);
-            SamplesPerFrame = (int)Math.Floor((double)(recording_rate / Int32.Parse(FrameRate.Text)));           
-            PushDigitizerSetting(WaveformArray_Ch1, 0);
+            
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                PushDigitizerSetting(WaveformArray_Ch1, 0);
+            }).Start();
 
         }
 
@@ -338,6 +341,7 @@ namespace DeExampleCSharpWPF
         // Input: Array: 1D array acquired, currently hardcoded to 10 samples per probe position, array size must be larger than 10*size_x*size_y
         //        size_x/size_y: target 2D matrix size in pixel
         //        option: 0 for reconstruction on default image window (512 px), 1 for reconstruction on ROI window (customized size)
+        //        SamplePerFrame: Acquisition frequency on digitizer
 
         public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option, int SamplesPerFrame)
         {
@@ -358,7 +362,7 @@ namespace DeExampleCSharpWPF
             int cycle = 0;
             int pos = 0;
             double DE_time = 1/ (double)Int32.Parse(FrameRate.Text);
-            double Digi_time = 0;
+            double Digi_time = 1/(double)SamplesPerFrame;
 
             // currently we assume the dead time won't take more than two samples from digitizer
 
@@ -374,8 +378,8 @@ namespace DeExampleCSharpWPF
                     }
                     average = subArray_list.Average();
                     subArray_list.Clear();
-                    //pos++;  // skip one more px
-                    //Digi_time += 1 / (double)SamplesPerFrame;
+                    pos++;  // skip one px
+                    Digi_time += 1 / (double)SamplesPerFrame;
 
                     // put aveaged value to correct position of the array
                     int row = ((cycle - cycle % size_x) / size_x);
