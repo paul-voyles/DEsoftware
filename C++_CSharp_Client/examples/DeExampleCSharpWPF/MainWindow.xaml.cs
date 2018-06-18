@@ -398,9 +398,10 @@ namespace DeExampleCSharpWPF
                 else
                 {
                     subArray_list.Add(RawArray[pos]);
+                    pos++;
+                    Digi_time += 1 / (double)SamplesPerFrame;
                 }
-                pos++;
-                Digi_time += 1 / (double)SamplesPerFrame;
+               
             }
 
             // write to different bitmap for different options
