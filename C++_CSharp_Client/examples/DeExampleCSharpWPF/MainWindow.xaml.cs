@@ -313,27 +313,53 @@ namespace DeExampleCSharpWPF
 
             }
 
-            // AWG and Digitizer setting part is same for conventional and serpentine scan
+            // set new thread for AWG
 
-            double[] WaveformArray_Ch1 = { };
             int fps = Int32.Parse(FrameRate.Text);
-            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
-            int SamplesPerFrame;
-            recording_rate = RecordingRateLookup(recording_rate);
-            SamplesPerFrame = (int)Math.Floor((double)(recording_rate / Int32.Parse(FrameRate.Text)));
-
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
                 PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps);
 
             }).Start();
+
+            // set new thread for digitizer
+
+            double[] WaveformArray_Ch1 = { };
+
+            string sent;
+            bool isNumeric = int.TryParse(FrameRate.Text, out int n);
+            if (!isNumeric)
+            {
+                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             
+            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            int record_size;
+            recording_rate = RecordingRateLookup(recording_rate);
+
+            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent;
+            record_size = (int)((double)Int32.Parse(PosX.Text) * (double)Int32.Parse(PosY.Text) / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
+            record_size = (int)(record_size * 1.01);
+            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
+            MessageBox.Text += sent;
+
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
-                PushDigitizerSetting(WaveformArray_Ch1, 0);
+                Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, Int32.Parse(FrameRate.Text));
+                }));
+                
+
             }).Start();
+            
+
 
         }
 
@@ -343,7 +369,7 @@ namespace DeExampleCSharpWPF
         //        option: 0 for reconstruction on default image window (512 px), 1 for reconstruction on ROI window (customized size)
         //        SamplePerFrame: Acquisition frequency on digitizer
 
-        public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option, int SamplesPerFrame)
+        public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option, int SamplesPerFrame, int DEFrameRate)
         {
 
             // Generate new array for rescaled HAADF image
@@ -354,28 +380,24 @@ namespace DeExampleCSharpWPF
 
             double Array_max = RawArray.Max();
             double Array_min = RawArray.Min();
-            double scale = 65535 / (Array_max - Array_min)/1;
+            double scale = 65535 / (Array_max - Array_min)/2;
             double average;
 
             List<double> subArray_list = new List<double>();
-            int total_px = Int32.Parse(PosX.Text) * Int32.Parse(PosY.Text);
-            int cycle = 0;
+            int total_px = size_x * size_y;
+            int cycle = -1;
             int pos = 0;
-            double DE_time = 1/ (double)Int32.Parse(FrameRate.Text);
+            double DE_time = 1/ (double)DEFrameRate;
             double Digi_time = 1/(double)SamplesPerFrame;
 
             // currently we assume the dead time won't take more than two samples from digitizer
 
             while (pos < RawArray.Count())
             {
-                if (DE_time <= Digi_time)
+                if (DE_time < Digi_time - 1e-10)
                 {
-                    DE_time += (1 / (double)Int32.Parse(FrameRate.Text));
+                    DE_time += (1 / (double)DEFrameRate);
                     cycle++;
-                    if (cycle == total_px)
-                    {
-                        break;
-                    }
                     average = subArray_list.Average();
                     subArray_list.Clear();
                     pos++;  // skip one px
@@ -391,12 +413,16 @@ namespace DeExampleCSharpWPF
                         }
                         else
                         {
-                            HAADF_rescale[size_x * (row + 1) - cycle % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                            HAADF_rescale[size_x * (row + 1) - cycle % size_x - 1 ] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
                         }
                     }
                     else
                     {
-                        HAADF_rescale[size_x * (row + 1) - cycle % size_x - 1] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                        HAADF_rescale[size_x * (row + 1) - cycle % size_x - 1 ] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                    }
+                    if (cycle == total_px - 1)
+                    {
+                        break;
                     }
                 }
                 else
@@ -451,6 +477,7 @@ namespace DeExampleCSharpWPF
             }
 
         }
+
 
         private void window_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
@@ -871,9 +898,6 @@ namespace DeExampleCSharpWPF
 
 
             GenerateScanArray(ref Xarray_index, ref Yarray_index, ref Xarray_vol, ref Yarray_vol);
-
-            // push settings to AWG and digitizer, waiting for Xu's API to communicate to hardware
-            // Push digitizer setting in a separate thread
             
             
             int recording_rate = Int32.Parse(FrameRate.Text);
@@ -883,12 +907,40 @@ namespace DeExampleCSharpWPF
                 PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol,recording_rate);
 
             }).Start();
-            PushDigitizerSetting(WaveformArray_Ch1,1);
 
 
-            //_deInterface.SetProperty("ROI Dimension X", "512");
-            //_deInterface.SetProperty("Image Size X", pxx);
-            //_deInterface.SetProperty("Image Size Y", pxy);
+            isNumeric = int.TryParse(FrameRate.Text, out n);
+            if (!isNumeric)
+            {
+                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+
+            recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            int record_size;
+            recording_rate = RecordingRateLookup(recording_rate);
+
+            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent;
+            record_size = (int)((double)Int32.Parse(PosX.Text) * (double)Int32.Parse(PosY.Text) / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
+            record_size = (int)(record_size * 1.01);
+            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
+            MessageBox.Text += sent;
+
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                    int sizex = Int32.Parse(PosX.Text);
+                    int sizey = Int32.Parse(PosY.Text);
+                    int DEFrameRate = Int32.Parse(FrameRate.Text);
+                    HAADFreconstrcution(WaveformArray_Ch1, sizex, sizey, 0, recording_rate, DEFrameRate);
+                }));
+
+            }).Start();
 
         }
 
@@ -975,34 +1027,14 @@ namespace DeExampleCSharpWPF
             }
         }
 
-        // Function used to write digitizer setting based on scan grid and frame rate setting
-        public void PushDigitizerSetting(double[] WaveformArray_Ch1, int option)
+
+        // Function used to write digitizer setting based on scan grid and frame rate setting, no longer in use
+        public void PushDigitizerSetting(double[] WaveformArray_Ch1, int option, int recording_rate, int record_size, int x_size, int y_size)
         {
-
-            string sent;
-            bool isNumeric = int.TryParse(FrameRate.Text, out int n);
-            if (!isNumeric)
-            {
-                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            int record_size;
-            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
-
-            recording_rate = RecordingRateLookup(recording_rate);
-            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
-            MessageBox.Text += sent;
-
-            record_size = (int)((double)Int32.Parse(PosX.Text) * (double)Int32.Parse(PosY.Text) / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
-            record_size = (int)(record_size * 1.01);
-            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
-            MessageBox.Text += sent ;
-            
-
             // this function can only be called when running on DE camera computer with Keysight libraries
-            Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+            
             // reconstruct and show image in ROI box when data fetched from digitizer
-            HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), option, recording_rate);
+            HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), option, recording_rate, Int32.Parse(FrameRate.Text));
 
         }
 
