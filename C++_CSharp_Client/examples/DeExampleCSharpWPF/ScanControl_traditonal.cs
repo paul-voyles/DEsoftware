@@ -82,7 +82,8 @@ namespace ScanControl_traditional
             for (int ix = 0; ix < xpoints.Count; ix++)
             {
                 // with 16 reps when generate wave form, AWG generates the desired scan pattern, not sure why
-                var tmpWaveform_X = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix] });
+                // var tmpWaveform_X = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix], xpoints[ix] });
+                var tmpWaveform_X = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { xpoints[ix], xpoints[ix]});
                 status = moduleAOU.waveformLoad(tmpWaveform_X, WFinModuleCount, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
                 if (status < 0)
                 {
@@ -94,7 +95,7 @@ namespace ScanControl_traditional
             for (int ix = 0; ix < xindex.Count; ix++)
             {
                 // loop x array
-                status = moduleAOU.AWGqueueWaveform(2, xindex[ix], SD_TriggerModes.EXTTRIG, 0, 1, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
+                status = moduleAOU.AWGqueueWaveform(2, xindex[ix], SD_TriggerModes.EXTTRIG, 0, 1, 4);// AWG, waveform#, trigger, delay, cycle,prescaler
                 if (status < 0)
                 {
                     Console.WriteLine("Error while queuing " + ix + " point from x array");
@@ -105,7 +106,9 @@ namespace ScanControl_traditional
 
             for (int iy = 0; iy < ypoints.Count; iy++)
             {
-                var tmpWaveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy] });
+            //    var tmpWaveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy], ypoints[iy] });
+                var tmpWaveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, new double[] { ypoints[iy], ypoints[iy] });
+
                 status = moduleAOU.waveformLoad(tmpWaveform_Y, WFinModuleCount, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
                 if (status < 0)
                 {
@@ -117,7 +120,7 @@ namespace ScanControl_traditional
             for (int iy = 0; iy < yindex.Count; iy++)
             {
                 // use external trigger and cycles for Y channel
-                status = moduleAOU.AWGqueueWaveform(1, yindex[iy] + xpoints.Count, SD_TriggerModes.EXTTRIG_CYCLE, 0, xindex.Count, 0);// AWG, waveform#, trigger, delay, cycle,prescaler
+                status = moduleAOU.AWGqueueWaveform(1, yindex[iy] + xpoints.Count, SD_TriggerModes.EXTTRIG_CYCLE, 0, xindex.Count, 4);// AWG, waveform#, trigger, delay, cycle,prescaler
                 if (status < 0)
                 {
                     Console.WriteLine("Error while queuing " + iy + " point from y array, error code " + status);
@@ -147,6 +150,7 @@ namespace ScanControl_traditional
             // Start both channel and wait for triggers
             moduleAOU.AWGstart(1);
             moduleAOU.AWGstart(2);  // after AWGstart(2), AWGisRunning(2) = 1, AWGnWFplaying(2) = 0, same for channel 1, there might be 1 px offset
+            Console.WriteLine("Now running on x and y " + moduleAOU.AWGnWFplaying(1) +"----" + moduleAOU.AWGnWFplaying(2));
             #region previous scheme to jump on Y channel
 
             // determine how long to pause after each jump based on frame rate
