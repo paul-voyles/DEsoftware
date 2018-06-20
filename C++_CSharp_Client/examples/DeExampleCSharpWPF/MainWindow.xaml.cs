@@ -394,11 +394,13 @@ namespace DeExampleCSharpWPF
 
             while (pos < RawArray.Count())
             {
+                // 1e-10 is used to avoid round off error for two times
                 if (DE_time < Digi_time - 1e-10)
                 {
                     DE_time += (1 / (double)DEFrameRate);
                     cycle++;
                     average = subArray_list.Average();
+                    csv.AppendLine(average.ToString());
                     subArray_list.Clear();
                     pos++;  // skip one px
                     Digi_time += 1 / (double)SamplesPerFrame;
