@@ -123,6 +123,7 @@
     <Compile Include="DigitizerController.cs" />
     <Compile Include="FileLoader.cs" />
     <Compile Include="ScanControl_cz.cs" />
+    <Compile Include="ScanControl_slave.cs" />
     <Compile Include="ScanControl_traditonal.cs" />
     <Compile Include="ScanControl_passive.cs" />
     <Page Include="ImageView.xaml">

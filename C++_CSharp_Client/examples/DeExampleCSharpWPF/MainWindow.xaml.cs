@@ -440,7 +440,7 @@ namespace DeExampleCSharpWPF
 
             int bytesPerPixel = 2;
             int stride = size_x * bytesPerPixel;
-            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);    // flip LR to match TIA display, didn't flip UD
+            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray32Float, null, HAADF_rescale, stride);    // flip LR to match TIA display, didn't flip UD
 
 
 
