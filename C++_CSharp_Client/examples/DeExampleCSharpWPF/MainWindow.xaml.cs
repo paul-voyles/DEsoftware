@@ -257,7 +257,7 @@ namespace DeExampleCSharpWPF
             double x_step_size = 1 / (double)(x_step_num - 1);
             double y_step_size = 1 / (double)(y_step_num - 1);
 
-            // Conventional scan scheme, without compensate for flyback error, also no protection voltage used here\
+            // Conventional scan scheme, without compensate for flyback error, also no protection voltage used here
             if (scan_scheme == 0)
             {
                 Xarray_index = new int[x_step_num];
@@ -377,6 +377,7 @@ namespace DeExampleCSharpWPF
 
             // Generate csv file to save HAADF raw array
             var csv = new StringBuilder();
+            var csv_raw = new StringBuilder();
 
             double Array_max = RawArray.Max();
             double Array_min = RawArray.Min();
@@ -394,6 +395,7 @@ namespace DeExampleCSharpWPF
 
             while (pos < RawArray.Count())
             {
+                csv_raw.AppendLine(RawArray[pos].ToString());
                 // 1e-10 is used to avoid round off error for two times
                 if (DE_time < Digi_time - 1e-10)
                 {
@@ -440,7 +442,7 @@ namespace DeExampleCSharpWPF
 
             int bytesPerPixel = 2;
             int stride = size_x * bytesPerPixel;
-            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray32Float, null, HAADF_rescale, stride);    // flip LR to match TIA display, didn't flip UD
+            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);    // flip LR to match TIA display, didn't flip UD
 
 
 
@@ -458,8 +460,9 @@ namespace DeExampleCSharpWPF
             // save HAADF raw data to csv file
 
             string FullPath = HAADFPath.Text + "HAADF_Preview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h_mm_ss_tt") + ".csv";
+            string FullPath_raw = HAADFPath.Text + "HAADF_rawPreview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h_mm_ss_tt") + ".csv";
 
-            
+
             System.IO.FileInfo fi = null;
             try
             {
@@ -476,6 +479,7 @@ namespace DeExampleCSharpWPF
             else
             {
                 File.WriteAllText(FullPath, csv.ToString());
+                File.WriteAllText(FullPath_raw, csv_raw.ToString());
             }
 
         }
@@ -1664,7 +1668,14 @@ namespace DeExampleCSharpWPF
             PosX.Text = 20.ToString();
             PosY.Text = 20.ToString();
             FrameRate.Text = 80.ToString();
-    }
+            BackgroundWorkerDemo.AlertForm alert;
+            alert = new BackgroundWorkerDemo.AlertForm();
+            // event handler for the Cancel button in AlertForm
+            //alert.Canceled += new EventHandler<EventArgs>(buttonCancel_Click);
+            alert.Show();
+            // Start the asynchronous operation.
+            //backgroundWorker1.RunWorkerAsync();
+        }
         #endregion
 
 
