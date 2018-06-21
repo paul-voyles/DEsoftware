@@ -1661,8 +1661,10 @@ namespace DeExampleCSharpWPF
 
         private void Reset_settings(object sender, RoutedEventArgs e)
         {
-
-        }
+            PosX.Text = 20.ToString();
+            PosY.Text = 20.ToString();
+            FrameRate.Text = 80.ToString();
+    }
         #endregion
 
 
