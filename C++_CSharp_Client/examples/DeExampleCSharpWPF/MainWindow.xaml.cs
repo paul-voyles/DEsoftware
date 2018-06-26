@@ -68,6 +68,9 @@ namespace DeExampleCSharpWPF
         // scan scheme, 0 for conventional, 1 for serpentine
         public int scan_scheme = 0;
 
+        // scan mode, 0 for DE in master mode, 1 for DE in slave mode
+        public int scan_mode = 0;
+
 
         public decimal Fps
         {
@@ -1020,16 +1023,23 @@ namespace DeExampleCSharpWPF
         {
             //ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
             // Test for passive mode scan control
-
-            if (scan_scheme == 1)
+            if (scan_mode == 1)
             {
-                ScanControl_passive.ScanControl_cz status = new ScanControl_passive.ScanControl_cz();
+                ScanControl_slave.ScanControl_cz status = new ScanControl_slave.ScanControl_cz();
                 status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate);
             }
             else
             {
-                ScanControl_traditional.ScanControl_cz status = new ScanControl_traditional.ScanControl_cz();
-                status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate);
+                if (scan_scheme == 1)
+                {
+                    ScanControl_passive.ScanControl_cz status = new ScanControl_passive.ScanControl_cz();
+                    status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate);
+                }
+                else
+                {
+                    ScanControl_traditional.ScanControl_cz status = new ScanControl_traditional.ScanControl_cz();
+                    status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate);
+                }
             }
         }
 
@@ -1676,8 +1686,8 @@ namespace DeExampleCSharpWPF
             // Start the asynchronous operation.
             //backgroundWorker1.RunWorkerAsync();
         }
-        #endregion
 
+        #endregion
 
     }
 
