@@ -27,35 +27,35 @@
                     <MenuItem Header="Load MRC file"></MenuItem>
                 </MenuItem>
                 <MenuItem Header="About"></MenuItem>
-        </StackPanel>
-        
-        <StackPanel Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,0" Height="23">
-            <TextBlock Margin="10,0,4,0" Text="IP:" VerticalAlignment="Center"/>
-            <TextBox Margin="0,0,4,0" Text="127.0.0.1" VerticalAlignment="Center"  Width="75" x:Name="IPAddr" />
-            <Button Click="btnConnect_Click" Content="Connect" Height="23" Margin="8,0,32,0" x:Name="btnConnect" Width="75" />
-            <TextBlock Margin="0,0,4,0" Text="Cameras" VerticalAlignment="Center" />
-            <ComboBox Height="23" x:Name="cmbCameras" SelectionChanged="cmbCameras_SelectionChanged" Width="120" />
-            <TextBlock Margin="4,0,4,0" Text="Transport:" VerticalAlignment="Center" />
-            <ComboBox Height="23" x:Name="cmbTransport" Width="120" >
-                <ComboBoxItem Content="MMF"/>
-                <ComboBoxItem Content="TCP"/>
-            </ComboBox>
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Width="315" Margin="0,20,0,0">
-                <TextBlock Text="FPS:" Margin="10,0,4,0" />
-                <TextBlock Text="{Binding Fps}" />
-                <TextBlock Margin="10,0,4,0" Text="Image Count:" />
-                <TextBlock Text="{Binding ImageCount}" />
-                <TextBlock Margin="10,0,4,0" Text="Seconds:" />
-                <TextBlock Text="{Binding TotalSeconds}" />
             </StackPanel>
 
-        </StackPanel>
+            <StackPanel Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,0" Height="23">
+                <TextBlock Margin="10,0,4,0" Text="IP:" VerticalAlignment="Center"/>
+                <TextBox Margin="0,0,4,0" Text="127.0.0.1" VerticalAlignment="Center"  Width="75" x:Name="IPAddr" />
+                <Button Click="btnConnect_Click" Content="Connect" Height="23" Margin="8,0,32,0" x:Name="btnConnect" Width="75" />
+                <TextBlock Margin="0,0,4,0" Text="Cameras" VerticalAlignment="Center" />
+                <ComboBox Height="23" x:Name="cmbCameras" SelectionChanged="cmbCameras_SelectionChanged" Width="120" />
+                <TextBlock Margin="4,0,4,0" Text="Transport:" VerticalAlignment="Center" />
+                <ComboBox Height="23" x:Name="cmbTransport" Width="120" >
+                    <ComboBoxItem Content="MMF"/>
+                    <ComboBoxItem Content="TCP"/>
+                </ComboBox>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Width="315" Margin="0,20,0,0">
+                    <TextBlock Text="FPS:" Margin="10,0,4,0" />
+                    <TextBlock Text="{Binding Fps}" />
+                    <TextBlock Margin="10,0,4,0" Text="Image Count:" />
+                    <TextBlock Text="{Binding ImageCount}" />
+                    <TextBlock Margin="10,0,4,0" Text="Seconds:" />
+                    <TextBlock Text="{Binding TotalSeconds}" />
+                </StackPanel>
+
+            </StackPanel>
         </StackPanel>
 
         <StackPanel Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,0" Grid.Row="2">
 
             <StackPanel Grid.ColumnSpan="2" Orientation="Vertical" Margin="0,0,0,0">
-                
+
                 <TextBlock x:Name="TextBlock1" HorizontalAlignment="Left" Height="30" Margin="130,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Frame Preview" VerticalAlignment="Top" Width="152" FontSize="20" Grid.Column="1"/>
 
                 <Grid>
@@ -140,7 +140,6 @@
                         <TextBox x:Name="EndX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="412" VerticalAlignment="Bottom" Width="90"/>
                         <TextBlock x:Name="FrameRate_text" HorizontalAlignment="Left" Height="18" Margin="0,10,0,0" TextWrapping="Wrap" Text="Frame rate (FPS):" VerticalAlignment="Bottom" Width="130"/>
                         <TextBox x:Name="FrameRate" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
-                        <ToggleButton Content="SlaveMode" Height="25" Margin="0,20,0,0" IsChecked="True"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Vertical" Margin="0,40,0,0">
@@ -152,7 +151,7 @@
 
                     <StackPanel Orientation="Vertical" Margin="40,0,0,0">
                         <TextBlock x:Name="textBlock1_Copy6" Height="20" Margin="0,40,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Scan grid setting:" VerticalAlignment="Bottom" Width="152"/>
-                        
+
                         <TextBlock x:Name="textBlock1_Copy8" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="60.667"><Run Text="X "/><Run Text="Positions"/><Run Text=":"/></TextBlock>
                         <TextBox x:Name="PosX" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="20" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
                         <TextBlock x:Name="textBlock1_Copy7" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="62" Text="Y Positions:"/>
@@ -162,7 +161,7 @@
                         <ProgressBar Grid.Column="2" HorizontalAlignment="Right" Height="12.284" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Bottom" Width="189.658"/>
                     </StackPanel>
                 </StackPanel>
-                
+
             </StackPanel>
 
             <Path Grid.Column="3" Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2"/>
@@ -200,7 +199,7 @@
                     <Button Click="DiscardEMD_Click" Content="Discard" Margin="5,0,0,0" x:Name="DiscardEMD" Visibility="Visible" HorizontalAlignment="Left" Width="70" Height="23" VerticalAlignment="Top"/>
                     <TextBox x:Name="EMDName" Margin="10,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="EMDFileNameHere" Height="23" Width="200" VerticalAlignment="Top"/>
                 </StackPanel>
-                
+
 
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
                     <TextBox x:Name="MessageBox" Margin="10,5,26,0" Grid.Row="1" TextWrapping="Wrap" Text="MessageBox" Height="300" Width="500" VerticalAlignment="Top"/>
