@@ -56,7 +56,11 @@ namespace ScanControl_slave
                 Prescaling = (int)Math.Ceiling(1.1e8 / recording_rate / nSamples);
             }
 
+            int TriggerDelay;
+            TriggerDelay = (int)Math.Floor(( 1e-8 * Prescaling * nSamples - 1 / recording_rate - 2.5e-6 ) * 1e9); // difference between scan cycle and camera integration time in ns
+
             Console.WriteLine("Precaling factor " + Prescaling + " will be used with " + nSamples + " for each beam position.");
+            Console.WriteLine("Trigger delay by " + TriggerDelay + " ns from beam position movement.");
 
             // Config amplitude and setup AWG in channels 1 and 2,
             moduleAOU.channelAmplitude(1, y_amp);
@@ -170,7 +174,7 @@ namespace ScanControl_slave
                            Console.WriteLine("Error while loading x waveform");
                        }
 
-                       status = moduleAOU.AWGqueueWaveform(1, 2, SD_TriggerModes.AUTOTRIG, 0, yindex.Count(), Prescaling);
+                       status = moduleAOU.AWGqueueWaveform(1, 2, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count(), Prescaling);
                        Console.WriteLine("Trigger waveform size " + moduleAOU.waveformGetMemorySize(2) + " byte");
 
                        if (status < 0)
