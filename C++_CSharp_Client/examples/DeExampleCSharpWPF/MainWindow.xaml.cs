@@ -245,9 +245,147 @@ namespace DeExampleCSharpWPF
 
         #region Acquire HAADF and choose ROI
 
-        // Function to acquire single HAADF image with default setting: max voltage range, 512*512 beam positions
-        // No DE camera is used together with beam scan, only collect data from digitizer.
+        // Function used to cancel current 2D/4D acquisition and reset hardwares to idle status
+        private void CancelAcq(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+
+        // Funtion to acquire traditional 2DSTEM image with full fra,e
+        // Number of beam position and dwell time will follow GUI setting
+        // DE camera/streampix should remain idle, triggers will be generated as this is using the same function to call AWG
+        // Must be under master mode as AWG cannot be controlled by external trigger, can choose between conventional scan/serpentine scan
+
+        private void SCAN2D(object sender, RoutedEventArgs e)
+        {
+            if (scan_mode == 0)
+            {
+                System.Windows.Forms.MessageBox.Show("Camera has to be in slave mode to run 2D scan!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            int x_step_num = Int32.Parse(PosX_2D.Text);
+            int y_step_num = Int32.Parse(PosY_2D.Text);
+            int[] Xarray_index;
+            int[] Yarray_index;
+            double[] Xarray_vol;
+            double[] Yarray_vol;
+            double x_step_size = 1 / (double)(x_step_num - 1);
+            double y_step_size = 1 / (double)(y_step_num - 1);
+
+            // Conventional scan scheme, without compensate for flyback error, also no protection voltage used here
+            if (scan_scheme == 0)
+            {
+                Xarray_index = new int[x_step_num];
+                Yarray_index = new int[y_step_num];
+                Xarray_vol = new double[x_step_num];
+                Yarray_vol = new double[y_step_num];
+
+                for (int ix = 0; ix < x_step_num; ix++)
+                {
+                    Xarray_index[ix] = ix;
+                    Xarray_vol[ix] = -0.5 + x_step_size * ix;
+                }
+
+                for (int iy = 0; iy < y_step_num; iy++)
+                {
+                    Yarray_index[iy] = iy;
+                    Yarray_vol[iy] = -0.5 + y_step_size * iy;
+                }
+
+            }
+
+            // serpentine scan scheme
+            else
+            {
+                Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
+                // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
+                Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away, not sure whether this +3 is causing problem
+                Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
+                Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
+
+                for (int ix = 0; ix < x_step_num * 2; ix++)
+                {
+                    if (ix < x_step_num)
+                    {
+                        Xarray_vol[ix] = -0.5 + x_step_size * ix;
+                        Xarray_index[ix] = ix;
+                    }
+                    else
+                    {
+                        Xarray_index[ix] = x_step_num * 2 - ix - 1;
+                    }
+                }
+
+                for (int iy = 0; iy < y_step_num; iy++)
+                {
+                    Yarray_index[iy + 1] = iy;
+                    Yarray_vol[iy] = -0.5 + y_step_size * iy;
+                }
+                Yarray_index[0] = y_step_num;
+                Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
+                Yarray_index[y_step_num + 2] = y_step_num;
+                Yarray_vol[y_step_num] = 1;
+
+            }
+
+            // set new thread for AWG and digitizer, digitizer has to go first as it waits for trigger from AWG
+
+            float dwellT = float.Parse(FrameRate_2D.Text);
+            int fps = (int)Math.Floor(1000000/dwellT);
+
+
+            // set new thread for digitizer
+
+            double[] WaveformArray_Ch1 = { };
+
+            string sent;
+            bool isNumeric = int.TryParse(FrameRate.Text, out int n);
+            if (!isNumeric)
+            {
+                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+
+            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            int record_size;
+            recording_rate = RecordingRateLookup(recording_rate);
+
+            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent;
+            record_size = (int)((double)Int32.Parse(PosX.Text) * (double)Int32.Parse(PosY.Text) / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
+            record_size = (int)(record_size * 1.01);
+            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
+            MessageBox.Text += sent;
+
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, Int32.Parse(FrameRate.Text));
+                }));
+
+
+            }).Start();
+
+            // start new thread for AWG
+
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps);
+
+            }).Start();
+
+        }
+
+        // Function to acquire single 4DSTEM dataset with full frame, i.e. max voltage range.
+        // Number of beam positions will follow GUI settings
         // For DE camera in master mode, camera has to run to generate trigger signal
+
         public void Single_Acquire(object sender, RoutedEventArgs e)
         {
             // test for passive mode scan control
@@ -349,7 +487,7 @@ namespace DeExampleCSharpWPF
             record_size = (int)(record_size * 1.01);
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent;
-/*
+
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
@@ -361,7 +499,7 @@ namespace DeExampleCSharpWPF
                 
 
             }).Start();
- */           
+           
 
 
         }
@@ -1673,21 +1811,10 @@ namespace DeExampleCSharpWPF
         {
         }
 
-        private void Reset_settings(object sender, RoutedEventArgs e)
-        {
-            PosX.Text = 20.ToString();
-            PosY.Text = 20.ToString();
-            FrameRate.Text = 80.ToString();
-            BackgroundWorkerDemo.AlertForm alert;
-            alert = new BackgroundWorkerDemo.AlertForm();
-            // event handler for the Cancel button in AlertForm
-            //alert.Canceled += new EventHandler<EventArgs>(buttonCancel_Click);
-            alert.Show();
-            // Start the asynchronous operation.
-            //backgroundWorker1.RunWorkerAsync();
-        }
+
 
         #endregion
+
 
     }
 

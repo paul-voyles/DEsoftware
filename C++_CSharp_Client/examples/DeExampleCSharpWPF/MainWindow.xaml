@@ -125,21 +125,21 @@
                 </Grid>
 
                 <StackPanel  Orientation="Horizontal" Margin="0,20,0,0">
-                    <Button x:Name="button" Content="Reset Setting" Height="33" Width="132" Margin="20,0,0,0" Click="Reset_settings" FontSize="18"/>
-                    <Button x:Name="button_Copy" Content="Default Acquire" Height="33" Width="132" Margin="30,0,0,0" FontSize="18" Click="Single_Acquire"/>
-                    <Button x:Name="Submit_Setting" Click="Submit_Setting_Click" Content="ROI Acquire" Height="33" Margin="30,0,0,0" FontSize="18"  Width="132" />
+                    <Button x:Name="button" Content="2D Acquire" Height="33" Width="132" Margin="20,0,0,0" Click="SCAN2D" FontSize="18"/>
+                    <Button x:Name="button_Copy" Content="Full Frame 4DSTEM" Height="33" Width="132" Margin="30,0,0,0" FontSize="14" Click="Single_Acquire"/>
+                    <Button x:Name="Submit_Setting" Click="Submit_Setting_Click" Content="ROI 4DSTEM" Height="33" Margin="30,0,0,0" FontSize="14"  Width="132" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
 
-                    <StackPanel Orientation="Vertical" Margin="50,40,0,0">
-                        <TextBlock x:Name="textBlock1"  HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" Text="Region of Interest (ROI):" VerticalAlignment="Bottom" Width="130"/>
-                        <TextBlock x:Name="textBlock1_Copy1" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start"/><Run Text=" X:"/></TextBlock>
+                    <StackPanel Orientation="Vertical" Margin="20,40,0,0">
+                        <TextBlock  HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" Text="Region of Interest (ROI):" VerticalAlignment="Bottom" Width="130"/>
+                        <TextBlock  HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start"/><Run Text=" X:"/></TextBlock>
                         <TextBox x:Name="StartX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0"  TextWrapping="Wrap" Text="100" VerticalAlignment="Bottom" Width="90"/>
-                        <TextBlock x:Name="textBlock1_Copy" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="End X:" VerticalAlignment="Bottom" Width="42"/>
+                        <TextBlock  HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="End X:" VerticalAlignment="Bottom" Width="42"/>
                         <TextBox x:Name="EndX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="412" VerticalAlignment="Bottom" Width="90"/>
-                        <TextBlock x:Name="FrameRate_text" HorizontalAlignment="Left" Height="18" Margin="0,10,0,0" TextWrapping="Wrap" Text="Frame rate (FPS):" VerticalAlignment="Bottom" Width="130"/>
-                        <TextBox x:Name="FrameRate" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Bottom" Width="90"/>
+                        <Button x:Name="CancelAcquisition" Content="Cancel Acquisition" Height="33" Width="132" Margin="0,50,0,0" Click="CancelAcq" FontSize="14"/>
+
                     </StackPanel>
 
                     <StackPanel Orientation="Vertical" Margin="0,40,0,0">
@@ -149,16 +149,26 @@
                         <TextBox x:Name="EndY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="412" Width="90"/>
                     </StackPanel>
 
-                    <StackPanel Orientation="Vertical" Margin="40,0,0,0">
-                        <TextBlock x:Name="textBlock1_Copy6" Height="20" Margin="0,40,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Scan grid setting:" VerticalAlignment="Bottom" Width="152"/>
-
-                        <TextBlock x:Name="textBlock1_Copy8" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="60.667"><Run Text="X "/><Run Text="Positions"/><Run Text=":"/></TextBlock>
+                    <StackPanel Orientation="Vertical" Margin="10,0,0,0">
+                        <TextBlock  Height="20" Margin="0,40,0,0" Grid.Row="1" TextWrapping="Wrap" Text="4D scan setting:" VerticalAlignment="Bottom" Width="132"/>
+                        <TextBlock  Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="60.667"><Run Text="X "/><Run Text="Positions"/><Run Text=":"/></TextBlock>
                         <TextBox x:Name="PosX" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="20" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
-                        <TextBlock x:Name="textBlock1_Copy7" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="62" Text="Y Positions:"/>
+                        <TextBlock  Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="62" Text="Y Positions:"/>
                         <TextBox x:Name="PosY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="20" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
-                        <TextBlock x:Name="TotalImages" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="79" Text="Total Images:"/>
-                        <TextBlock x:Name="RamSpace" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="79" Text="RAM space:"/>
-                        <ProgressBar Grid.Column="2" HorizontalAlignment="Right" Height="12.284" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Bottom" Width="189.658"/>
+                        <TextBlock  HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" Text="Frame rate (FPS):" VerticalAlignment="Bottom" Width="130"/>
+                        <TextBox x:Name="FrameRate" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="1000" VerticalAlignment="Bottom" Width="90"/>
+
+                    </StackPanel>
+
+                    <StackPanel Orientation="Vertical" Margin="0,0,0,0">
+                        <TextBlock  Height="20" Margin="0,40,0,0" Grid.Row="1" TextWrapping="Wrap" Text="2D scan setting:" VerticalAlignment="Bottom" />
+                        <TextBlock  Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="60.667"><Run Text="X "/><Run Text="Positions"/><Run Text=":"/></TextBlock>
+                        <TextBox x:Name="PosX_2D" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="512" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
+                        <TextBlock  Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="62" Text="Y Positions:"/>
+                        <TextBox x:Name="PosY_2D" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="512" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
+                        <TextBlock HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" Text="Dwell Time (uS):" VerticalAlignment="Bottom" Width="130"/>
+                        <TextBox x:Name="FrameRate_2D" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="10" VerticalAlignment="Bottom" Width="90"/>
+
                     </StackPanel>
                 </StackPanel>
 
