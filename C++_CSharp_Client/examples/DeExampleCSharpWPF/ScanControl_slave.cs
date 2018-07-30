@@ -32,7 +32,7 @@ namespace ScanControl_slave
             SD_AOU moduleAOU = new SD_AOU();
             string ModuleName = "M3201A";
             int nChassis = 1;
-            int nSlot = 3;
+            int nSlot = 7;
 
             if ((status = moduleAOU.open(ModuleName, nChassis, nSlot)) < 0)
             {
@@ -57,7 +57,7 @@ namespace ScanControl_slave
             }
 
             int TriggerDelay;
-            TriggerDelay = (int)Math.Floor(( 1e-8 * Prescaling * nSamples - 1 / recording_rate - 2.5e-6 ) * 1e9); // difference between scan cycle and camera integration time in ns
+            TriggerDelay = (int)Math.Floor(( 1e-8 * Prescaling * nSamples - 1 / recording_rate - 2.5e-6 ) * 1e9 / 10); // difference between scan cycle and camera integration time in tens of ns
 
             Console.WriteLine("Precaling factor " + Prescaling + " will be used with " + nSamples + " for each beam position.");
             Console.WriteLine("Trigger delay by " + TriggerDelay + " ns from beam position movement.");
@@ -69,6 +69,8 @@ namespace ScanControl_slave
             moduleAOU.channelWaveShape(2, SD_Waveshapes.AOU_AWG);
             moduleAOU.channelAmplitude(3, 0.5);
             moduleAOU.channelWaveShape(3, SD_Waveshapes.AOU_AWG);
+            moduleAOU.channelAmplitude(4, 0.5);
+            moduleAOU.channelWaveShape(4, SD_Waveshapes.AOU_AWG);
             moduleAOU.waveformFlush();
 
             // Convert array into list
@@ -89,9 +91,14 @@ namespace ScanControl_slave
             yindex = Yarray_index.ToList();
 
             status = moduleAOU.AWGflush(1);
+            Console.WriteLine("Status for channel 1 " + status);
             status = moduleAOU.AWGflush(2);
+            Console.WriteLine("Status for channel 2 " + status);
             status = moduleAOU.AWGflush(3);
+            Console.WriteLine("Status for channel 3 " + status);
             status = moduleAOU.AWGflush(4);
+            Console.WriteLine("Status for channel 4 " + status);
+
 
 
             #region X scan generation
@@ -163,18 +170,17 @@ namespace ScanControl_slave
                 Console.WriteLine("Error while queuing y waveform");
                         }
 
-        #endregion
+            #endregion
             
 
-        #region generate DE trigger
+            #region generate DE trigger
 
             // Generate and queue waveform for DE trigger on wavefrom #2 (channel 3), same size and reps as x array
 
             var Waveform_DE = new double[nSamples * xindex.Count()];
-            Count = 0;
             for (int ix = 0; ix < xindex.Count; ix++)
             {
-                Waveform_DE[ix * nSamples] = -1;
+                Waveform_DE[ix * nSamples] = 1;
             }
             var SD_Waveform_DE = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DE);
             status = moduleAOU.waveformLoad(SD_Waveform_DE, 2, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
@@ -184,12 +190,12 @@ namespace ScanControl_slave
                 Console.WriteLine("Error while loading x waveform");
             }
 
-            status = moduleAOU.AWGqueueWaveform(1, 2, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count(), Prescaling);
+            status = moduleAOU.AWGqueueWaveform(3, 2, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count(), Prescaling);
             Console.WriteLine("Trigger waveform size " + moduleAOU.waveformGetMemorySize(2) + " byte");
 
             if (status < 0)
             {
-                Console.WriteLine("Error while queuing x waveform");
+                Console.WriteLine("Error while queuing camera trigger, error code " + status);
             }
 
             #endregion
@@ -200,25 +206,24 @@ namespace ScanControl_slave
             // trigger signal same size as x array, run only once
 
             var Waveform_DIGI = new double[nSamples * xindex.Count()];
-            Count = 0;
             for (int ix = 0; ix < nSamples; ix++)
             {
-                Waveform_DE[ix] = -1;
+                Waveform_DIGI[ix] = 1; // set first nSamples points to -1 to create on single trigger
             }
-            var SD_Waveform_DIGI = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DE);
-            status = moduleAOU.waveformLoad(SD_Waveform_DE, 3, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
+            var SD_Waveform_DIGI = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DIGI);
+            status = moduleAOU.waveformLoad(SD_Waveform_DIGI, 3, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
 
             if (status < 0)
             {
                 Console.WriteLine("Error while loading x waveform");
             }
 
-            status = moduleAOU.AWGqueueWaveform(1, 2, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count(), Prescaling);
-            Console.WriteLine("Trigger waveform size " + moduleAOU.waveformGetMemorySize(2) + " byte");
+            status = moduleAOU.AWGqueueWaveform(4, 3, SD_TriggerModes.AUTOTRIG, 0, 1, Prescaling);
+            Console.WriteLine("Trigger waveform size " + (double)moduleAOU.waveformGetMemorySize(3)/1000000 + " MB");
 
             if (status < 0)
             {
-                Console.WriteLine("Error while queuing x waveform");
+                Console.WriteLine("Error while queuing digitizer trigger, error code " + status);
             }
 
             #endregion
@@ -226,7 +231,7 @@ namespace ScanControl_slave
             // Configure all channels to single shot, X and trigger will automatically stop after certain amount of cycles
             moduleAOU.AWGqueueConfig(1, 0);
             moduleAOU.AWGqueueConfig(2, 0);
-            moduleAOU.AWGqueueConfig(3, 1); // Should also be 0 here?
+            moduleAOU.AWGqueueConfig(3, 0); // Should also be 0 here?
             moduleAOU.AWGqueueConfig(4, 0);
 
             // Start both channel and wait for triggers, start channel 0,1,2: 00000111 = 7; start channel 0,1,2,3: 00001111 = 15
