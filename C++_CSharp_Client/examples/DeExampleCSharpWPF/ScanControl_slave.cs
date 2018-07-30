@@ -23,7 +23,34 @@ namespace ScanControl_slave
         private List<int> xindex;
         private List<int> yindex;
 
-        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay, int recording_rate)
+        public HW_STATUS_RETURNS CancelScan()
+        {
+            int status;
+            // Channel 1 for y scan and channel 2 for x scan
+
+            //Create an instance of the AOU module
+            SD_AOU moduleAOU = new SD_AOU();
+            string ModuleName = "M3201A";
+            int nChassis = 1;
+            int nSlot = 7;
+
+            if ((status = moduleAOU.open(ModuleName, nChassis, nSlot)) < 0)
+            {
+                Console.WriteLine("Error openning the Module 'M3201A', make sure the slot and chassis are correct. Aborting...");
+                Console.ReadKey();
+
+                return HW_STATUS_RETURNS.HW_SUCCESS;
+            }
+            status = moduleAOU.AWGflush(1);
+            status = moduleAOU.AWGflush(2);
+            status = moduleAOU.AWGflush(3);
+            status = moduleAOU.AWGflush(4);
+
+            return HW_STATUS_RETURNS.HW_SUCCESS;
+
+        }
+
+        public HW_STATUS_RETURNS ScanControlInitialize(double x_amp, double y_amp, double[] Xarray_vol, double[] Yarray_vol, int[] Xarray_index, int[] Yarray_index, double delay, int recording_rate, int Option2D)
         {
             int status;
             // Channel 1 for y scan and channel 2 for x scan
@@ -57,7 +84,7 @@ namespace ScanControl_slave
             }
 
             int TriggerDelay;
-            TriggerDelay = (int)Math.Floor(( 1e-8 * Prescaling * nSamples - 1 / recording_rate - 2.5e-6 ) * 1e9 / 10); // difference between scan cycle and camera integration time in tens of ns
+            TriggerDelay = (int)Math.Floor(( 1e-8 * Prescaling * nSamples - 1 / recording_rate  ) * 1e9 / 10); // difference between scan cycle and camera integration time in tens of ns
 
             Console.WriteLine("Precaling factor " + Prescaling + " will be used with " + nSamples + " for each beam position.");
             Console.WriteLine("Trigger delay by " + TriggerDelay + " ns from beam position movement.");
@@ -170,8 +197,7 @@ namespace ScanControl_slave
                 Console.WriteLine("Error while queuing y waveform");
                         }
 
-            #endregion
-            
+            #endregion            
 
             #region generate DE trigger
 
@@ -235,7 +261,10 @@ namespace ScanControl_slave
             moduleAOU.AWGqueueConfig(4, 0);
 
             // Start both channel and wait for triggers, start channel 0,1,2: 00000111 = 7; start channel 0,1,2,3: 00001111 = 15
-            moduleAOU.AWGstartMultiple(15);
+            if (Option2D == 0)
+                moduleAOU.AWGstartMultiple(15);
+            else
+                moduleAOU.AWGstartMultiple(11); // don't start channel 3 for DE trigger if doing 2D scan mode
             //moduleAOU.AWGstartMultiple(3);
 
 

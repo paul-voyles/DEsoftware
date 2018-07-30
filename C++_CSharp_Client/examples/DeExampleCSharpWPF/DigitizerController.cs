@@ -17,6 +17,11 @@ namespace Digitizer
     {
         [STAThread]
 
+        public static void CancelAcquisition()
+        {
+
+        }
+
         public static void FetchData( int record_size, int recording_rate, ref double[] WaveformArray_Ch1)
         {
             Console.WriteLine(" PrintProperties");

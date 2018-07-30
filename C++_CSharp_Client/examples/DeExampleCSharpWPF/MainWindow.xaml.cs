@@ -248,7 +248,8 @@ namespace DeExampleCSharpWPF
         // Function used to cancel current 2D/4D acquisition and reset hardwares to idle status
         private void CancelAcq(object sender, RoutedEventArgs e)
         {
-
+            ScanControl_slave.ScanControl_cz status = new ScanControl_slave.ScanControl_cz();
+            status.CancelScan();
         }
 
 
@@ -376,7 +377,7 @@ namespace DeExampleCSharpWPF
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
-                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps);
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps,1);
 
             }).Start();
 
@@ -460,7 +461,7 @@ namespace DeExampleCSharpWPF
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
-                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps);
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps,0);
 
             }).Start();
 
@@ -1051,7 +1052,7 @@ namespace DeExampleCSharpWPF
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
-                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol,recording_rate);
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol,recording_rate,0);
 
             }).Start();
 
@@ -1157,14 +1158,15 @@ namespace DeExampleCSharpWPF
 
         // Function used to write AWG setting onto Xu's API or Chenyu's API
         // 2* x/y_scan_max will always be used as amplitute for two channels, in order to drive beam away in the end
-        public void PushAWGsetting(int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol, int recording_rate)
+        // Option2D is used to mark 2D/4D acquisition, Option2D==1 then AWG will run 2D acquisition without generate DE camera trigger, only for DE in slave mode
+        public void PushAWGsetting(int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol, int recording_rate, int Option2D)
         {
             //ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
             // Test for passive mode scan control
             if (scan_mode == 1)
             {
                 ScanControl_slave.ScanControl_cz status = new ScanControl_slave.ScanControl_cz();
-                status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate);
+                status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate, Option2D);
             }
             else
             {
