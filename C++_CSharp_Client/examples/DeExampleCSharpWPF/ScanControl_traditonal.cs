@@ -32,7 +32,7 @@ namespace ScanControl_traditional
             SD_AOU moduleAOU = new SD_AOU();
             string ModuleName = "M3201A";
             int nChassis = 1;
-            int nSlot = 3;
+            int nSlot = 7;
 
             if ((status = moduleAOU.open(ModuleName, nChassis, nSlot)) < 0)
             {

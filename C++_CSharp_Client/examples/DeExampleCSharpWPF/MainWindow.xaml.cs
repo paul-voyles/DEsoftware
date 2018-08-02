@@ -332,7 +332,7 @@ namespace DeExampleCSharpWPF
 
             // set new thread for AWG and digitizer, digitizer has to go first as it waits for trigger from AWG
 
-            float dwellT = float.Parse(FrameRate_2D.Text);
+            float dwellT = float.Parse(FrameRate_2D.Text);  // FrameRate_2D actually contains dwell time, not frequency
             int fps = (int)Math.Floor(1000000/dwellT);
 
 
@@ -349,16 +349,31 @@ namespace DeExampleCSharpWPF
             }
 
 
-            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            int recording_rate = fps * 10;
             int record_size;
             recording_rate = RecordingRateLookup(recording_rate);
 
             sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
             MessageBox.Text += sent;
-            record_size = (int)((double)Int32.Parse(PosX.Text) * (double)Int32.Parse(PosY.Text) / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
-            record_size = (int)(record_size * 1.01);
+            record_size = (int)((double)Int32.Parse(PosX_2D.Text) * (double)Int32.Parse(PosY_2D.Text) / fps * (double)recording_rate);
+            record_size = (int)(record_size * 1.15);
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent;
+
+            // run the same process in AWG control to determine nSamples and prescaling factor
+            int nSamples;
+            int Prescaling;
+
+            nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
+            Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
+            {
+                nSamples++;
+                Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            }
+
+            int DE_fps;
+            DE_fps = (int)Math.Ceiling(1e8 / Prescaling / nSamples);
 
             new Thread(() =>
             {
@@ -366,7 +381,7 @@ namespace DeExampleCSharpWPF
                 Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
                 this.Dispatcher.Invoke((Action)(() =>
                 {
-                    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, Int32.Parse(FrameRate.Text));
+                   HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX_2D.Text), Int32.Parse(PosY_2D.Text), 0, recording_rate, DE_fps);
                 }));
 
 
@@ -1221,10 +1236,28 @@ namespace DeExampleCSharpWPF
             {
                 refined_rate = 50000;
             }
-            else
+            else if (recording_rate <= 100000)
             {
                 refined_rate = 100000;
             }
+            else if (recording_rate <= 200000)
+            {
+                refined_rate = 200000;
+            }
+            else if (recording_rate <= 5e5)
+            {
+                refined_rate = 500000;
+            }
+            else if (recording_rate <= 1e6)
+                refined_rate = (int)1e6;
+            else if (recording_rate <= 2e6)
+                refined_rate = (int)2e6;
+            else if (recording_rate <= 5e6)
+                refined_rate = (int)5e6;
+            else if (recording_rate <= 1e7)
+                refined_rate = (int)1e7;
+            else
+                refined_rate = (int)2e7;    // 20MSa/sec is the maximum sampling rate for this digitizer
             return refined_rate;
         }
 

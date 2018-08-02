@@ -80,14 +80,18 @@ namespace ScanControl_slave
             while (Prescaling > 1.10e8/recording_rate/nSamples || nSamples == 1)
             {
                 nSamples++;
-                Prescaling = (int)Math.Ceiling(1.1e8 / recording_rate / nSamples);
+                Prescaling = (int)Math.Ceiling(1.05e8 / recording_rate / nSamples);
             }
 
             int TriggerDelay;
-            TriggerDelay = (int)Math.Floor(( 1e-8 * Prescaling * nSamples - 1 / recording_rate  ) * 1e9 / 10); // difference between scan cycle and camera integration time in tens of ns
+            TriggerDelay = (int)Math.Floor(( 1e-8 * Prescaling * nSamples - 1 / recording_rate  ) * 1e9); // difference between scan cycle and camera integration time in ns
+            if (TriggerDelay > 25000)
+                TriggerDelay = 25000/10;
+            else
+                TriggerDelay = TriggerDelay / 10;
 
             Console.WriteLine("Precaling factor " + Prescaling + " will be used with " + nSamples + " for each beam position.");
-            Console.WriteLine("Trigger delay by " + TriggerDelay + " ns from beam position movement.");
+            Console.WriteLine("Trigger delay by " + TriggerDelay*10 + " ns from beam position movement.");
 
             // Config amplitude and setup AWG in channels 1 and 2,
             moduleAOU.channelAmplitude(1, y_amp);
@@ -152,10 +156,11 @@ namespace ScanControl_slave
             {
                 Console.WriteLine("Error while loading x waveform");
             }
+            Console.WriteLine("X waveform size " + moduleAOU.waveformGetMemorySize(0) + " byte");
 
             // queue waveform into channel 2 and loop for yindex.count() times
             status = moduleAOU.AWGqueueWaveform(2, 0, SD_TriggerModes.AUTOTRIG, 0, yindex.Count(), Prescaling);
-            Console.WriteLine("X waveform size " + moduleAOU.waveformGetMemorySize(0) + " byte");
+            
             if (status < 0)
             {
                 Console.WriteLine("Error while queuing x waveform");
@@ -187,10 +192,11 @@ namespace ScanControl_slave
             {
                 Console.WriteLine("Error while loading y waveform");
             }
+            Console.WriteLine("Y waveform size " + moduleAOU.waveformGetMemorySize(1) + " byte");
+
 
             // queue waveform into channel 1 and run once
             status = moduleAOU.AWGqueueWaveform(1, 1, SD_TriggerModes.AUTOTRIG, 0, 1, Prescaling);
-            Console.WriteLine("Y waveform size " + moduleAOU.waveformGetMemorySize(1) + " byte");
 
             if (status < 0)
             {
@@ -206,7 +212,7 @@ namespace ScanControl_slave
             var Waveform_DE = new double[nSamples * xindex.Count()];
             for (int ix = 0; ix < xindex.Count; ix++)
             {
-                Waveform_DE[ix * nSamples] = 1;
+                Waveform_DE[ix * nSamples] = -1;
             }
             var SD_Waveform_DE = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DE);
             status = moduleAOU.waveformLoad(SD_Waveform_DE, 2, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
@@ -234,7 +240,7 @@ namespace ScanControl_slave
             var Waveform_DIGI = new double[nSamples * xindex.Count()];
             for (int ix = 0; ix < nSamples; ix++)
             {
-                Waveform_DIGI[ix] = 1; // set first nSamples points to -1 to create on single trigger
+                Waveform_DIGI[ix] = -1; // set first nSamples points to -1 to create on single trigger
             }
             var SD_Waveform_DIGI = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DIGI);
             status = moduleAOU.waveformLoad(SD_Waveform_DIGI, 3, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
@@ -261,6 +267,7 @@ namespace ScanControl_slave
             moduleAOU.AWGqueueConfig(4, 0);
 
             // Start both channel and wait for triggers, start channel 0,1,2: 00000111 = 7; start channel 0,1,2,3: 00001111 = 15
+            System.Threading.Thread.Sleep(1000);
             if (Option2D == 0)
                 moduleAOU.AWGstartMultiple(15);
             else
