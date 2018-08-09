@@ -470,15 +470,7 @@ namespace DeExampleCSharpWPF
 
             }
 
-            // set new thread for AWG
 
-            int fps = Int32.Parse(FrameRate.Text);
-            new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps,0);
-
-            }).Start();
 
             // set new thread for digitizer
 
@@ -500,9 +492,24 @@ namespace DeExampleCSharpWPF
             sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
             MessageBox.Text += sent;
             record_size = (int)((double)Int32.Parse(PosX.Text) * (double)Int32.Parse(PosY.Text) / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
-            record_size = (int)(record_size * 1.01);
+            record_size = (int)(record_size * 1.1);
             sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
             MessageBox.Text += sent;
+
+            int nSamples;
+            int Prescaling;
+            int fps = Int32.Parse(FrameRate.Text);
+
+            nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
+            Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
+            {
+                nSamples++;
+                Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            }
+
+            int DE_fps;
+            DE_fps = (int)Math.Ceiling(1e8 / Prescaling / nSamples);
 
             new Thread(() =>
             {
@@ -510,12 +517,21 @@ namespace DeExampleCSharpWPF
                 Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
                 this.Dispatcher.Invoke((Action)(() =>
                 {
-                    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, Int32.Parse(FrameRate.Text));
+                    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, DE_fps);
                 }));
-                
 
             }).Start();
-           
+
+            // set new thread for AWG
+
+
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0);
+
+            }).Start();
+
 
 
         }

@@ -35,3 +35,6 @@ C++_CSharp_Client/examples/DeExampleCSharpWPF/.vs/DeExampleCSharpWPF/v15/sqlite3
 *.resources
 *.baml
 *.ide
+*.exe
+*.pdb
+*.cache

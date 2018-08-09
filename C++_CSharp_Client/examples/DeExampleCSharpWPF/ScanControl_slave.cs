@@ -222,7 +222,7 @@ namespace ScanControl_slave
                 Console.WriteLine("Error while loading x waveform");
             }
 
-            status = moduleAOU.AWGqueueWaveform(3, 2, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count(), Prescaling);
+            status = moduleAOU.AWGqueueWaveform(3, 2, SD_TriggerModes.AUTOTRIG, 0, yindex.Count(), Prescaling);
             Console.WriteLine("Trigger waveform size " + moduleAOU.waveformGetMemorySize(2) + " byte");
 
             if (status < 0)
