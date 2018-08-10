@@ -156,7 +156,7 @@ namespace ScanControl_slave
             {
                 Console.WriteLine("Error while loading x waveform");
             }
-            Console.WriteLine("X waveform size " + moduleAOU.waveformGetMemorySize(0) + " byte");
+            Console.WriteLine("X waveform size " + (double)moduleAOU.waveformGetMemorySize(0)/1000000 + " MB");
 
             // queue waveform into channel 2 and loop for yindex.count() times
             status = moduleAOU.AWGqueueWaveform(2, 0, SD_TriggerModes.AUTOTRIG, 0, yindex.Count(), Prescaling);
@@ -192,7 +192,7 @@ namespace ScanControl_slave
             {
                 Console.WriteLine("Error while loading y waveform");
             }
-            Console.WriteLine("Y waveform size " + moduleAOU.waveformGetMemorySize(1) + " byte");
+            Console.WriteLine("Y waveform size " + (double)moduleAOU.waveformGetMemorySize(1)/1000000 + " MB");
 
 
             // queue waveform into channel 1 and run once
@@ -223,7 +223,7 @@ namespace ScanControl_slave
             }
 
             status = moduleAOU.AWGqueueWaveform(3, 2, SD_TriggerModes.AUTOTRIG, 0, yindex.Count(), Prescaling);
-            Console.WriteLine("Trigger waveform size " + moduleAOU.waveformGetMemorySize(2) + " byte");
+            Console.WriteLine("Trigger waveform size " + (double)moduleAOU.waveformGetMemorySize(2)/1000000 + " MB");
 
             if (status < 0)
             {
