@@ -36,7 +36,7 @@ namespace ScanControl_slave
 
             if ((status = moduleAOU.open(ModuleName, nChassis, nSlot)) < 0)
             {
-                Console.WriteLine("Error openning the Module 'M3201A', make sure the slot and chassis are correct. Aborting...");
+                Console.WriteLine("Error openning the Module 'M3201A', make sure the slot and chassis are correct. Aborting..." + status);
                 Console.ReadKey();
 
                 return HW_STATUS_RETURNS.HW_SUCCESS;
@@ -89,6 +89,9 @@ namespace ScanControl_slave
                 TriggerDelay = 25000/10;
             else
                 TriggerDelay = TriggerDelay / 10;
+
+            // For global shutter mode, set trigger signal delay to zero
+           TriggerDelay = 0;   
 
             Console.WriteLine("Precaling factor " + Prescaling + " will be used with " + nSamples + " for each beam position.");
             Console.WriteLine("Trigger delay by " + TriggerDelay*10 + " ns from beam position movement.");
@@ -159,7 +162,7 @@ namespace ScanControl_slave
             Console.WriteLine("X waveform size " + (double)moduleAOU.waveformGetMemorySize(0)/1000000 + " MB");
 
             // queue waveform into channel 2 and loop for yindex.count() times
-            status = moduleAOU.AWGqueueWaveform(2, 0, SD_TriggerModes.AUTOTRIG, 0, yindex.Count(), Prescaling);
+            status = moduleAOU.AWGqueueWaveform(2, 0, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count(), Prescaling);
             
             if (status < 0)
             {
@@ -196,7 +199,7 @@ namespace ScanControl_slave
 
 
             // queue waveform into channel 1 and run once
-            status = moduleAOU.AWGqueueWaveform(1, 1, SD_TriggerModes.AUTOTRIG, 0, 1, Prescaling);
+            status = moduleAOU.AWGqueueWaveform(1, 1, SD_TriggerModes.AUTOTRIG, TriggerDelay, 1, Prescaling);
 
             if (status < 0)
             {

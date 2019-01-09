@@ -372,8 +372,8 @@ namespace DeExampleCSharpWPF
                 Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
             }
 
-            int DE_fps;
-            DE_fps = (int)Math.Ceiling(1e8 / Prescaling / nSamples);
+            double DE_fps;
+            DE_fps = 1e-8 * Prescaling * nSamples;
 
             new Thread(() =>
             {
@@ -508,8 +508,8 @@ namespace DeExampleCSharpWPF
                 Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
             }
 
-            int DE_fps;
-            DE_fps = (int)Math.Ceiling(1e8 / Prescaling / nSamples);
+            double DE_fps;
+            DE_fps = 1e-8 * Prescaling * nSamples;
 
             new Thread(() =>
             {
@@ -541,8 +541,9 @@ namespace DeExampleCSharpWPF
         //        size_x/size_y: target 2D matrix size in pixel
         //        option: 0 for reconstruction on default image window (512 px), 1 for reconstruction on ROI window (customized size)
         //        SamplePerFrame: Acquisition frequency on digitizer
+        //        DEFrameRate: old name was used here, this is actually the dwell time for each beam position, NOT RATE
 
-        public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option, int SamplesPerFrame, int DEFrameRate)
+        public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option, int SamplesPerFrame, double DEFrameRate)
         {
 
             // Generate new array for rescaled HAADF image
@@ -561,7 +562,7 @@ namespace DeExampleCSharpWPF
             int total_px = size_x * size_y;
             int cycle = -1;
             int pos = 0;
-            double DE_time = 1/ (double)DEFrameRate;
+            double DE_time = DEFrameRate;
             double Digi_time = 1/(double)SamplesPerFrame;
 
             // currently we assume the dead time won't take more than two samples from digitizer
@@ -572,7 +573,7 @@ namespace DeExampleCSharpWPF
                 // 1e-10 is used to avoid round off error for two times
                 if (DE_time < Digi_time - 1e-10)
                 {
-                    DE_time += (1 / (double)DEFrameRate);
+                    DE_time += DEFrameRate;
                     cycle++;
                     average = subArray_list.Average();
                     csv.AppendLine(average.ToString());
@@ -1030,7 +1031,7 @@ namespace DeExampleCSharpWPF
         #endregion
 
         #region Set AWG and digitizer
-        // Configure AWG and digitizer based on current settings
+        // This function is currently being used to do ROI 4DSTEM acquisition
         private void Submit_Setting_Click(object sender, RoutedEventArgs e)
         {
             string pxx = PosX.Text;
@@ -1116,7 +1117,7 @@ namespace DeExampleCSharpWPF
                     int sizex = Int32.Parse(PosX.Text);
                     int sizey = Int32.Parse(PosY.Text);
                     int DEFrameRate = Int32.Parse(FrameRate.Text);
-                    HAADFreconstrcution(WaveformArray_Ch1, sizex, sizey, 0, recording_rate, DEFrameRate);
+                    HAADFreconstrcution(WaveformArray_Ch1, sizex, sizey, 1, recording_rate, DEFrameRate);
                 }));
 
             }).Start();
