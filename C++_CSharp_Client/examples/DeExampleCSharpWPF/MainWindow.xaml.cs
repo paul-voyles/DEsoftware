@@ -1127,7 +1127,8 @@ namespace DeExampleCSharpWPF
 
         }
 
-        // Function used to generate two scan array for AWG channels based on current setting
+        // Function used to generate two scan array for AWG channels based on current setting, currently only use for ROI 4DSTEM. Full frame 4DSTEM
+        // will generate array within the function itself.
         // Input: two empty double arrays
         // Save two arrays into Xarray and Yarray
         public void GenerateScanArray(ref int[] Xarray_index, ref int[] Yarray_index, ref double[] Xarray_vol, ref double[] Yarray_vol)
