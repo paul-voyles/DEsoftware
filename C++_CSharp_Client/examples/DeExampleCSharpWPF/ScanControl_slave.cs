@@ -146,7 +146,7 @@ namespace ScanControl_slave
             {
                 for (int i = 0; i < nSamples; i++)
                 {
-                    Waveform_X[Count] = xpoints[xindex[ix]];
+                    Waveform_X[Count] = xpoints[xindex[xindex.Count - ix - 1]];
                     Count++;
                 }
             }
@@ -162,7 +162,7 @@ namespace ScanControl_slave
             Console.WriteLine("X waveform size " + (double)moduleAOU.waveformGetMemorySize(0)/1000000 + " MB");
 
             // queue waveform into channel 2 and loop for yindex.count() times
-            status = moduleAOU.AWGqueueWaveform(2, 0, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count(), Prescaling);
+            status = moduleAOU.AWGqueueWaveform(1, 0, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count(), Prescaling);
             
             if (status < 0)
             {
@@ -183,7 +183,7 @@ namespace ScanControl_slave
                 {
                     for (int i = 0; i < nSamples; i++)
                     {
-                        Waveform_Y[Count] = ypoints[yindex[iy]];
+                        Waveform_Y[Count] = ypoints[yindex[yindex.Count - iy - 1]];
                         Count++;
                     }
                 }
@@ -199,7 +199,7 @@ namespace ScanControl_slave
 
 
             // queue waveform into channel 1 and run once
-            status = moduleAOU.AWGqueueWaveform(1, 1, SD_TriggerModes.AUTOTRIG, TriggerDelay, 1, Prescaling);
+            status = moduleAOU.AWGqueueWaveform(2, 1, SD_TriggerModes.AUTOTRIG, TriggerDelay, 1, Prescaling);
 
             if (status < 0)
             {

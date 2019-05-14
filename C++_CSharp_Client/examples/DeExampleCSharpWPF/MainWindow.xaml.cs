@@ -66,9 +66,10 @@ namespace DeExampleCSharpWPF
         public double y_scan_min = -0.15;
 
         // scan scheme, 0 for conventional, 1 for serpentine
+        // conventional scan without flyback dwell time works well for slow scans.
         public int scan_scheme = 0;
 
-        // scan mode, 0 for DE in master mode, 1 for DE in slave mode
+        // scan mode, 0 for DE in master mode, 1 for DE in slave mode. Currenly always run in slave mode.
         public int scan_mode = 1;
 
 
@@ -253,10 +254,10 @@ namespace DeExampleCSharpWPF
         }
 
 
-        // Funtion to acquire traditional 2DSTEM image with full fra,e
+        // Funtion to acquire traditional 2DSTEM image with full frame
         // Number of beam position and dwell time will follow GUI setting
-        // DE camera/streampix should remain idle, triggers will be generated as this is using the same function to call AWG
-        // Must be under master mode as AWG cannot be controlled by external trigger, can choose between conventional scan/serpentine scan
+        // DE camera/streampix should remain idle or running in normal mode, triggers will be generated as this is using the same function to call AWG.
+        // Scan system must run as master as AWG cannot be controlled by external trigger, can choose between conventional scan/serpentine scan
 
         private void SCAN2D(object sender, RoutedEventArgs e)
         {
@@ -589,6 +590,7 @@ namespace DeExampleCSharpWPF
                         {
                             HAADF_rescale[cycle] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
                         }
+                        // image display for serpentine scan still flipped LR, not fixed yet.
                         else
                         {
                             HAADF_rescale[size_x * (row + 1) - cycle % size_x - 1 ] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
@@ -596,7 +598,7 @@ namespace DeExampleCSharpWPF
                     }
                     else
                     {
-                        HAADF_rescale[size_x * (row + 1) - cycle % size_x - 1 ] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                        HAADF_rescale[size_x * row + cycle % size_x ] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
                     }
                     if (cycle == total_px - 1)
                     {
@@ -616,7 +618,8 @@ namespace DeExampleCSharpWPF
 
             int bytesPerPixel = 2;
             int stride = size_x * bytesPerPixel;
-            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);    // flip LR to match TIA display, didn't flip UD
+            // No flipLR now.
+            BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale, stride);
 
 
 
@@ -1194,7 +1197,7 @@ namespace DeExampleCSharpWPF
         public void PushAWGsetting(int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol, int recording_rate, int Option2D)
         {
             //ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
-            // Test for passive mode scan control
+            //Slave mode
             if (scan_mode == 1)
             {
                 ScanControl_slave.ScanControl_cz status = new ScanControl_slave.ScanControl_cz();
@@ -1202,11 +1205,13 @@ namespace DeExampleCSharpWPF
             }
             else
             {
+                //Conventional scan
                 if (scan_scheme == 1)
                 {
                     ScanControl_passive.ScanControl_cz status = new ScanControl_passive.ScanControl_cz();
                     status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate);
                 }
+                //Serpentine scan
                 else
                 {
                     ScanControl_traditional.ScanControl_cz status = new ScanControl_traditional.ScanControl_cz();
