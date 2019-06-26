@@ -84,17 +84,22 @@ namespace ScanControl_slave
             }
 
             int TriggerDelay;
+            // Old delay scheme, not in use anymore
+            /*
             TriggerDelay = (int)Math.Floor(( 1e-8 * Prescaling * nSamples - 1 / recording_rate  ) * 1e9); // difference between scan cycle and camera integration time in ns
             if (TriggerDelay > 25000)
                 TriggerDelay = 25000/10;
             else
                 TriggerDelay = TriggerDelay / 10;
+            */
 
-            // For global shutter mode, set trigger signal delay to zero
-           TriggerDelay = 0;   
+            // For global shutter mode, set targer trigger delay time in ns
+            TriggerDelay = 100000;
+            int SampleDelay;
+            SampleDelay = (int) Math.Ceiling((double)TriggerDelay / 10 / (double)Prescaling);
 
             Console.WriteLine("Precaling factor " + Prescaling + " will be used with " + nSamples + " for each beam position.");
-            Console.WriteLine("Trigger delay by " + TriggerDelay*10 + " ns from beam position movement.");
+            Console.WriteLine("Scan delayed by " + (int)SampleDelay*Prescaling*10 + " ns from beam position movement.");
 
             // Config amplitude and setup AWG in channels 1 and 2,
             moduleAOU.channelAmplitude(1, y_amp);
@@ -138,9 +143,17 @@ namespace ScanControl_slave
             #region X scan generation
 
             // Generate and queue waveform for X channel on waveform #0 (channel 2)
+            // Currently when the waveform is full, break all loops using break, a better way would be to put the waveform gen into a function and use return
+            // to break all the loops.
 
             var Waveform_X = new double[nSamples * xindex.Count()];
             int Count = 0;
+            // Start with loop for delay cycle
+            for (int i = 0; i < SampleDelay; i++)
+            {
+                Waveform_X[Count] = -1; //Start with beam outside scan region, scan region ranges from -0.5 to 0.5
+                Count++;    // Count represents the current number of points in waveform
+            }
             // create double array for each x cycle
             for (int ix = 0; ix < xindex.Count; ix++)
             {
@@ -148,6 +161,14 @@ namespace ScanControl_slave
                 {
                     Waveform_X[Count] = xpoints[xindex[xindex.Count - ix - 1]];
                     Count++;
+                    if (Count == nSamples * xindex.Count())
+                    {
+                        break;  // End waveform generation when the waveform is full
+                    }
+                }
+                if (Count == nSamples * xindex.Count())
+                {
+                    break;  // Also break the outer loop, in case the delay length is more than one beam position
                 }
             }
             // generate SD_wave from array
@@ -177,6 +198,13 @@ namespace ScanControl_slave
 
             var Waveform_Y = new double[nSamples * xindex.Count() * yindex.Count()];
             Count = 0;
+            // Start with loop for delay cycle
+            for (int i = 0; i < SampleDelay; i++)
+            {
+                Waveform_Y[Count] = -1; //Start with beam outside scan region, scan region ranges from -0.5 to 0.5
+                Count++;
+            }
+
             for (int iy = 0; iy < yindex.Count(); iy++)
             {
                 for (int ix = 0; ix < xindex.Count(); ix++)
@@ -185,7 +213,19 @@ namespace ScanControl_slave
                     {
                         Waveform_Y[Count] = ypoints[yindex[yindex.Count - iy - 1]];
                         Count++;
+                        if (Count == nSamples * xindex.Count())
+                        {
+                            break;  // End waveform generation when the waveform is full
+                        }
                     }
+                    if (Count == nSamples * xindex.Count())
+                    {
+                        break;  // Also break outer loop
+                    }
+                }
+                if (Count == nSamples * xindex.Count())
+                {
+                    break;  // Break outmost loop
                 }
             }
             var SD_Waveform_Y = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_Y);
