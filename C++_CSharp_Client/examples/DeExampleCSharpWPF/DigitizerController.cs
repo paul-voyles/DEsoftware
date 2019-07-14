@@ -19,7 +19,26 @@ namespace Digitizer
 
         public static void CancelAcquisition()
         {
+            KtM9217 driver = null;
+            driver = new KtM9217();
 
+            // Edit resource and options as needed. Resource is ignored if option Simulate=true
+            string resourceDesc = "PXI0::8-0.0::INSTR";
+
+            string initOptions = "QueryInstrStatus=true, Simulate=false, DriverSetup= Model=, Trace=false";
+
+            bool idquery = true;
+            bool reset = true;
+
+            // Initialize the driver. See driver help topic "Initializing the IVI-COM Driver" for additional information
+            driver.Initialize(resourceDesc, idquery, reset, initOptions);
+            if (driver != null && driver.Initialized)
+            {
+                #region Close Driver Instances
+                driver.Close();
+                Console.WriteLine("Driver Closed");
+                #endregion
+            }
         }
 
         public static void FetchData( int record_size, int recording_rate, ref double[] WaveformArray_Ch1)
@@ -77,8 +96,8 @@ namespace Digitizer
 
                 #region Channels Settings - Channel 1
                 Console.WriteLine("Configuring Channel 1...");
-                Console.WriteLine("Voltage range: 16V");
-                driver.Channels.get_Item("Channel1").Range = 16;
+                Console.WriteLine("Voltage range: 4V");
+                driver.Channels.get_Item("Channel1").Range = 4;
                 Console.WriteLine("Coupling: DC\n");
                 driver.Channels.get_Item("Channel1").Coupling = KtM9217VerticalCouplingEnum.KtM9217VerticalCouplingDC;
                 #endregion

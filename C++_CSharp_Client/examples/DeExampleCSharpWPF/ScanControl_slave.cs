@@ -100,6 +100,7 @@ namespace ScanControl_slave
 
             Console.WriteLine("Precaling factor " + Prescaling + " will be used with " + nSamples + " for each beam position.");
             Console.WriteLine("Scan delayed by " + (int)SampleDelay*Prescaling*10 + " ns from beam position movement.");
+            Console.WriteLine("Sample delayed by + " + (int)SampleDelay);
 
             // Config amplitude and setup AWG in channels 1 and 2,
             moduleAOU.channelAmplitude(1, y_amp);
@@ -151,7 +152,7 @@ namespace ScanControl_slave
             // Start with loop for delay cycle
             for (int i = 0; i < SampleDelay; i++)
             {
-                Waveform_X[Count] = -1; //Start with beam outside scan region, scan region ranges from -0.5 to 0.5
+                Waveform_X[Count] = 0.5; //Start with beam outside scan region, scan region ranges from -0.5 to 0.5
                 Count++;    // Count represents the current number of points in waveform
             }
             // create double array for each x cycle
@@ -182,8 +183,8 @@ namespace ScanControl_slave
             }
             Console.WriteLine("X waveform size " + (double)moduleAOU.waveformGetMemorySize(0)/1000000 + " MB");
 
-            // queue waveform into channel 2 and loop for yindex.count() times
-            status = moduleAOU.AWGqueueWaveform(1, 0, SD_TriggerModes.AUTOTRIG, TriggerDelay, yindex.Count(), Prescaling);
+            // queue waveform into channel 1 and loop for yindex.count() times
+            status = moduleAOU.AWGqueueWaveform(1, 0, SD_TriggerModes.AUTOTRIG, 0, yindex.Count(), Prescaling);
             
             if (status < 0)
             {
@@ -213,17 +214,17 @@ namespace ScanControl_slave
                     {
                         Waveform_Y[Count] = ypoints[yindex[yindex.Count - iy - 1]];
                         Count++;
-                        if (Count == nSamples * xindex.Count())
+                        if (Count == nSamples * xindex.Count() * yindex.Count())
                         {
                             break;  // End waveform generation when the waveform is full
                         }
                     }
-                    if (Count == nSamples * xindex.Count())
+                    if (Count == nSamples * xindex.Count() * yindex.Count())
                     {
                         break;  // Also break outer loop
                     }
                 }
-                if (Count == nSamples * xindex.Count())
+                if (Count == nSamples * xindex.Count() * yindex.Count())
                 {
                     break;  // Break outmost loop
                 }
@@ -238,8 +239,8 @@ namespace ScanControl_slave
             Console.WriteLine("Y waveform size " + (double)moduleAOU.waveformGetMemorySize(1)/1000000 + " MB");
 
 
-            // queue waveform into channel 1 and run once
-            status = moduleAOU.AWGqueueWaveform(2, 1, SD_TriggerModes.AUTOTRIG, TriggerDelay, 1, Prescaling);
+            // queue waveform into channel 2 and run once
+            status = moduleAOU.AWGqueueWaveform(2, 1, SD_TriggerModes.AUTOTRIG, 0, 1, Prescaling);
 
             if (status < 0)
             {
@@ -283,7 +284,7 @@ namespace ScanControl_slave
             var Waveform_DIGI = new double[nSamples * xindex.Count()];
             for (int ix = 0; ix < nSamples; ix++)
             {
-                Waveform_DIGI[ix] = -1; // set first nSamples points to -1 to create on single trigger
+                Waveform_DIGI[ix+SampleDelay] = -1; // set first nSamples after SampleDelay points to -1 to create on single trigger
             }
             var SD_Waveform_DIGI = new SD_Wave(SD_WaveformTypes.WAVE_ANALOG, Waveform_DIGI);
             status = moduleAOU.waveformLoad(SD_Waveform_DIGI, 3, 1);       // padding option 1 is used to maintain ending voltage after each WaveForm
