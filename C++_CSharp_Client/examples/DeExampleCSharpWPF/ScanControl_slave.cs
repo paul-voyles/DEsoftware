@@ -69,32 +69,24 @@ namespace ScanControl_slave
                 return HW_STATUS_RETURNS.HW_SUCCESS;
             }
 
+            // For global shutter mode, set targer trigger delay time in ns, TriggerDelay and TriggerDelayCeil set the acceptable range of dealy
+            int TriggerDelay = 100000;
+            int TriggerDelayCeil = 120000; // Define maximum triggger delay, otherwise the software would likely to use max Prescaling factor to satisfy the delay time
+
             // Determine prescaling factor and number of samples per step to use
             // according to Benjamin Bammels suggestion, use 5% to 10% longer frame time on AWG compared to DE frame integration time
 
             int nSamples;
             int Prescaling;
 
-            nSamples = (int) Math.Ceiling(1.05e8 / recording_rate / 4095);
-            Prescaling = (int) Math.Ceiling(1.05e8 / recording_rate / nSamples);
-            while (Prescaling > 1.10e8/recording_rate/nSamples || nSamples == 1)
+            nSamples = (int)Math.Ceiling(1.05e8 / recording_rate / 4095);
+            Prescaling = (int)Math.Ceiling(1.05e8 / recording_rate / nSamples);
+            while (Prescaling > 1.10e8 / recording_rate / nSamples || nSamples == 1 || 10*Prescaling > (TriggerDelayCeil - TriggerDelay))
             {
                 nSamples++;
                 Prescaling = (int)Math.Ceiling(1.05e8 / recording_rate / nSamples);
             }
 
-            int TriggerDelay;
-            // Old delay scheme, not in use anymore
-            /*
-            TriggerDelay = (int)Math.Floor(( 1e-8 * Prescaling * nSamples - 1 / recording_rate  ) * 1e9); // difference between scan cycle and camera integration time in ns
-            if (TriggerDelay > 25000)
-                TriggerDelay = 25000/10;
-            else
-                TriggerDelay = TriggerDelay / 10;
-            */
-
-            // For global shutter mode, set targer trigger delay time in ns
-            TriggerDelay = 100000;
             int SampleDelay;
             SampleDelay = (int) Math.Ceiling((double)TriggerDelay / 10 / (double)Prescaling);
 
