@@ -70,8 +70,8 @@ namespace ScanControl_slave
             }
 
             // For global shutter mode, set targer trigger delay time in ns, TriggerDelay and TriggerDelayCeil set the acceptable range of dealy
-            int TriggerDelay = 100000;
-            int TriggerDelayCeil = 120000; // Define maximum triggger delay, otherwise the software would likely to use max Prescaling factor to satisfy the delay time
+            int TriggerDelay = 203800;
+            int TriggerDelayCeil = 203900; // Define maximum triggger delay, otherwise the software would likely to use max Prescaling factor to satisfy the delay time
 
             // Determine prescaling factor and number of samples per step to use
             // according to Benjamin Bammels suggestion, use 5% to 10% longer frame time on AWG compared to DE frame integration time
@@ -81,7 +81,7 @@ namespace ScanControl_slave
 
             nSamples = (int)Math.Ceiling(1.05e8 / recording_rate / 4095);
             Prescaling = (int)Math.Ceiling(1.05e8 / recording_rate / nSamples);
-            while (Prescaling > 1.10e8 / recording_rate / nSamples || nSamples == 1 || 10*Prescaling > (TriggerDelayCeil - TriggerDelay))
+            while (Prescaling > 1.10e8 / recording_rate / nSamples || nSamples == 1 || TriggerDelay % (10*Prescaling) > 1)
             {
                 nSamples++;
                 Prescaling = (int)Math.Ceiling(1.05e8 / recording_rate / nSamples);
@@ -144,7 +144,7 @@ namespace ScanControl_slave
             // Start with loop for delay cycle
             for (int i = 0; i < SampleDelay; i++)
             {
-                Waveform_X[Count] = 0.5; //Start with beam outside scan region, scan region ranges from -0.5 to 0.5
+                Waveform_X[Count] = -0.5; //Start with beam outside scan region, scan region ranges from -0.5 to 0.5
                 Count++;    // Count represents the current number of points in waveform
             }
             // create double array for each x cycle
