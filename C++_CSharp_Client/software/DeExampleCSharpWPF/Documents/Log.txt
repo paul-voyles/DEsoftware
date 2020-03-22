@@ -1,0 +1,111 @@
+12/11/17
+- Don't change saving path without restart DE server, DE server will try to find last acquired image under old path and gives error
+- For emd_group_type, which is UINT8, H5T.H5Type.NATIVE_UCHAR works well
+- Colin version uses INT16, where DE generates UINT16, not sure whethere they work well, don't worry about that for now
+	- one way to do this is to transfer data from UINT16 to INT16 when streaming from MRC data
+- Now try to generate array for different dimensions, now assume only 3 dimensions, use integer numbers for now
+	$ consider change the unit into physical number later
+
+10/15/17
+- DE server is very slow when changing the binning number or ROI dimension
+
+10/13/17
+- Finished MRC loading routine, after loading, reconstruction would be calculated
+- Not sure what is in the returned image here, often shows to be pure black.
+- Adapted image acuqisition scheme, now single capture (should) also display image in imagebox1
+- To be added:
+	- save loaded MRC matrix as hdf5/emd file
+	- automatically load file path from DE server
+- Problem: if trying to access to the MRC file within btnGetImage_click function, system will show that mrc file is occupied by another process
+	- tried to create another layer of function that calls image capture then mrc loading, still won't work
+	- however, it's ok to create another button to load mrcfile and do reconstruction
+- created another button to load mrc file and do reconstruction
+	- will simultaneously create HDF5 file
+	- another 3D array will be used for HDF5, which probably going to cost more RAM
+- Included two more text boxes to input EMD file directory and name
+- ??? Seems push property from software to server is not working well
+- ??? Sometimes actual exposure time is different from server exposure time setting, seems server just runs at top speed???
+
+10/5/17
+- Updates on image acquisition routine, let DE server save files to MRC format on SSD first, then load it and do reconstruction
+	- on my PC, with HDD, the file writing speed is much slower than image acquisition speed and thus limiting the total speed
+	- How does DE server calculate the maximum exposure time? Seems maximum exposure time corresponds to 10,000 frames on DE computer and 2048 on my PC
+	- Why image simulator would always generate 1k by 1k image no matter what number I use to set ROI?	
+
+9/29/17
+- To save string metadata in HDF5 file, string has to be converted to ASCii code first, a good example can be found at https://lists.hdfgroup.org/pipermail/hdf-forum_lists.hdfgroup.org/2014-November/008201.html
+- An successful example is show here:
+
+	    char[] testChars = new char[] { 'C','h' };
+            byte[] asciiStr = ASCIIEncoding.ASCII.GetBytes(testChars);
+            H5AttributeId attributeId = H5A.create(userGroup, "Board Name", H5T.create(H5T.CreateClass.STRING, 256), H5S.create(H5S.H5SClass.SCALAR));
+            H5A.write(attributeId, H5T.create(H5T.CreateClass.STRING, 256), new H5Array<byte>(asciiStr));
+            H5A.close(attributeId);
+
+- there should be some more elegent way to convert letters into ASC2 code, the byte[] asciiStr contains long[], each one saves the corresponding ascii code of a letter in it
+
+
+8/18/17
+- Window size needs to be adjustable
+- Recon image success, but RAM would be a problem if acquiring too many frames
+- 1024*1024 pixels are used by image simulator
+- need to reconnect camera before change camera
+- stream and reconstruct from DE won't take up RAM,even with lots of beam positions
+! Try to read only useful informations from camera and display them in a more efficient way
+? where will DE camera save the buffered images in RAM?
+! Only do reconstruction if detector is enabled, maybe change 'enable detector' button into a radio button
+- checked relationship between imagecount, recon image, and DE preview, things are correct
+£¡ Add a button to reset image
+
+8/17/17
+! DE server can set total number of acquisitions, need to coordinate this number with the X/Y Positions in software
+! Change start/end X/Y into slider
+- On DE server, you can change both Binning X/Y and ROI Dimension X/Y, binning factor would be applied on top of ROI dimension, and also ROI offset, not sure what that means
+- to display bitmap on image:
+	_wBmp = new WriteableBitmap(bmpSource.PixelWidth, bmpSource.PixelHeight, bmpSource.DpiX, bmpSource.DpiY, bmpSource.Format, bmpSource.Palette);
+            pictureBox1.Source = _wBmp; // display _wBmp to pictureBox1, will be called only once
+
+8/16/17
+- Use more straightforward way to display detector edge, create a ellipse and use a button to control its visibility, the size and thickness of edge can be controlled by two sliders representing inner and outer collection angle
+-- default: Ellipse Name="OuterAngle" Height="266" Margin="71,68,60,0" Grid.Row="1" Stroke="Black" StrokeThickness="2" VerticalAlignment="Top" Visibility="Hidden" 
+! Need to solve the problem when input image is not square in pixels
+- Functions in DeInterface:
+	- 	DeInterfaceNET();
+		!DeInterfaceNET();
+		~DeInterfaceNET();
+
+		bool connect(String^ ip, int rPort, int wPort);
+		bool close();
+		bool isConnected();
+
+		bool SetProperty(String^ prop, String^ val);
+		bool SetCameraName(String^ name);		
+
+		bool GetCameraNames(List<String^>^% cameras);
+		bool GetPropertyNames(List<String^>^% props);
+		bool GetProperty(String^ prop, String^% value);
+		bool GetImage([Out]array<UInt16, 1> ^%image);
+		bool IsInLiveMode();
+		bool EnableLiveMode();
+		bool DisableLiveMode();
+		DeError^ GetLastError();
+	private:
+		DeInterfaceWin32 *unmanaged;
+		bool connected;
+
+- may be able to use SetProperty to set image size along x and y direction
+- Number of pixels can be arbitary number?
+- tried but not working, so far cannot change image size from software
+- How to control how many images to take from software?
+
+8/15/17
+- DE12 streaming would keep occupy RAM and won't clean it after streaming stopped. SoftwareSim is ok, DE20 would give error message
+- private void DrawEllipseInt(PaintEventsArgs e) is added to try to draw a circle representing the aperture
+- Paint property is for pictureBox, not for image
+- all button needs to be under class MainWindow
+- Window : System.windows
+
+7/16/17
+- Need to copy all .dll files in HDF5DotNet folder to C:\Windows\System32 to run 
+- Consider to include the .dll file for HDF5DotNet in the code
+- The HDF5 file is currently saved under bin/x64/Debug, and the current version cannot debug with x86/64bit

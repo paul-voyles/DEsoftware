@@ -1,0 +1,241 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" 
+        x:Class="DeExampleCSharpWPF.MainWindow"
+        DataContext="{Binding RelativeSource={RelativeSource Self}}"
+        Title="ScanSoftware" Height="1000" Width="1600" Closing="Window_Closing" Loaded="Window_Loaded" WindowStartupLocation="CenterScreen"
+        PreviewMouseMove="window_PreviewMouseMove">
+
+    <Grid Style="{DynamicResource SimpleButtonFocusVisual}">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="54*" />
+            <RowDefinition Height="815*" />
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Vertical" Grid.ColumnSpan="4">
+            <StackPanel Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,0" Height="30">
+                <MenuItem Header="File">
+                    <MenuItem Header="Close"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="Save">
+                    <MenuItem Header="Save HAADF image"></MenuItem>
+                    <MenuItem Header="Save HDF5 file"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="Load">
+                    <MenuItem Header="Load SEQ file" Click="SEQFilePath_Click"></MenuItem>
+                    <MenuItem Header="Load MRC file"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="About"></MenuItem>
+            </StackPanel>
+
+            <StackPanel Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,0" Height="23">
+                <TextBlock Margin="10,0,4,0" Text="IP:" VerticalAlignment="Center"/>
+                <TextBox Margin="0,0,4,0" Text="127.0.0.1" VerticalAlignment="Center"  Width="75" x:Name="IPAddr" />
+                <Button Click="btnConnect_Click" Content="Connect" Height="23" Margin="8,0,32,0" x:Name="btnConnect" Width="75" />
+                <TextBlock Margin="0,0,4,0" Text="Cameras" VerticalAlignment="Center" />
+                <ComboBox Height="23" x:Name="cmbCameras" SelectionChanged="cmbCameras_SelectionChanged" Width="120" />
+                <TextBlock Margin="4,0,4,0" Text="Transport:" VerticalAlignment="Center" />
+                <ComboBox Height="23" x:Name="cmbTransport" Width="120" >
+                    <ComboBoxItem Content="MMF"/>
+                    <ComboBoxItem Content="TCP"/>
+                </ComboBox>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Width="315" Margin="0,20,0,0">
+                    <TextBlock Text="FPS:" Margin="10,0,4,0" />
+                    <TextBlock Text="{Binding Fps}" />
+                    <TextBlock Margin="10,0,4,0" Text="Image Count:" />
+                    <TextBlock Text="{Binding ImageCount}" />
+                    <TextBlock Margin="10,0,4,0" Text="Seconds:" />
+                    <TextBlock Text="{Binding TotalSeconds}" />
+                </StackPanel>
+
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,0,0,0" Grid.Row="2">
+
+            <StackPanel Grid.ColumnSpan="2" Orientation="Vertical" Margin="0,0,0,0">
+
+                <TextBlock x:Name="TextBlock1" HorizontalAlignment="Left" Height="30" Margin="130,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Frame Preview" VerticalAlignment="Top" Width="152" FontSize="20" Grid.Column="1"/>
+
+                <Grid>
+                    <Image x:Name="pictureBox1" Height="400" Width ="400" Margin="7,7,7,0" VerticalAlignment="Top" Grid.ColumnSpan="1" />
+                    <Rectangle Stroke="Black" Height ="400" Width="400" Margin="7,7,7,0"/>
+                    <Ellipse x:Name="InnerAngle"  Height="400" Margin="7,7,7,0" Grid.Row="1" Stroke="Red" StrokeThickness="200" VerticalAlignment="Top" Visibility="Hidden" Grid.ColumnSpan="1"/>
+                </Grid>
+
+                <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" Margin="10,10,0,0">
+                    <RadioButton x:Name="EnableDetector" Content="Enable Detector" Margin="0,0,0,0" Click="EnableDetector_click" IsChecked="False" Checked="EnableDetector_Checked" />
+                    <TextBlock x:Name="textBlock1_Copy10" Height="18" Margin="15,0,0,0" TextWrapping="Wrap" Text="Inner Angle" VerticalAlignment="Top" Grid.Column="1"/>
+                    <Slider x:Name="slider_innerang" Height="25" Margin="12,0,0,0" ValueChanged="changeinnerang" Minimum="0" Maximum="1" Width="200"/>
+                </StackPanel>
+
+                <StackPanel Grid.ColumnSpan="2" Orientation="Horizontal" Margin="10,10,0,0">
+                    <RadioButton x:Name="DisableDetector" Content="Disable Detector" Click="DisableDetector_click" Margin="0,0,0,0" IsChecked="True"/>
+                    <TextBlock x:Name="textBlock1_Copy11" Margin="10,0,0,0" Grid.Row="1" TextWrapping="Wrap" Grid.Column="1"><Run Text="Outer"/><Run Text=" Angle"/></TextBlock>
+                    <Slider x:Name="slider_outerang" Height="25" Margin="10,0,0,0" ValueChanged="changeouterang" Minimum="0" Maximum="1" Width="200"/>
+                </StackPanel>
+
+                <Grid>
+                    <Image x:Name="Recon" Height="300" Margin="0,30,0,0" Width="300" OpacityMask="Black" />
+                    <Rectangle Stroke="Black" Margin="0,30,0,0" Width="300"/>
+                </Grid>
+                <TextBlock x:Name="textBlock1_Copy9" HorizontalAlignment="Left" Height="30" Margin="130,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Reconstruction" VerticalAlignment="Bottom" Width="152" FontSize="20" Grid.Column="1"/>
+
+            </StackPanel>
+
+            <Path Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="10,-7,0,-1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2" Grid.Column="2" Grid.Row="1" />
+
+            <StackPanel Grid.ColumnSpan="1" Orientation="Vertical" Margin="10,0,10,0" Width="512">
+                <TextBlock x:Name="textBlock" Grid.Column="2" Height="28" Margin="162,10,161,0" Grid.Row="1" TextWrapping="Wrap" Text="HAADF Preview" VerticalAlignment="Top" TextAlignment="Center" FontSize="18"/>
+
+                <Grid>
+                    <Image x:Name="HAADF" Margin="0,0,0,0" Height="512" Width="512" HorizontalAlignment="Left"  />
+                    <Rectangle Stroke="Black" Margin="0,0,0,0" Height="512" Width="512" HorizontalAlignment="Left"/>
+
+                    <Grid Background="BlueViolet" x:Name="gridResize"  Margin="100,100,100,100" Opacity="0.2" >
+                        <Image x:Name="HAADFacquisition" Margin="0,0,0,0" VerticalAlignment="Top" />
+                        <Border Focusable="True" Background="Black" BorderBrush="LightGray" BorderThickness="1" Opacity="1" x:Name="resizeGrip2" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="27" 
+                    PreviewMouseLeftButtonDown="resizeGrip_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="resizeGrip_PreviewMouseLeftButtonUp"  >
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter  Property="Opacity" Value="1.0"/>
+                                            <Setter Property="Cursor" Value="SizeNWSE"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                        <Border Focusable="True" Background="Black" BorderBrush="LightGray" BorderThickness="1" Opacity="1" x:Name="resizeGrip3" HorizontalAlignment="Right" Height="30" VerticalAlignment="Bottom" Width="27" 
+                    PreviewMouseLeftButtonDown="resizeGrip3_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="resizeGrip3_PreviewMouseLeftButtonUp" Margin="0,0,0,0"  >
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter  Property="Opacity" Value="1.0"/>
+                                            <Setter Property="Cursor" Value="SizeNWSE"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                    </Grid>
+                </Grid>
+
+                <StackPanel  Orientation="Horizontal" Margin="0,20,0,0">
+                    <Button x:Name="button" Content="2D Acquire" Height="33" Width="132" Margin="20,0,0,0" Click="SCAN2D" FontSize="18"/>
+                    <Button x:Name="button_Copy" Content="Full Frame 4DSTEM" Height="33" Width="132" Margin="30,0,0,0" FontSize="14" Click="Single_Acquire"/>
+                    <Button x:Name="Submit_Setting" Click="Submit_Setting_Click" Content="ROI 4DSTEM" Height="33" Margin="30,0,0,0" FontSize="14"  Width="132" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+
+                    <StackPanel Orientation="Vertical" Margin="20,40,0,0">
+                        <TextBlock  HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" Text="Region of Interest (ROI):" VerticalAlignment="Bottom" Width="130"/>
+                        <TextBlock  HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start"/><Run Text=" X:"/></TextBlock>
+                        <TextBox x:Name="StartX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0"  TextWrapping="Wrap" Text="100" VerticalAlignment="Bottom" Width="90"/>
+                        <TextBlock  HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="End X:" VerticalAlignment="Bottom" Width="42"/>
+                        <TextBox x:Name="EndX" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="412" VerticalAlignment="Bottom" Width="90"/>
+                        <Button x:Name="CancelAcquisition" Content="Cancel Acquisition" Height="33" Width="132" Margin="0,50,0,0" Click="CancelAcq" FontSize="14"/>
+
+                    </StackPanel>
+
+                    <StackPanel Orientation="Vertical" Margin="0,40,0,0">
+                        <TextBlock x:Name="textBlock1_Copy2" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,20,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="Start "/><Run Text="Y"/><Run Text=":"/></TextBlock>
+                        <TextBox x:Name="StartY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="100" Width="90"/>
+                        <TextBlock x:Name="textBlock1_Copy3" Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="42"><Run Text="End"/><Run Text=" "/><Run Text="Y"/><Run Text=":"/></TextBlock>
+                        <TextBox x:Name="EndY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="412" Width="90"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Vertical" Margin="10,0,0,0">
+                        <TextBlock  Height="20" Margin="0,40,0,0" Grid.Row="1" TextWrapping="Wrap" Text="4D scan setting:" VerticalAlignment="Bottom" Width="132"/>
+                        <TextBlock  Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="60.667"><Run Text="X "/><Run Text="Positions"/><Run Text=":"/></TextBlock>
+                        <TextBox x:Name="PosX" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="20" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
+                        <TextBlock  Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="62" Text="Y Positions:"/>
+                        <TextBox x:Name="PosY" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="20" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
+                        <TextBlock  HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" Text="Frame rate (FPS):" VerticalAlignment="Bottom" Width="130"/>
+                        <TextBox x:Name="FrameRate" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="1000" VerticalAlignment="Bottom" Width="90"/>
+
+                    </StackPanel>
+
+                    <StackPanel Orientation="Vertical" Margin="0,0,0,0">
+                        <TextBlock  Height="20" Margin="0,40,0,0" Grid.Row="1" TextWrapping="Wrap" Text="2D scan setting:" VerticalAlignment="Bottom" />
+                        <TextBlock  Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="60.667"><Run Text="X "/><Run Text="Positions"/><Run Text=":"/></TextBlock>
+                        <TextBox x:Name="PosX_2D" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="512" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
+                        <TextBlock  Grid.Column="2" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Bottom" Width="62" Text="Y Positions:"/>
+                        <TextBox x:Name="PosY_2D" Grid.Column="2" Height="20" Margin="0,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="512" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="109"/>
+                        <TextBlock HorizontalAlignment="Left" Height="18" Margin="0,0,0,0" TextWrapping="Wrap" Text="Dwell Time (uS):" VerticalAlignment="Bottom" Width="130"/>
+                        <TextBox x:Name="FrameRate_2D" HorizontalAlignment="Left" Height="20" Margin="0,0,0,0" TextWrapping="Wrap" Text="10" VerticalAlignment="Bottom" Width="90"/>
+
+                    </StackPanel>
+                </StackPanel>
+
+            </StackPanel>
+
+            <Path Grid.Column="3" Data="M1062,869 L1062,47" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" Stretch="Fill" Stroke="Black" Width="1" StrokeThickness="2"/>
+
+            <StackPanel Grid.ColumnSpan="1" Orientation="Vertical" Margin="0,0,0,0" Width="587.953">
+                <DataGrid AutoGenerateColumns="False" Grid.Column="3" ItemsSource="{Binding CameraProperties}" Margin="10,5,26,0" Grid.Row="1" Height="200" Width="500" VerticalAlignment="Top">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Binding="{Binding Name}" CanUserReorder="True" CanUserResize="True" Header="Property" />
+                    </DataGrid.Columns>
+                </DataGrid>
+                <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
+                    <CheckBox Content="DE slave mode" Height="18" Margin="0,0,0,0" Checked="DE_SlaveMode" Unchecked="DE_MasterMode"/>
+                    <Button Click="btnGetImage_Click" Content="Capture Image" Height="23" HorizontalAlignment="Left" Margin="20,0,0,0" x:Name="btnGetImage" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" IsEnabled="False"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
+                    <Button Click="SEQFilePath_Click" Content="Select SEQ file" Margin="0,0,0,0" x:Name="SEQFilePath" Visibility="Visible"  HorizontalAlignment="Right" Width="170" RenderTransformOrigin="0.439,3.913" Height="23" VerticalAlignment="Top"/>
+                    <TextBox x:Name="SEQPath" Grid.Column="3" Height="23" Width="150" Margin="10,0,0,0" Text="D:/RawFrames" VerticalAlignment="Top"/>
+                    <Button Click="LoadnRecon_Click" Content="Load SEQ file" Height="23" HorizontalAlignment="Left" Margin="10,0,0,0" x:Name="LoadnRecon" Width="100" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top"/>
+                    <Button Click="ReconFromSEQ_Click" Content="Reconstruction" Height="23" HorizontalAlignment="Left" Margin="10,0,0,0" x:Name="ReconFromSEQ" Width="100" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
+                    <Button Click="EMDFilePath_Click" Content="Select EMD file saving path" Margin="0,0,0,0" x:Name="EMDFilePath" Visibility="Visible"  HorizontalAlignment="Right" Width="170" RenderTransformOrigin="0.439,3.913" Height="23" VerticalAlignment="Top"/>
+                    <TextBox x:Name="EMDPath" Grid.Column="3" Height="23" Width="200" Margin="10,0,0,0" Text="D:/RawFrames" VerticalAlignment="Top"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
+                    <Button Click="HAADFFilePath_Click" Content="Select HAADF file saving path" Margin="0,0,0,0" x:Name="HAADFFilePath" Visibility="Visible"  HorizontalAlignment="Right" Width="170" RenderTransformOrigin="0.439,3.913" Height="23" VerticalAlignment="Top"/>
+                    <TextBox x:Name="HAADFPath" Grid.Column="3" Height="23" Width="200" Margin="10,0,0,0" Text="D:/Archive/ScanSystem/HAADFpreview/" VerticalAlignment="Top"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
+                    <Button Click="ResaveEMD_Click" Content="Save" Margin="0,0,0,0" x:Name="ResaveEMD" Visibility="Visible" HorizontalAlignment="Left" Width="73" Height="23" VerticalAlignment="Top"/>
+                    <Button Click="DiscardEMD_Click" Content="Discard" Margin="5,0,0,0" x:Name="DiscardEMD" Visibility="Visible" HorizontalAlignment="Left" Width="70" Height="23" VerticalAlignment="Top"/>
+                    <TextBox x:Name="EMDName" Margin="10,0,0,0" Grid.Row="1" TextWrapping="Wrap" Text="EMDFileNameHere" Height="23" Width="200" VerticalAlignment="Top"/>
+                </StackPanel>
+
+
+                <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
+                    <TextBox x:Name="MessageBox" Margin="10,5,26,0" Grid.Row="1" TextWrapping="Wrap" Text="MessageBox" Height="300" Width="500" VerticalAlignment="Top"/>
+                </StackPanel>
+
+            </StackPanel>
+
+        </StackPanel>
+
+
+
+
+
+
+
+
+        <Grid HorizontalAlignment="Left" Height="51" Margin="-125,79,0,0" Grid.Row="1" VerticalAlignment="Top" Width="45" />
+
+        <Button Click="btnLiveCapture_Click" Content="Stream from DE" Height="23" HorizontalAlignment="Left" Margin="10,284,0,0" x:Name="btnLiveCapture" Width="148" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" Visibility="Hidden" />
+
+
+        <Path Grid.Column="2" Data="M398,-1" HorizontalAlignment="Left" Height="1" Margin="1,-1,0,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Top" Width="1"/>
+        <Rectangle Grid.ColumnSpan="4" Height="0" Grid.Row="1" Stroke="Black" VerticalAlignment="Top" />
+
+        <Path Grid.ColumnSpan="4" Data="M0.5,46.5 L1592,47" Height="1.5" Margin="0.5,0,-1,0" Stretch="Fill" Stroke="Black" VerticalAlignment="Bottom" StrokeThickness="2"/>
+
+
+    </Grid>
+</Window>

@@ -1,0 +1,5 @@
+c:\users\xzhai\documents\visual studio 2013\Projects\ScanControl\ScanControl\bin\Debug\ScanControl.dll
+c:\users\xzhai\documents\visual studio 2013\Projects\ScanControl\ScanControl\bin\Debug\ScanControl.pdb
+c:\users\xzhai\documents\visual studio 2013\Projects\ScanControl\ScanControl\obj\Debug\ScanControl.csprojResolveAssemblyReference.cache
+c:\users\xzhai\documents\visual studio 2013\Projects\ScanControl\ScanControl\obj\Debug\ScanControl.dll
+c:\users\xzhai\documents\visual studio 2013\Projects\ScanControl\ScanControl\obj\Debug\ScanControl.pdb
