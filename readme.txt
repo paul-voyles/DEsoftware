@@ -12,3 +12,4 @@ http://www.directelectron.com/products/de-16/
 
 Publications using this software:
 Ultramicroscopy 210 (2020): 112921.  https://doi.org/10.1016/j.ultramic.2019.112921
+Acta Materialia 178 (2019): 228-240. https://doi.org/10.1016/j.actamat.2019.08.012
