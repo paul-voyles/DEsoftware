@@ -238,7 +238,7 @@ namespace DeExampleCSharpWPF
 
         #endregion
 
-        #region Acquire HAADF and choose ROI
+        #region 2D HAADF acquisition
 
         // Function used to cancel current 2D/4D acquisition and reset hardwares to idle status
         private void CancelAcq(object sender, RoutedEventArgs e)
@@ -396,6 +396,10 @@ namespace DeExampleCSharpWPF
 
         }
 
+        #endregion
+
+        #region Fullsize4DSTEM
+
         // Function to acquire single 4DSTEM dataset with full frame, i.e. max voltage range.
         // Number of beam positions will follow GUI settings
         // For DE camera in master mode, camera has to run to generate trigger signal
@@ -473,8 +477,6 @@ namespace DeExampleCSharpWPF
 
             }
 
-
-
             // set new thread for digitizer
 
             double[] WaveformArray_Ch1 = { };
@@ -534,8 +536,6 @@ namespace DeExampleCSharpWPF
                 PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0, Nmultiframes);
 
             }).Start();
-
-
 
         }
 
