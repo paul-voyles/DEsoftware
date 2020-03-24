@@ -38,9 +38,6 @@ namespace DeExampleCSharpWPF
 
         private DeInterfaceNET _deInterface;
         private bool _liveModeEnabled;
-        //private LiveModeView _liveView;   LiveViewWindow no longer a separate window
-        private bool _closing;
-        UInt16[] m_image_local;
         static Semaphore semaphore;
         Queue<UInt16[]> m_imageQueue = new Queue<ushort[]>();
         public int numpos;
@@ -53,8 +50,6 @@ namespace DeExampleCSharpWPF
         private System.Timers.Timer _updateTimer;
         private WriteableBitmap _wBmp;
         private WriteableBitmap _wBmpRecon;
-        private WriteableBitmap _wBmpHAADF;
-        private WriteableBitmap _wBmpHAADFROI;
         private int nTickCount = 0;
         private decimal dTickCountAvg = 0;
         private int nCount = 0;
@@ -71,7 +66,6 @@ namespace DeExampleCSharpWPF
 
         // scan mode, 0 for DE in master mode, 1 for DE in slave mode. Currenly always run in slave mode.
         public int scan_mode = 1;
-
 
         public decimal Fps
         {
@@ -117,7 +111,7 @@ namespace DeExampleCSharpWPF
 
         System.Windows.Point _startPosition;
         bool _isResizing = false;
-        bool _isResizing2 = false;
+        bool _isResizing2 = false; // ??? Check what are these for
 
 
 
@@ -143,7 +137,7 @@ namespace DeExampleCSharpWPF
         #endregion
 
         #region connect to DE server
-
+        // DE server currently not in use, and this whole region is not called, 032320-cz
         // Get Image Transfer Mode      
         private ImageTransfer_Mode GetImageTransferMode()
         {
@@ -334,9 +328,8 @@ namespace DeExampleCSharpWPF
             // set new thread for AWG and digitizer, digitizer has to go first as it waits for trigger from AWG
 
             float dwellT = float.Parse(FrameRate_2D.Text);  // FrameRate_2D actually contains dwell time, not frequency
+            // for 2D acquisition, frame rate are not directly defined, it is calculated from dwell time deined in us
             int fps = (int)Math.Floor(1000000/dwellT);
-
-            // set new thread for digitizer
 
             double[] WaveformArray_Ch1 = { };
 
@@ -348,19 +341,8 @@ namespace DeExampleCSharpWPF
                 return;
             }
 
-
-            int recording_rate = fps * 10;
-            int record_size;
-            recording_rate = RecordingRateLookup(recording_rate);
-
-            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
-            MessageBox.Text += sent;
-            record_size = (int)((double)Int32.Parse(PosX_2D.Text) * (double)Int32.Parse(PosY_2D.Text) / fps * (double)recording_rate);
-            record_size = (int)(record_size * 1.15);
-            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
-            MessageBox.Text += sent;
-
-            // run the same process in AWG control to determine nSamples and prescaling factor
+            // First calculate the actual frame rate from AWG generated trigger signals.
+            // !!! Consider make a separate function to calculate nSamples and prescaling factor, as it is used multiple times.
             int nSamples;
             int Prescaling;
 
@@ -372,9 +354,29 @@ namespace DeExampleCSharpWPF
                 Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
             }
 
+            // Calculate the actual scan frequency that will be used, this number is typically not an integer
+            // This is also the frame rate that will be used when reconstructing the HAADF image
             double DE_fps;
             DE_fps = 1e-8 * Prescaling * nSamples;
 
+            // Sample the digitizer signal 10 times for each probe position
+            int recording_rate = (int)Math.Ceiling(DE_fps * 10);
+            int record_size;
+            // Look up for the closet possible digitizer rate that is higher than the necessary recording rate (10 x scan frequency).
+            recording_rate = RecordingRateLookup(recording_rate);
+
+            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent;
+            // Calculate the acutal HAADF array size, round up to gurantee a long enough array. !!! This needs to be tested on hardware
+            record_size = (int)Math.Ceiling((double)Int32.Parse(PosX_2D.Text) * (double)Int32.Parse(PosY_2D.Text) / DE_fps * (double)recording_rate);
+            // The line below is the old scheme to ensure a long enough acquisition, which seems to be too much (15% longer)
+            //record_size = (int)(record_size * 1.15); // The actual scan rate is DE_fps, which could be lower compare to fps, thus acquire 15% more data to make sure it is long enough.
+            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
+            MessageBox.Text += sent;
+
+
+
+            // Start a new thread for digitizer readout
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
@@ -383,17 +385,13 @@ namespace DeExampleCSharpWPF
                 {
                    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX_2D.Text), Int32.Parse(PosY_2D.Text), 0, recording_rate, DE_fps, 1, 1);
                 }));
-
-
             }).Start();
 
-            // start new thread for AWG
-
+            // Start a new thread for AWG
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
                 PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 1, 1);
-
             }).Start();
 
         }
@@ -1502,11 +1500,13 @@ namespace DeExampleCSharpWPF
 
         private void DE_SlaveMode(object sender, RoutedEventArgs e)
         {
-            btnGetImage.IsEnabled = true;
+            button_2DAcquire.IsEnabled = true;
+            scan_mode = 1;
         }
         private void DE_MasterMode(object sender, RoutedEventArgs e)
         {
-            btnGetImage.IsEnabled = false;
+            button_2DAcquire.IsEnabled = false;
+            scan_mode = 0;
         }
 
         #endregion
