@@ -65,3 +65,27 @@ C:\Users\zhang\OneDrive\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\D
 C:\Users\zhang\OneDrive\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.CoreCompileInputs.cache
 C:\Users\zhang\OneDrive\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.exe
 C:\Users\zhang\OneDrive\Documents\GitHub\DEsoftware\C++_CSharp_Client\examples\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.pdb
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csprojAssemblyReference.cache
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\ImageView.baml
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\LiveModeView.baml
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\MainWindow.baml
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\Simple Styles.baml
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\App.baml
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\ImageView.g.cs
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\LiveModeView.g.cs
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\MainWindow.g.cs
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\App.g.cs
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF_Content.g.cs
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF_MarkupCompile.cache
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.g.resources
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.Properties.Resources.resources
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.GenerateResource.cache
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.CoreCompileInputs.cache
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.exe
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.pdb
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.exe.config
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.exe
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\bin\x64\Debug\DeExampleCSharpWPF.pdb
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\bin\x64\Debug\DeInterface.NET.dll
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\bin\x64\Debug\HDF5DotNet.dll
+C:\Users\zhang\Documents\GitHub\DEsoftware\C++_CSharp_Client\software\DeExampleCSharpWPF\obj\x64\Debug\DeExampleCSharpWPF.csproj.CopyComplete

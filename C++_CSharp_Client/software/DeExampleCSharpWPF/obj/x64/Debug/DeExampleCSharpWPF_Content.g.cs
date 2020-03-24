@@ -11,6 +11,9 @@
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("deinterface.net.dll")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("hdf5dotnet.dll")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("hdf5_hldll.dll")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("ivi.digitizer.interop.dll")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("ivi.driver.interop.dll")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("keysight.ktm9217.interop.dll")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("mrcio.cpp")]
 
 
