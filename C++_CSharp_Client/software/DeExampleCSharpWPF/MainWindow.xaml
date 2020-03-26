@@ -126,8 +126,8 @@
 
                 <StackPanel  Orientation="Horizontal" Margin="0,20,0,0">
                     <Button x:Name="button_2DAcquire" Content="2D Acquire" Height="33" Width="132" Margin="20,0,0,0" Click="SCAN2D" FontSize="18"/>
-                    <Button x:Name="button_Copy" Content="Full Frame 4DSTEM" Height="33" Width="132" Margin="30,0,0,0" FontSize="14" Click="Single_Acquire"/>
-                    <Button x:Name="Submit_Setting" Click="Submit_Setting_Click" Content="ROI 4DSTEM" Height="33" Margin="30,0,0,0" FontSize="14"  Width="132" />
+                    <Button x:Name="button_Copy" Content="Full Frame 4DSTEM" Height="33" Width="132" Margin="30,0,0,0" FontSize="14" Click="Fullsize_4DSTEM"/>
+                    <Button x:Name="Submit_Setting" Click="ROI_4DSTEM" Content="ROI 4DSTEM" Height="33" Margin="30,0,0,0" FontSize="14"  Width="132" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
