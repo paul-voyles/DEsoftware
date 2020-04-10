@@ -125,9 +125,9 @@
                 </Grid>
 
                 <StackPanel  Orientation="Horizontal" Margin="0,20,0,0">
-                    <Button x:Name="button" Content="2D Acquire" Height="33" Width="132" Margin="20,0,0,0" Click="SCAN2D" FontSize="18"/>
-                    <Button x:Name="button_Copy" Content="Full Frame 4DSTEM" Height="33" Width="132" Margin="30,0,0,0" FontSize="14" Click="Single_Acquire"/>
-                    <Button x:Name="Submit_Setting" Click="Submit_Setting_Click" Content="ROI 4DSTEM" Height="33" Margin="30,0,0,0" FontSize="14"  Width="132" />
+                    <Button x:Name="button_2DAcquire" Content="2D Acquire" Height="33" Width="132" Margin="20,0,0,0" Click="SCAN2D" FontSize="18"/>
+                    <Button x:Name="button_Copy" Content="Full Frame 4DSTEM" Height="33" Width="132" Margin="30,0,0,0" FontSize="14" Click="Fullsize_4DSTEM"/>
+                    <Button x:Name="Submit_Setting" Click="ROI_4DSTEM" Content="ROI 4DSTEM" Height="33" Margin="30,0,0,0" FontSize="14"  Width="132" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
@@ -196,7 +196,7 @@
                     </DataGrid.Columns>
                 </DataGrid>
                 <StackPanel Orientation="Horizontal" Margin="20,20,0,0">
-                    <CheckBox Content="DE slave mode" Height="18" Margin="0,0,0,0" Checked="DE_SlaveMode" Unchecked="DE_MasterMode"/>
+                    <CheckBox Content="DE slave mode" Height="18" Margin="0,0,0,0" Checked="DE_SlaveMode" Unchecked="DE_MasterMode" IsChecked="True"/>
                     <Button Click="btnGetImage_Click" Content="Capture Image" Height="23" HorizontalAlignment="Left" Margin="20,0,0,0" x:Name="btnGetImage" Width="148" Visibility="Visible" Grid.Column="3" Grid.Row="1" VerticalAlignment="Top" IsEnabled="False"/>
                 </StackPanel>
 

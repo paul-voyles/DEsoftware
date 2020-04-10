@@ -30,6 +30,143 @@ using System.Windows.Forms;
 
 namespace DeExampleCSharpWPF
 {
+    class HAADFacq
+    {
+        public double[] WaveformArray;
+        public int recording_rate;
+        public int record_size;
+        public Int32 PosX;
+        public Int32 PosY;
+        public int pixel_cycle;
+        public int frame_cycle;
+        public double DE_fps;
+        public string save_path;
+        public System.Windows.Controls.Image display_target;
+        public void ReadDigitizer(object obj)
+        {
+            CancellationToken ct = (CancellationToken)obj;
+            while (!ct.IsCancellationRequested)
+            {
+                Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray);
+                HAADFreconstrcution(WaveformArray, PosX, PosY, recording_rate, DE_fps, pixel_cycle, frame_cycle);
+            }
+            
+        }
+
+        // Function used to reconstruct 2D matrix from 1D array acquired from digitizer
+        // Input: Array: 1D array acquired, currently hardcoded to 10 samples per probe position, array size must be larger than 10*size_x*size_y
+        //        size_x/size_y: target 2D matrix size in pixel
+        //        option: 0 for reconstruction on default image window (512 px), 1 for reconstruction on ROI window (customized size)
+        //        SamplePerFrame: Acquisition frequency on digitizer
+        //        DEFrameRate: old name was used here, this is actually the dwell time for each beam position, NOT RATE
+
+        private void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int SamplesPerFrame, double DEFrameRate, int pixelcycle, int framecycle)
+        {
+            // Generate new array for rescaled HAADF image
+            UInt16[] HAADF_rescale = new UInt16[size_x * size_y * framecycle];
+
+            UInt16[] HAADF_pre = new UInt16[size_x * size_y * pixelcycle * framecycle];
+
+            // Generate csv file to save HAADF raw array
+            var csv = new StringBuilder();  //should be xpos * ypos * frame_cycle values 
+            var csv_raw = new StringBuilder();
+
+            double Array_max = RawArray.Max();
+            double Array_min = RawArray.Min();
+            double scale = 65535 / (Array_max - Array_min) / 2;
+            double average;
+
+            List<double> subArray_list = new List<double>();
+            int total_px = size_x * size_y;
+            int cycle = -1;  // 0 - e.g.99 is used
+            int pos = 0;
+            double DE_time = DEFrameRate;
+            double Digi_time = 1 / (double)SamplesPerFrame;
+            //int step = (pixelcycle - 1) * recordsize / size_x / size_y;
+            // currently we assume the dead time won't take more than two samples from digitizer
+
+            while (pos < RawArray.Count())
+            {
+                csv_raw.AppendLine(RawArray[pos].ToString());
+                // 1e-10 is used to avoid round off error for two times
+                if (DE_time < Digi_time - 1e-10)
+                // when get all samples at one pixel, set the averaged value to new array
+                {
+                    DE_time += DEFrameRate;
+                    cycle++;
+                    average = subArray_list.Average();
+                    csv.AppendLine(average.ToString());
+                    HAADF_pre[cycle] = (ushort)((average - Array_min) / (Array_max - Array_min) * scale);
+                    subArray_list.Clear();
+                    pos += 1; // skip one px and skip other value at the same position
+                    Digi_time += 1 / (double)SamplesPerFrame;
+
+                    if (cycle == total_px * pixelcycle * framecycle - 1)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    subArray_list.Add(RawArray[pos]);
+                    pos++;
+                    Digi_time += 1 / (double)SamplesPerFrame;
+                }
+
+            }
+
+            //save first value at each position
+            pos = 0;
+            cycle = -1;
+            while (pos < HAADF_pre.Count())
+            {
+                cycle++;
+                HAADF_rescale[cycle] = HAADF_pre[pos];
+                pos += pixelcycle;
+
+            }
+
+            int fc = 0;
+            while (fc < framecycle)
+            {
+                // write to different bitmap for different options
+                int bytesPerPixel = 2;
+                int stride = size_x * bytesPerPixel;
+                // No flipLR now.
+                BitmapSource HAADFbmpSource = BitmapSource.Create(size_x, size_y, 96, 96, PixelFormats.Gray16, null, HAADF_rescale.Skip(total_px * fc).Take(total_px).ToArray(), stride);
+                fc++;
+                // invoke different image box source for different options
+                display_target.Source = HAADFbmpSource;
+
+            }
+
+            // save HAADF raw data to csv file
+
+            string FullPath = save_path + "HAADF_Preview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h_mm_ss_tt") + ".csv";
+            string FullPath_raw = save_path + "HAADF_rawPreview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h_mm_ss_tt") + ".csv";
+
+
+            System.IO.FileInfo fi = null;
+            try
+            {
+                fi = new System.IO.FileInfo(FullPath);
+            }
+            catch (ArgumentException) { }
+            catch (System.IO.PathTooLongException) { }
+            catch (NotSupportedException) { }
+            if (ReferenceEquals(fi, null))
+            {
+                System.Windows.Forms.MessageBox.Show("HAADF saving path is not valid!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            else
+            {
+                File.WriteAllText(FullPath, csv.ToString());
+                File.WriteAllText(FullPath_raw, csv_raw.ToString());
+            }
+
+        }
+    }
 
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
@@ -38,9 +175,6 @@ namespace DeExampleCSharpWPF
 
         private DeInterfaceNET _deInterface;
         private bool _liveModeEnabled;
-        //private LiveModeView _liveView;   LiveViewWindow no longer a separate window
-        private bool _closing;
-        UInt16[] m_image_local;
         static Semaphore semaphore;
         Queue<UInt16[]> m_imageQueue = new Queue<ushort[]>();
         public int numpos;
@@ -53,8 +187,6 @@ namespace DeExampleCSharpWPF
         private System.Timers.Timer _updateTimer;
         private WriteableBitmap _wBmp;
         private WriteableBitmap _wBmpRecon;
-        private WriteableBitmap _wBmpHAADF;
-        private WriteableBitmap _wBmpHAADFROI;
         private int nTickCount = 0;
         private decimal dTickCountAvg = 0;
         private int nCount = 0;
@@ -71,7 +203,6 @@ namespace DeExampleCSharpWPF
 
         // scan mode, 0 for DE in master mode, 1 for DE in slave mode. Currenly always run in slave mode.
         public int scan_mode = 1;
-
 
         public decimal Fps
         {
@@ -117,7 +248,8 @@ namespace DeExampleCSharpWPF
 
         System.Windows.Point _startPosition;
         bool _isResizing = false;
-        bool _isResizing2 = false;
+        bool _isResizing2 = false;  // boolean for resizing grip on top-left corner and bottom right corner
+        bool cancel_acq = false;    // boolean used to cancel the acquisition in the middle
 
 
 
@@ -143,7 +275,7 @@ namespace DeExampleCSharpWPF
         #endregion
 
         #region connect to DE server
-
+        // DE server currently not in use, and this whole region is not called, 032320-cz
         // Get Image Transfer Mode      
         private ImageTransfer_Mode GetImageTransferMode()
         {
@@ -244,303 +376,121 @@ namespace DeExampleCSharpWPF
 
         #endregion
 
-        #region Acquire HAADF and choose ROI
+        #region Supporting functions
 
-        // Function used to cancel current 2D/4D acquisition and reset hardwares to idle status
-        private void CancelAcq(object sender, RoutedEventArgs e)
+        // Function used to write AWG setting onto Xu's API or Chenyu's API
+        // 2* x/y_scan_max will always be used as amplitute for two channels, in order to drive beam away in the end
+        // Option2D is used to mark 2D/4D acquisition, Option2D==1 then AWG will run 2D acquisition without generate DE camera trigger, only for DE in slave mode
+        public void PushAWGsetting(int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol, int recording_rate, int Option2D, int Nmultiframes)
         {
-            ScanControl_slave.ScanControl_cz status = new ScanControl_slave.ScanControl_cz();
-            status.CancelScan();
+            //ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
+            //Slave mode
+            if (scan_mode == 1)
+            {
+                ScanControl_slave.ScanControl_cz status = new ScanControl_slave.ScanControl_cz();
+                status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate, Option2D, Nmultiframes);
+            }
         }
 
-
-        // Funtion to acquire traditional 2DSTEM image with full frame
-        // Number of beam position and dwell time will follow GUI setting
-        // DE camera/streampix should remain idle or running in normal mode, triggers will be generated as this is using the same function to call AWG.
-        // Scan system must run as master as AWG cannot be controlled by external trigger, can choose between conventional scan/serpentine scan
-
-        private void SCAN2D(object sender, RoutedEventArgs e)
+        // Function to find the digitizer recording rate to use that is higher than the required recording rate.
+        public int RecordingRateLookup(int recording_rate)
         {
-            if (scan_mode == 0)
-            {
-                System.Windows.Forms.MessageBox.Show("Camera has to be in slave mode to run 2D scan!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            int x_step_num = Int32.Parse(PosX_2D.Text);
-            int y_step_num = Int32.Parse(PosY_2D.Text);
-            int[] Xarray_index;
-            int[] Yarray_index;
-            double[] Xarray_vol;
-            double[] Yarray_vol;
-            double x_step_size = 1 / (double)(x_step_num - 1);
-            double y_step_size = 1 / (double)(y_step_num - 1);
+            int refined_rate = recording_rate;
+            if (recording_rate <= 1000)
+                refined_rate = 1000;
+            else if (recording_rate <= 2000)
+                refined_rate = 2000;
+            else if (recording_rate <= 5000)
+                refined_rate = 5000;
+            else if (recording_rate <= 10000)
+                refined_rate = 10000;
+            else if (recording_rate <= 20000)
+                refined_rate = 20000;
+            else if (recording_rate <= 50000)
+                refined_rate = 50000;
+            else if (recording_rate <= 100000)
+                refined_rate = 100000;
+            else if (recording_rate <= 200000)
+                refined_rate = 200000;
+            else if (recording_rate <= 5e5)
+                refined_rate = 500000;
+            else if (recording_rate <= 1e6)
+                refined_rate = (int)1e6;
+            else if (recording_rate <= 2e6)
+                refined_rate = (int)2e6;
+            else if (recording_rate <= 5e6)
+                refined_rate = (int)5e6;
+            else if (recording_rate <= 1e7)
+                refined_rate = (int)1e7;
+            else
+                refined_rate = (int)2e7;    // 20MSa/sec is the maximum sampling rate for this digitizer
+            return refined_rate;
+        }
 
-            // Conventional scan scheme, without compensate for flyback error, also no protection voltage used here
-            if (scan_scheme == 0)
+        // Function used to generate two scan array for AWG channels for ROI scan area, only called by ROI_4DSTEM, not used in 2D and fullsize 4D acquisition
+        // Input: two empty double arrays
+        // Save two arrays into Xarray and Yarray
+        public void GenerateROIScanArray(ref int[] Xarray_index, ref int[] Yarray_index, ref double[] Xarray_vol, ref double[] Yarray_vol)
+        {
+            // fractional scan range between [-0.5, 0.5]
+            double x_scan_low = (double.Parse(StartX.Text) - 256) / 256 / 2;
+            double x_scan_high = (double.Parse(EndX.Text) - 256) / 256 / 2;
+            double y_scan_low = (double.Parse(StartY.Text) - 256) / 256 / 2;
+            double y_scan_high = (double.Parse(EndY.Text) - 256) / 256 / 2;
+
+            // Force x,y scan to have same step size, i.e. square pixel, calculate y_step num based on step size and ROI shape
+            int x_step_num = int.Parse(PosX.Text);
+            double x_step_size = (x_scan_high - x_scan_low) / (x_step_num - 1);
+            double y_step_size = x_step_size;
+            int y_step_num = (int)((y_scan_high - y_scan_low) / y_step_size + 1);
+
+            // passive scan setting
+
+            if (scan_scheme == 1)
             {
-                Xarray_index = new int[x_step_num];
-                Yarray_index = new int[y_step_num];
-                Xarray_vol = new double[x_step_num];
-                Yarray_vol = new double[y_step_num];
+
+                for (int ix = 0; ix < x_step_num * 2; ix++)
+                {
+                    if (ix < x_step_num)
+                    {
+                        Xarray_vol[ix] = x_scan_low + x_step_size * ix;
+                        Xarray_index[ix] = ix;
+                    }
+                    else
+                    {
+                        Xarray_index[ix] = x_step_num * 2 - ix - 1;
+                    }
+                }
+
+                for (int iy = 0; iy < y_step_num; iy++)
+                {
+                    Yarray_index[iy + 1] = iy;
+                    Yarray_vol[iy] = y_scan_low + y_step_size * iy;
+                }
+                Yarray_index[0] = y_step_num;
+                Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
+                Yarray_index[y_step_num + 2] = y_step_num;
+                Yarray_vol[y_step_num] = 1;
+            }
+            else // traditional scan setting
+            {
 
                 for (int ix = 0; ix < x_step_num; ix++)
                 {
                     Xarray_index[ix] = ix;
-                    Xarray_vol[ix] = -0.5 + x_step_size * ix;
+                    Xarray_vol[ix] = x_scan_low + x_step_size * ix;
                 }
 
                 for (int iy = 0; iy < y_step_num; iy++)
                 {
                     Yarray_index[iy] = iy;
-                    Yarray_vol[iy] = -0.5 + y_step_size * iy;
+                    Yarray_vol[iy] = y_scan_low + y_step_size * iy;
                 }
-
             }
-
-            // serpentine scan scheme
-            else
-            {
-                Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
-                // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
-                Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away, not sure whether this +3 is causing problem
-                Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
-                Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
-
-                for (int ix = 0; ix < x_step_num * 2; ix++)
-                {
-                    if (ix < x_step_num)
-                    {
-                        Xarray_vol[ix] = -0.5 + x_step_size * ix;
-                        Xarray_index[ix] = ix;
-                    }
-                    else
-                    {
-                        Xarray_index[ix] = x_step_num * 2 - ix - 1;
-                    }
-                }
-
-                for (int iy = 0; iy < y_step_num; iy++)
-                {
-                    Yarray_index[iy + 1] = iy;
-                    Yarray_vol[iy] = -0.5 + y_step_size * iy;
-                }
-                Yarray_index[0] = y_step_num;
-                Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
-                Yarray_index[y_step_num + 2] = y_step_num;
-                Yarray_vol[y_step_num] = 1;
-
-            }
-
-            // set new thread for AWG and digitizer, digitizer has to go first as it waits for trigger from AWG
-
-            float dwellT = float.Parse(FrameRate_2D.Text);  // FrameRate_2D actually contains dwell time, not frequency
-            int fps = (int)Math.Floor(1000000/dwellT);
-
-            // set new thread for digitizer
-
-            double[] WaveformArray_Ch1 = { };
-
-            string sent;
-            bool isNumeric = int.TryParse(FrameRate.Text, out int n);
-            if (!isNumeric)
-            {
-                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-
-            int recording_rate = fps * 10;
-            int record_size;
-            recording_rate = RecordingRateLookup(recording_rate);
-
-            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
-            MessageBox.Text += sent;
-            record_size = (int)((double)Int32.Parse(PosX_2D.Text) * (double)Int32.Parse(PosY_2D.Text) / fps * (double)recording_rate);
-            record_size = (int)(record_size * 1.15);
-            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
-            MessageBox.Text += sent;
-
-            // run the same process in AWG control to determine nSamples and prescaling factor
-            int nSamples;
-            int Prescaling;
-
-            nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
-            Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
-            while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
-            {
-                nSamples++;
-                Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
-            }
-
-            double DE_fps;
-            DE_fps = 1e-8 * Prescaling * nSamples;
-
-            new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-                Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
-                this.Dispatcher.Invoke((Action)(() =>
-                {
-                   HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX_2D.Text), Int32.Parse(PosY_2D.Text), 0, recording_rate, DE_fps, 1, 1);
-                }));
-
-
-            }).Start();
-
-            // start new thread for AWG
-
-            new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 1, 1);
-
-            }).Start();
 
         }
 
-        // Function to acquire single 4DSTEM dataset with full frame, i.e. max voltage range.
-        // Number of beam positions will follow GUI settings
-        // For DE camera in master mode, camera has to run to generate trigger signal
-
-        public void Single_Acquire(object sender, RoutedEventArgs e)
-        {
-            // test for passive mode scan control
-            int x_step_num = Int32.Parse(PosX.Text);
-            int y_step_num = Int32.Parse(PosY.Text);
-            int[] Xarray_index;
-            int[] Yarray_index;
-            double[] Xarray_vol;
-            double[] Yarray_vol;
-            double x_step_size = 1 / (double)(x_step_num - 1);
-            double y_step_size = 1 / (double)(y_step_num - 1);
-            int pixel_cycle = int.Parse(PixelCycle.Text);
-
-            // Conventional scan scheme, without compensate for flyback error, also no protection voltage used here
-            if (scan_scheme == 0)
-            {
-                Xarray_index = new int[x_step_num * pixel_cycle];
-                Yarray_index = new int[y_step_num];
-                Xarray_vol = new double[x_step_num];
-                Yarray_vol = new double[y_step_num];
-                for (int ix = 0; ix < x_step_num; ix++)
-                {
-                    Xarray_index[ix * pixel_cycle] = ix;
-                    for (int ixp = 0; ixp < pixel_cycle; ixp++)
-                    {
-                        Xarray_index[ix * pixel_cycle + ixp] = ix;
-                    }
-                    
-                    Xarray_vol[ix] = -0.5 + x_step_size * ix;
-                }
-
-                for (int iy = 0; iy < y_step_num; iy++)
-                {
-                    Yarray_index[iy] = iy;
-                    Yarray_vol[iy] = -0.5 + y_step_size * iy;
-                }
-
-            }
-
-            // serpentine scan scheme, JR didn't change
-            else
-            {
-                Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
-                // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
-                Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away, not sure whether this +3 is causing problem
-                Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
-                Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
-
-                for (int ix = 0; ix < x_step_num * 2; ix++)
-                {
-                    if (ix < x_step_num)
-                    {
-                        Xarray_vol[ix] = -0.5 + x_step_size * ix;
-                        Xarray_index[ix] = ix;
-                    }
-                    else
-                    {
-                        Xarray_index[ix] = x_step_num * 2 - ix - 1;
-                    }
-                }
-
-                for (int iy = 0; iy < y_step_num; iy++)
-                {
-                    Yarray_index[iy + 1] = iy;
-                    Yarray_vol[iy] = -0.5 + y_step_size * iy;
-                }
-                Yarray_index[0] = y_step_num;
-                Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
-                Yarray_index[y_step_num + 2] = y_step_num;
-                Yarray_vol[y_step_num] = 1;
-
-            }
-
-
-
-            // set new thread for digitizer
-
-            double[] WaveformArray_Ch1 = { };
-
-            string sent;
-            bool isNumeric = int.TryParse(FrameRate.Text, out int n);
-            if (!isNumeric)
-            {
-                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            int Nmultiframes = int.Parse(FrameCycle.Text);
-            int recording_rate = Int32.Parse(FrameRate.Text) * 3;
-            int record_size;
-            recording_rate = RecordingRateLookup(recording_rate);
-
-            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
-            MessageBox.Text += sent;
-            record_size = (int)((double)Int32.Parse(PosX.Text) * (double)Int32.Parse(PosY.Text) * pixel_cycle * Nmultiframes / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
-            record_size = (int)(record_size * 1.1); //REAL ?
-            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
-            MessageBox.Text += sent;
-
-            int nSamples;
-            int Prescaling;
-            int fps = Int32.Parse(FrameRate.Text);
-
-            nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
-            Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
-            while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
-            {
-                nSamples++;
-                Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
-            }
-
-            double DE_fps;
-            DE_fps = 1e-8 * Prescaling * nSamples;
-
-            new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-                Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
-                this.Dispatcher.Invoke((Action)(() =>
-                {
-                    HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, DE_fps, pixel_cycle, Nmultiframes);
-                }));
-
-            }).Start();
-
-            // set new thread for AWG
-
-
-            new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0, Nmultiframes);
-
-            }).Start();
-
-
-
-        }
-
+        // This function is already moved into class HAADFacq as a private function, cz 3/26/20
         // Function used to reconstruct 2D matrix from 1D array acquired from digitizer
         // Input: Array: 1D array acquired, currently hardcoded to 10 samples per probe position, array size must be larger than 10*size_x*size_y
         //        size_x/size_y: target 2D matrix size in pixel
@@ -551,7 +501,7 @@ namespace DeExampleCSharpWPF
         public void HAADFreconstrcution(double[] RawArray, int size_x, int size_y, int option, int SamplesPerFrame, double DEFrameRate, int pixelcycle, int framecycle)
         {
             // Generate new array for rescaled HAADF image
-            UInt16[] HAADF_rescale = new UInt16[size_x * size_y  * framecycle];
+            UInt16[] HAADF_rescale = new UInt16[size_x * size_y * framecycle];
 
             UInt16[] HAADF_pre = new UInt16[size_x * size_y * pixelcycle * framecycle];
 
@@ -568,7 +518,7 @@ namespace DeExampleCSharpWPF
             int total_px = size_x * size_y;
             int cycle = -1;  // 0 - e.g.99 is used
             int pos = 0;
-            double DE_time = DEFrameRate;  
+            double DE_time = DEFrameRate;
             double Digi_time = 1 / (double)SamplesPerFrame;
             //int step = (pixelcycle - 1) * recordsize / size_x / size_y;
             // currently we assume the dead time won't take more than two samples from digitizer
@@ -611,11 +561,11 @@ namespace DeExampleCSharpWPF
                 cycle++;
                 HAADF_rescale[cycle] = HAADF_pre[pos];
                 pos += pixelcycle;
-              
+
             }
 
             int fc = 0;
-            while(fc < framecycle)
+            while (fc < framecycle)
             {
                 // write to different bitmap for different options
                 int bytesPerPixel = 2;
@@ -635,7 +585,7 @@ namespace DeExampleCSharpWPF
                 }
 
             }
-            
+
             // save HAADF raw data to csv file
 
             string FullPath = HAADFPath.Text + "HAADF_Preview_" + size_x + "_" + size_y + "_" + DateTime.Now.ToString("h_mm_ss_tt") + ".csv";
@@ -662,8 +612,364 @@ namespace DeExampleCSharpWPF
             }
 
         }
+        private void ConventionScan(int x_step_num, int y_step_num, double x_step_size, double y_step_size, int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol)
+        {
+
+            for (int ix = 0; ix < x_step_num; ix++)
+            {
+                Xarray_index[ix] = ix;
+                Xarray_vol[ix] = -0.5 + x_step_size * ix;
+            }
+
+            for (int iy = 0; iy < y_step_num; iy++)
+            {
+                Yarray_index[iy] = iy;
+                Yarray_vol[iy] = -0.5 + y_step_size * iy;
+            }
+        }
+
+        private void SerpentineScan(int x_step_num, int y_step_num, double x_step_size, double y_step_size, int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol)
+        {
+            
+            for (int ix = 0; ix < x_step_num * 2; ix++)
+            {
+                if (ix < x_step_num)
+                {
+                    Xarray_vol[ix] = -0.5 + x_step_size * ix;
+                    Xarray_index[ix] = ix;
+                }
+                else
+                {
+                    Xarray_index[ix] = x_step_num * 2 - ix - 1;
+                }
+            }
+
+            for (int iy = 0; iy < y_step_num; iy++)
+            {
+                Yarray_index[iy + 1] = iy;
+                Yarray_vol[iy] = -0.5 + y_step_size * iy;
+            }
+            Yarray_index[0] = y_step_num;
+            Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
+            Yarray_index[y_step_num + 2] = y_step_num;
+            Yarray_vol[y_step_num] = 1;
+
+        }
+
+        // Function used to cancel current 2D/4D acquisition and reset hardwares to idle status
+        private void CancelAcq(object sender, RoutedEventArgs e)
+        {
+            cancel_acq = true;
+            ScanControl_slave.ScanControl_cz status = new ScanControl_slave.ScanControl_cz();
+            status.CancelScan();
+        }
+
+        #endregion
+
+        #region 2D HAADF acquisition
+        // Funtion to acquire traditional 2DSTEM image with full frame
+        // Number of beam position and dwell time will follow GUI setting
+        // DE camera/streampix should remain idle or running in normal mode, triggers will be generated as this is using the same function to call AWG.
+        // Scan system must run as master as AWG cannot be controlled by external trigger, can choose between conventional scan/serpentine scan
+
+        private void SCAN2D(object sender, RoutedEventArgs e)
+        {
+            // First check whether scan mode requirment is satisfied
+            if (scan_mode == 0)
+            {
+                System.Windows.Forms.MessageBox.Show("Camera has to be in slave mode to run 2D scan!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Scan array related variables
+            
+            int x_step_num = Int32.Parse(PosX_2D.Text);
+            int y_step_num = Int32.Parse(PosY_2D.Text);
+            int[] Xarray_index = { };
+            int[] Yarray_index = { };
+            double[] Xarray_vol = { };
+            double[] Yarray_vol = { };
+            double x_step_size = 1 / (double)(x_step_num - 1);
+            double y_step_size = 1 / (double)(y_step_num - 1);
+
+            // Acquisition parameter related variables
+            HAADFacq scan2D = new HAADFacq();   // Create a new HAADFacq class for 2D scan
+            int nSamples;
+            int Prescaling;
+            int record_size;
+            int recording_rate;
+            int fps;
+            float dwellT;  
+            double[] WaveformArray_Ch1 = { };
+            double DE_fps;
+            string sent;
+            bool isNumeric;
+
+            // Conventional scan scheme, without compensate for flyback error, also no protection voltage used here
+            if (scan_scheme == 0)
+            {
+                Xarray_index = new int[x_step_num];
+                Yarray_index = new int[y_step_num];
+                Xarray_vol = new double[x_step_num];
+                Yarray_vol = new double[y_step_num];
+                ConventionScan(x_step_num, y_step_num, x_step_size, y_step_size, Xarray_index, Yarray_index, Xarray_vol, Yarray_vol);
+            }
+
+            // serpentine scan scheme
+            else
+            {
+                Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
+                // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
+                Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away, not sure whether this +3 is causing problem
+                Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
+                Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
+                SerpentineScan(x_step_num, y_step_num, x_step_size, y_step_size, Xarray_index, Yarray_index, Xarray_vol, Yarray_vol);
+
+            }
+
+            // set new thread for AWG and digitizer, digitizer has to go first as it waits for trigger from AWG
+            // calculate parameters for acquisition
+
+            isNumeric = int.TryParse(FrameRate.Text, out int n);
+            if (!isNumeric)
+            {
+                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // First calculate the actual frame rate from AWG generated trigger signals.
+            // !!! Consider make a separate function to calculate nSamples and prescaling factor, as it is used multiple times.
+
+            dwellT = float.Parse(FrameRate_2D.Text); // FrameRate_2D actually contains dwell time, not frequency
+            fps = (int)Math.Floor(1000000 / dwellT); // for 2D acquisition, frame rate are not directly defined, it is calculated from dwell time deined in us
+            nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
+            Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
+            {
+                nSamples++;
+                Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            }
+
+            // Calculate the actual scan frequency that will be used, this number is typically not an integer
+            // This is also the frame rate that will be used when reconstructing the HAADF image
+            
+            DE_fps = 1e-8 * Prescaling * nSamples;
+
+            // Sample the digitizer signal 10 times for each probe position
+            recording_rate = (int)Math.Ceiling(DE_fps * 10);
+            
+            // Look up for the closet possible digitizer rate that is higher than the necessary recording rate (10 x scan frequency).
+            recording_rate = RecordingRateLookup(recording_rate);
+
+            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent;
+            // Calculate the acutal HAADF array size, round up to gurantee a long enough array. !!! This needs to be tested on hardware
+            record_size = (int)Math.Ceiling((double)Int32.Parse(PosX_2D.Text) * (double)Int32.Parse(PosY_2D.Text) / DE_fps * (double)recording_rate);
+            // The line below is the old scheme to ensure a long enough acquisition, which seems to be too much (15% longer)
+            //record_size = (int)(record_size * 1.15); // The actual scan rate is DE_fps, which could be lower compare to fps, thus acquire 15% more data to make sure it is long enough.
+            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
+            MessageBox.Text += sent;
+
+            // Assign calculated parameters to scan2D
+            scan2D.WaveformArray = WaveformArray_Ch1;
+            scan2D.recording_rate = recording_rate;
+            scan2D.record_size = record_size;
+            scan2D.PosX = Int32.Parse(PosX_2D.Text);
+            scan2D.PosY = Int32.Parse(PosY_2D.Text);
+            scan2D.pixel_cycle = int.Parse(PixelCycle.Text);
+            scan2D.frame_cycle = int.Parse(FrameCycle.Text);
+            scan2D.DE_fps = DE_fps;
+            scan2D.save_path = HAADFPath.Text;
+            scan2D.display_target = HAADF;  // for 2D acquisition, always use the full viewing window
+
+            // Start a new thread to monitor acquisition cancellation
+            // https://docs.microsoft.com/en-us/dotnet/standard/threading/canceling-threads-cooperatively
+            // !!! Need to test this new threading scheme of HAADF acquisition with cancellation
+            CancellationTokenSource cts = new CancellationTokenSource();
+            Thread thr_cancel = new Thread(() => {
+                if (cancel_acq)
+                {
+                    cts.Cancel();
+                    cancel_acq = false;
+                }       
+            });
+            thr_cancel.IsBackground = true;
+            thr_cancel.Start();
+
+            // Start a new thread for digitizer readout with cancellation token
+            Thread thr_HAADF = new Thread(new ParameterizedThreadStart(scan2D.ReadDigitizer));
+            thr_HAADF.IsBackground = true;
+            thr_HAADF.Start(cts.Token);
+
+            // Old thread for digitizer without using the HAADFacq class
+            /*
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+                this.Dispatcher.Invoke((Action)(() =>
+                {
+                   HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX_2D.Text), Int32.Parse(PosY_2D.Text), 0, recording_rate, DE_fps, 1, 1);
+                }));
+            }).Start();
+            */
+
+            // Start a new thread for AWG
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 1, 1);
+            }).Start();
+
+        }
+
+        #endregion
+
+        #region Fullsize 4DSTEM
+
+        // Function to acquire single 4DSTEM dataset with full frame, i.e. max voltage range.
+        // Number of beam positions will follow GUI settings
+        // For DE camera in master mode, camera has to run to generate trigger signal
+
+        public void Fullsize_4DSTEM(object sender, RoutedEventArgs e)
+        {
+            // Variables related to scan arrays
+            int x_step_num = Int32.Parse(PosX.Text);
+            int y_step_num = Int32.Parse(PosY.Text);
+            int[] Xarray_index;
+            int[] Yarray_index;
+            double[] Xarray_vol;
+            double[] Yarray_vol;
+            double x_step_size = 1 / (double)(x_step_num - 1);
+            double y_step_size = 1 / (double)(y_step_num - 1);
+
+            // Variables related to scan parameters
+            HAADFacq scan2D = new HAADFacq();   // Create a new HAADFacq class for 2D scan
+            int pixel_cycle = int.Parse(PixelCycle.Text);
+            int Nmultiframes = int.Parse(FrameCycle.Text);
+            int record_size;
+            int recording_rate;
+            int nSamples;
+            int Prescaling;
+            int fps;
+            double DE_fps;
+            double[] WaveformArray_Ch1 = { };
+            string sent;
+            bool isNumeric;
+
+            // Conventional scan scheme, without compensate for flyback error, also no protection voltage used here
+            if (scan_scheme == 0)
+            {
+                Xarray_index = new int[x_step_num * pixel_cycle];
+                Yarray_index = new int[y_step_num];
+                Xarray_vol = new double[x_step_num];
+                Yarray_vol = new double[y_step_num];
+                ConventionScan(x_step_num, y_step_num, x_step_size, y_step_size, Xarray_index, Yarray_index, Xarray_vol, Yarray_vol);
+            }
+
+            // serpentine scan scheme, JR didn't change
+            else
+            {
+                Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
+                // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
+                Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away, not sure whether this +3 is causing problem
+                Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
+                Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
+                SerpentineScan(x_step_num, y_step_num, x_step_size, y_step_size, Xarray_index, Yarray_index, Xarray_vol, Yarray_vol);
+            }
+
+            // Calculate scan parameters
+
+            isNumeric = int.TryParse(FrameRate.Text, out int n);
+            if (!isNumeric)
+            {
+                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            recording_rate = Int32.Parse(FrameRate.Text) * 3;
+            recording_rate = RecordingRateLookup(recording_rate);
+
+            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent;
+            record_size = (int)((double)Int32.Parse(PosX.Text) * (double)Int32.Parse(PosY.Text) * pixel_cycle * Nmultiframes / (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
+            record_size = (int)(record_size * 1.1); //REAL ?
+            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
+            MessageBox.Text += sent;
+
+            fps = Int32.Parse(FrameRate.Text);
+
+            nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
+            Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
+            {
+                nSamples++;
+                Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            }
+
+            
+            DE_fps = 1e-8 * Prescaling * nSamples;
+
+            // Assign calculated parameters to scan2D
+            scan2D.WaveformArray = WaveformArray_Ch1;
+            scan2D.recording_rate = recording_rate;
+            scan2D.record_size = record_size;
+            scan2D.PosX = Int32.Parse(PosX_2D.Text);
+            scan2D.PosY = Int32.Parse(PosY_2D.Text);
+            scan2D.pixel_cycle = int.Parse(PixelCycle.Text);
+            scan2D.frame_cycle = int.Parse(FrameCycle.Text);
+            scan2D.DE_fps = DE_fps;
+            scan2D.save_path = HAADFPath.Text;
+            scan2D.display_target = HAADF;  // for 2D acquisition, always use the full viewing window
+
+            // Start a new thread to monitor acquisition cancellation
+            // https://docs.microsoft.com/en-us/dotnet/standard/threading/canceling-threads-cooperatively
+            // !!! Need to test this new threading scheme of HAADF acquisition with cancellation
+            CancellationTokenSource cts = new CancellationTokenSource();
+            Thread thr_cancel = new Thread(() => {
+                if (cancel_acq)
+                {
+                    cts.Cancel();
+                    cancel_acq = false;
+                }
+            });
+            thr_cancel.IsBackground = true;
+            thr_cancel.Start();
+
+            // Start a new thread for digitizer readout with cancellation token
+            Thread thr_HAADF = new Thread(new ParameterizedThreadStart(scan2D.ReadDigitizer));
+            thr_HAADF.IsBackground = true;
+            thr_HAADF.Start(cts.Token);
 
 
+            // Old scheme for HAADF acquisition
+            /*
+                        new Thread(() =>
+                        {
+                            Thread.CurrentThread.IsBackground = true;
+                            Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+                            // ??? Why use Dispatcher.Invoke instead of just HAADFreconstruction
+                            this.Dispatcher.Invoke((Action)(() =>
+                            {
+                                HAADFreconstrcution(WaveformArray_Ch1, Int32.Parse(PosX.Text), Int32.Parse(PosY.Text), 0, recording_rate, DE_fps, pixel_cycle, Nmultiframes);
+                            }));
+
+                        }).Start();
+            */
+            // set new thread for AWG
+
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0, Nmultiframes);
+
+            }).Start();
+
+        }
+
+        #endregion
+
+        #region ROI 4DSTEM
         private void window_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (_isResizing)    // top left resizing grip
@@ -675,11 +981,11 @@ namespace DeExampleCSharpWPF
                 double currentTop = gridResize.Margin.Top;
                 double currentRight = gridResize.Margin.Right;
                 double currentBottom = gridResize.Margin.Bottom;
-                if(currentLeft<0)
+                if (currentLeft < 0)
                 {
                     currentLeft = 0;
                 }
-                if(currentLeft > 512 - currentRight - 30)
+                if (currentLeft > 512 - currentRight - 30)
                 {
                     currentLeft = 512 - currentRight - 30;
                 }
@@ -696,8 +1002,8 @@ namespace DeExampleCSharpWPF
                 _startPosition = currentPosition;
                 StartX.Text = currentLeft.ToString();
                 StartY.Text = currentTop.ToString();
-                EndX.Text = (512-currentRight).ToString();
-                EndY.Text = (512-currentBottom).ToString();  // 28 for height of topic
+                EndX.Text = (512 - currentRight).ToString();
+                EndY.Text = (512 - currentBottom).ToString();  // 28 for height of topic
             }
             if (_isResizing2)
             {
@@ -728,8 +1034,8 @@ namespace DeExampleCSharpWPF
                 _startPosition = currentPosition;
                 StartX.Text = currentLeft.ToString();
                 StartY.Text = currentTop.ToString();
-                EndX.Text = (512-currentRight).ToString();
-                EndY.Text = (512-currentBottom).ToString();
+                EndX.Text = (512 - currentRight).ToString();
+                EndY.Text = (512 - currentBottom).ToString();
             }
         }
 
@@ -768,6 +1074,157 @@ namespace DeExampleCSharpWPF
                 _isResizing2 = true;
                 _startPosition = Mouse.GetPosition(this);
             }
+        }
+
+        // This function is currently being used to do ROI 4DSTEM acquisition.
+        // The only difference between ROI and fullsize acquisition is the scan arrays.
+        private void ROI_4DSTEM(object sender, RoutedEventArgs e)
+        {
+            // Variables related to scan arrays
+            int[] Xarray_index;
+            int[] Yarray_index;
+            double[] Xarray_vol;
+            double[] Yarray_vol;
+            double x_scan_low = double.Parse(StartX.Text);
+            double x_scan_high = double.Parse(EndX.Text);
+            double y_scan_low = double.Parse(StartY.Text);
+            double y_scan_high = double.Parse(EndY.Text);
+            int x_step_num = int.Parse(PosX.Text);
+            double x_step_size = (x_scan_high - x_scan_low) / (x_step_num - 1);
+            double y_step_size = x_step_size;
+            int y_step_num = (int)((y_scan_high - y_scan_low) / y_step_size + 1);
+
+            // Variables related to scan parameters
+            HAADFacq scan2D = new HAADFacq();   // Create a new HAADFacq class for HAADF acquisition
+            string pxx = PosX.Text;
+            string sent;
+            double[] WaveformArray_Ch1 = { };
+            bool isNumeric;
+            int Nmultiframes = int.Parse(FrameCycle.Text);  //Get settings for multiframe-acquire
+            int pixel_cycle = int.Parse(PixelCycle.Text);
+            int recording_rate;
+            int record_size;
+            int nSamples;
+            int Prescaling;
+            int fps;
+            double DE_fps;
+
+            // check whether X,Y position box contains number
+            isNumeric = int.TryParse(pxx, out int n);
+            if (!isNumeric)
+            {
+                System.Windows.Forms.MessageBox.Show("X position setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            
+            // Generate scan arrays
+            if (scan_scheme == 1)
+            {
+                // passive scan settings
+                Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
+                                                                            // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
+                Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away
+                Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
+                Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
+
+            }
+            else
+            {
+                Xarray_index = new int[x_step_num];
+                Yarray_index = new int[y_step_num];
+                Xarray_vol = new double[y_step_num];
+                Yarray_vol = new double[y_step_num];
+            }
+
+
+            sent = "A total " + x_step_num.ToString() + " by " + y_step_num.ToString() + "scan positions will be generated by arbitrary wave generator.\n";
+            MessageBox.Text += sent;
+            GenerateROIScanArray(ref Xarray_index, ref Yarray_index, ref Xarray_vol, ref Yarray_vol);
+
+            // Calculate scan parameters
+
+            isNumeric = int.TryParse(FrameRate.Text, out n);
+            if (!isNumeric)
+            {
+                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            recording_rate = Int32.Parse(FrameRate.Text) * 10;
+            recording_rate = RecordingRateLookup(recording_rate);
+
+            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
+            MessageBox.Text += sent;
+            record_size = (int)(x_step_num * y_step_num * pixel_cycle * Nmultiframes/ (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
+            record_size = (int)(record_size * 1.1);
+            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
+            MessageBox.Text += sent;
+
+            fps = Int32.Parse(FrameRate.Text);
+            nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
+            Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
+            {
+                nSamples++;
+                Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
+            }
+            DE_fps = 1e-8 * Prescaling * nSamples;
+
+            // Assign calculated parameters to scan2D
+            scan2D.WaveformArray = WaveformArray_Ch1;
+            scan2D.recording_rate = recording_rate;
+            scan2D.record_size = record_size;
+            scan2D.PosX = Int32.Parse(PosX_2D.Text);
+            scan2D.PosY = Int32.Parse(PosY_2D.Text);
+            scan2D.pixel_cycle = int.Parse(PixelCycle.Text);
+            scan2D.frame_cycle = int.Parse(FrameCycle.Text);
+            scan2D.DE_fps = DE_fps;
+            scan2D.save_path = HAADFPath.Text;
+            scan2D.display_target = HAADF;  // for 2D acquisition, always use the full viewing window
+
+            // Start a new thread to monitor acquisition cancellation
+            // https://docs.microsoft.com/en-us/dotnet/standard/threading/canceling-threads-cooperatively
+            // !!! Need to test this new threading scheme of HAADF acquisition with cancellation
+            CancellationTokenSource cts = new CancellationTokenSource();
+            Thread thr_cancel = new Thread(() => {
+                if (cancel_acq)
+                {
+                    cts.Cancel();
+                    cancel_acq = false;
+                }
+            });
+            thr_cancel.IsBackground = true;
+            thr_cancel.Start();
+
+            // Start a new thread for digitizer readout with cancellation token
+            Thread thr_HAADF = new Thread(new ParameterizedThreadStart(scan2D.ReadDigitizer));
+            thr_HAADF.IsBackground = true;
+            thr_HAADF.Start(cts.Token);
+
+            // Old thread for digitizer acquisition
+            /*            new Thread(() =>
+                        {
+                            Thread.CurrentThread.IsBackground = true;
+                            Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
+                            this.Dispatcher.Invoke((Action)(() =>
+                            {
+                                int sizex = x_step_num;
+                                int sizey = y_step_num;
+                                HAADFreconstrcution(WaveformArray_Ch1, sizex, sizey, 1, recording_rate, DE_fps, pixel_cycle, Nmultiframes);
+                            }));
+
+                        }).Start();
+            */
+            // set new thread for AWG
+
+
+            new Thread(() =>
+            {
+                Thread.CurrentThread.IsBackground = true;
+                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0, Nmultiframes);
+
+            }).Start();
+
         }
 
         #endregion
@@ -836,7 +1293,7 @@ namespace DeExampleCSharpWPF
                 slider_outerang.Value = 1;
             }
             // call function to load MRC file and do reconstruction, MRC file when using DE server, SEQ file when using Streampix
-            
+
             UInt32 sizex = 0;
             UInt32 sizey = 0;
             UInt16 numframe = 0;
@@ -860,7 +1317,7 @@ namespace DeExampleCSharpWPF
             double[] subArray = new double[ratio];
             List<double> subArray_list = new List<double>();
 
-            for (int j = 0; j < sizey_resize ; j++)
+            for (int j = 0; j < sizey_resize; j++)
             {
                 for (int i = 0; i < sizex_resize; i++)
                 {
@@ -876,12 +1333,12 @@ namespace DeExampleCSharpWPF
 
             UInt16 maxint = FirstFrame_resize.Max();
             UInt16 minint = FirstFrame_resize.Min();
-            FirstFrame_resize = FirstFrame_resize.Select(r => (UInt16)( (double)r / (maxint - minint) * 65535)).ToArray();
+            FirstFrame_resize = FirstFrame_resize.Select(r => (UInt16)((double)r / (maxint - minint) * 65535)).ToArray();
 
 
             int bytesPerPixel = 2;
             int stride = sizex_resize * bytesPerPixel;
-            BitmapSource FirstFramebmpSource = BitmapSource.Create(sizex_resize, sizey_resize, 96,96, PixelFormats.Gray16, null, FirstFrame_resize, stride);
+            BitmapSource FirstFramebmpSource = BitmapSource.Create(sizex_resize, sizey_resize, 96, 96, PixelFormats.Gray16, null, FirstFrame_resize, stride);
             pictureBox1.Source = FirstFramebmpSource;
         }
 
@@ -905,7 +1362,7 @@ namespace DeExampleCSharpWPF
             string name_string = "";
             _deInterface.GetProperty("Autosave Directory", ref path_string);
             _deInterface.GetProperty("Autosave Frames - Previous Dataset Name", ref name_string);
-            path_string = path_string.Replace("\\","/");
+            path_string = path_string.Replace("\\", "/");
             string path = path_string + "/" + name_string + "_RawImages.mrc";
 
             using (var filestream = File.Open(@path, FileMode.Open))
@@ -972,7 +1429,7 @@ namespace DeExampleCSharpWPF
                 int px = 0, py = 0;
 
                 // create H5 file with attributes and data
-                string fullpath = EMDPath.Text + "/" + EMDName.Text + ".emd" ;
+                string fullpath = EMDPath.Text + "/" + EMDName.Text + ".emd";
                 //H5FileId fileId = HDF5.InitializeHDF(numpos, width, height, datacube,fullpath);
 
 
@@ -1012,7 +1469,7 @@ namespace DeExampleCSharpWPF
                                         (ThreadStart)delegate { outerang = slider_outerang.Value; }
                                         );
                                     sum = IntegrateBitmap(imagelayer, width, height, innerang, outerang);
-                                    recon[iy*px + ix] = sum;
+                                    recon[iy * px + ix] = sum;
                                     if (recon[iy * px + ix] < min) min = recon[iy * px + ix];
                                     if (recon[iy * px + ix] > max) max = recon[iy * px + ix]; //update max and min after recon array changed
                                     for (int i = 0; i < iy * px + ix; i++)
@@ -1026,265 +1483,11 @@ namespace DeExampleCSharpWPF
                                 _wBmpRecon.WritePixels(new Int32Rect(0, 0, px, py), recon_scale, px * 2, 0);
 
                             }));
-                            
+
                         }
                     }
                 }
             }
-        }
-
-        #endregion
-
-        #region Set AWG and digitizer for ROI 4DSTEM 
-        // This function is currently being used to do ROI 4DSTEM acquisition
-        private void Submit_Setting_Click(object sender, RoutedEventArgs e)
-        {
-            string pxx = PosX.Text;
-            string sent;
-            // check whether X,Y position box contains number
-            bool isNumeric = int.TryParse(pxx, out int n);
-            if (!isNumeric)
-            {
-                System.Windows.Forms.MessageBox.Show("X position setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            // Initialize array for scan index and voltage
-            int[] Xarray_index;
-            int[] Yarray_index;
-            double[] Xarray_vol;
-            double[] Yarray_vol;
-
-            // Calculate y_step_num based on x_step num and scan region box
-            double x_scan_low = double.Parse(StartX.Text);
-            double x_scan_high = double.Parse(EndX.Text);
-            double y_scan_low = double.Parse(StartY.Text);
-            double y_scan_high = double.Parse(EndY.Text);
-            int x_step_num = int.Parse(PosX.Text);
-            double x_step_size = (x_scan_high - x_scan_low) / (x_step_num - 1);
-            double y_step_size = x_step_size;
-            int y_step_num = (int)((y_scan_high - y_scan_low) / y_step_size + 1);
-
-            //Get settings for multiframe-acquire
-            int Nmultiframes = int.Parse(FrameCycle.Text);
-
-            if (scan_scheme == 1)
-            {
-                // passive scan settings
-                Xarray_index = new int[x_step_num * 2];   // Xarray_index contains one round scan
-                                                                            // for some unknown reason, need another value in the end to trigger the protection voltage on Yarray_index[y_step_num + 1]
-                Yarray_index = new int[y_step_num + 3];   // Yarray_index contains one single trip scan with two more at beginning and end to drive beam away
-                Xarray_vol = new double[x_step_num];   // Xarray_vol only contains 256 voltages, as it needs to be cyclic, not protection voltage can be used
-                Yarray_vol = new double[y_step_num + 1];   // Yarray_vol contains one more protection voltage
-
-            }
-            else
-            {
-                Xarray_index = new int[x_step_num];
-                Yarray_index = new int[y_step_num];
-                Xarray_vol = new double[y_step_num];
-                Yarray_vol = new double[y_step_num];
-            }
-
-            double[] WaveformArray_Ch1 = { };
-
-            sent = "A total " + x_step_num.ToString() + " by " + y_step_num.ToString() + "scan positions will be generated by arbitrary wave generator.\n";
-            MessageBox.Text += sent;
-
-
-
-            GenerateScanArray(ref Xarray_index, ref Yarray_index, ref Xarray_vol, ref Yarray_vol);
-
-
-            // set new thread for digitizer
-
-            isNumeric = int.TryParse(FrameRate.Text, out n);
-            if (!isNumeric)
-            {
-                System.Windows.Forms.MessageBox.Show("Frame rate setting is wrong!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-
-            int recording_rate = Int32.Parse(FrameRate.Text) * 10;
-            int pixel_cycle = int.Parse(PixelCycle.Text);
-            int record_size;
-            recording_rate = RecordingRateLookup(recording_rate);
-
-            sent = "Digitizer will sample HAADF signal at " + recording_rate + " samples per second.\n";
-            MessageBox.Text += sent;
-            record_size = (int)(x_step_num * y_step_num * pixel_cycle * Nmultiframes/ (double)Int32.Parse(FrameRate.Text) * (double)recording_rate);
-            record_size = (int)(record_size * 1.1);
-            sent = "A total " + record_size + "samples will be recorded by digitizer.\n";
-            MessageBox.Text += sent;
-
-            int nSamples;
-            int Prescaling;
-            int fps = Int32.Parse(FrameRate.Text);
-
-            nSamples = (int)Math.Ceiling(1.05e8 / fps / 4095);
-            Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
-            while (Prescaling > 1.10e8 / fps / nSamples || nSamples == 1)
-            {
-                nSamples++;
-                Prescaling = (int)Math.Ceiling(1.05e8 / fps / nSamples);
-            }
-
-            double DE_fps;
-            DE_fps = 1e-8 * Prescaling * nSamples;
-
-            new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-                Digitizer.Program.FetchData(record_size, recording_rate, ref WaveformArray_Ch1);
-                this.Dispatcher.Invoke((Action)(() =>
-                {
-                    int sizex = x_step_num;
-                    int sizey = y_step_num;
-                    HAADFreconstrcution(WaveformArray_Ch1, sizex, sizey, 1, recording_rate, DE_fps, pixel_cycle, Nmultiframes);
-                }));
-
-            }).Start();
-
-            // set new thread for AWG
-
-
-            new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-                PushAWGsetting(Xarray_index, Yarray_index, Xarray_vol, Yarray_vol, fps, 0, Nmultiframes);
-
-            }).Start();
-
-        }
-
-        // Function used to generate two scan array for AWG channels based on current setting
-        // Input: two empty double arrays
-        // Save two arrays into Xarray and Yarray
-        public void GenerateScanArray(ref int[] Xarray_index, ref int[] Yarray_index, ref double[] Xarray_vol, ref double[] Yarray_vol)
-        {
-            // fractional scan range between [-0.5, 0.5]
-            double x_scan_low = (double.Parse(StartX.Text) - 256)/256/2;
-            double x_scan_high = (double.Parse(EndX.Text) - 256)/256/2;
-            double y_scan_low = (double.Parse(StartY.Text) - 256)/256/2;
-            double y_scan_high = (double.Parse(EndY.Text) - 256)/256/2;
-
-            // Force x,y scan to have same step size, i.e. square pixel, calculate y_step num based on step size and ROI shape
-            int x_step_num = int.Parse(PosX.Text);
-            double x_step_size = (x_scan_high - x_scan_low) / (x_step_num - 1);
-            double y_step_size = x_step_size;
-            int y_step_num = (int)((y_scan_high - y_scan_low) / y_step_size + 1);
-
-            // passive scan setting
-
-            if (scan_scheme == 1)
-            {
-
-                for (int ix = 0; ix < x_step_num * 2; ix++)
-                {
-                    if (ix < x_step_num)
-                    {
-                        Xarray_vol[ix] = x_scan_low + x_step_size * ix;
-                        Xarray_index[ix] = ix;
-                    }
-                    else
-                    {
-                        Xarray_index[ix] = x_step_num * 2 - ix - 1;
-                    }
-                }
-
-                for (int iy = 0; iy < y_step_num; iy++)
-                {
-                    Yarray_index[iy + 1] = iy;
-                    Yarray_vol[iy] = y_scan_low + y_step_size * iy;
-                }
-                Yarray_index[0] = y_step_num;
-                Yarray_index[y_step_num + 1] = y_step_num;  // point to protection voltage at beginning and end
-                Yarray_index[y_step_num + 2] = y_step_num;
-                Yarray_vol[y_step_num] = 1;
-            }
-            else // traditional scan setting
-            {
-
-                for (int ix = 0; ix < x_step_num; ix++)
-                {
-                    Xarray_index[ix] = ix;
-                    Xarray_vol[ix] = x_scan_low + x_step_size * ix;
-                }
-
-                for (int iy = 0; iy < y_step_num; iy++)
-                {
-                    Yarray_index[iy] = iy;
-                    Yarray_vol[iy] = y_scan_low + y_step_size * iy;
-                }
-            }
-
-        }
-
-        // Function used to write AWG setting onto Xu's API or Chenyu's API
-        // 2* x/y_scan_max will always be used as amplitute for two channels, in order to drive beam away in the end
-        // Option2D is used to mark 2D/4D acquisition, Option2D==1 then AWG will run 2D acquisition without generate DE camera trigger, only for DE in slave mode
-        public void PushAWGsetting(int[] Xarray_index, int[] Yarray_index, double[] Xarray_vol, double[] Yarray_vol, int recording_rate, int Option2D, int Nmultiframes)
-        {
-            //ScanControl_cz.ScanControl_cz status = new ScanControl_cz.ScanControl_cz();
-            //Slave mode
-            if (scan_mode == 1)
-            {
-                ScanControl_slave.ScanControl_cz status = new ScanControl_slave.ScanControl_cz();
-                status.ScanControlInitialize(x_scan_max * 2, y_scan_max * 2, Xarray_vol, Yarray_vol, Xarray_index, Yarray_index, 0, recording_rate, Option2D, Nmultiframes);
-            }
-        }
-        
-        public int RecordingRateLookup(int recording_rate)
-        {
-            int refined_rate = recording_rate;
-            if (recording_rate <= 1000)
-            {
-                refined_rate = 1000;
-            }
-            else if (recording_rate <= 2000)
-            {
-                refined_rate = 2000;
-            }
-            else if (recording_rate <= 5000)
-            {
-                refined_rate = 5000;
-            }
-            else if (recording_rate <= 10000)
-            {
-                refined_rate = 10000;
-            }
-            else if (recording_rate <= 20000)
-            {
-                refined_rate = 20000;
-            }
-            else if (recording_rate <= 50000)
-            {
-                refined_rate = 50000;
-            }
-            else if (recording_rate <= 100000)
-            {
-                refined_rate = 100000;
-            }
-            else if (recording_rate <= 200000)
-            {
-                refined_rate = 200000;
-            }
-            else if (recording_rate <= 5e5)
-            {
-                refined_rate = 500000;
-            }
-            else if (recording_rate <= 1e6)
-                refined_rate = (int)1e6;
-            else if (recording_rate <= 2e6)
-                refined_rate = (int)2e6;
-            else if (recording_rate <= 5e6)
-                refined_rate = (int)5e6;
-            else if (recording_rate <= 1e7)
-                refined_rate = (int)1e7;
-            else
-                refined_rate = (int)2e7;    // 20MSa/sec is the maximum sampling rate for this digitizer
-            return refined_rate;
         }
 
         #endregion
@@ -1502,11 +1705,13 @@ namespace DeExampleCSharpWPF
 
         private void DE_SlaveMode(object sender, RoutedEventArgs e)
         {
-            btnGetImage.IsEnabled = true;
+            button_2DAcquire.IsEnabled = true;
+            scan_mode = 1;
         }
         private void DE_MasterMode(object sender, RoutedEventArgs e)
         {
-            btnGetImage.IsEnabled = false;
+            button_2DAcquire.IsEnabled = false;
+            scan_mode = 0;
         }
 
         #endregion

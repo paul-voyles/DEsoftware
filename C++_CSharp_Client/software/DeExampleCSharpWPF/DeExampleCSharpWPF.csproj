@@ -199,6 +199,9 @@
     <Content Include="DeInterface.NET.dll" />
     <Content Include="HDF5DotNet.dll" />
     <Content Include="hdf5_hldll.dll" />
+    <Content Include="Ivi.Digitizer.Interop.dll" />
+    <Content Include="Ivi.Driver.Interop.dll" />
+    <Content Include="Keysight.KtM9217.Interop.dll" />
     <Content Include="mrcio.cpp" />
   </ItemGroup>
   <ItemGroup>
