@@ -78,6 +78,14 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AForge, Version=2.2.5.0, Culture=neutral, PublicKeyToken=c1db6ff4eaa06aeb, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\AForge.dll</HintPath>
+    </Reference>
+    <Reference Include="AForge.Math, Version=2.2.5.0, Culture=neutral, PublicKeyToken=abba2e25397ee8c9, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\AForge.Math.dll</HintPath>
+    </Reference>
     <Reference Include="DeInterface.NET, Version=1.0.5878.22488, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\x64\Debug\DeInterface.NET.dll</HintPath>
@@ -119,6 +127,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="SampleCorrection.cs" />
     <Compile Include="ProgressWindow.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -196,6 +205,8 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="AForge.dll" />
+    <Content Include="AForge.Math.dll" />
     <Content Include="DeInterface.NET.dll" />
     <Content Include="HDF5DotNet.dll" />
     <Content Include="hdf5_hldll.dll" />
@@ -203,6 +214,7 @@
     <Content Include="Ivi.Driver.Interop.dll" />
     <Content Include="Keysight.KtM9217.Interop.dll" />
     <Content Include="mrcio.cpp" />
+    <Resource Include="Mag_Calib.txt" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\..\lib\x64\Debug\DeInterface.NET.dll" />
