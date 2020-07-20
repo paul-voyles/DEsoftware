@@ -9,18 +9,47 @@ namespace TEMControlWrapper
 	// Microscope class constructor
 	TEMControlWrapper::Microscope::Microscope()
 	{
+		HRESULT hr0 = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		if (SUCCEEDED(hr0)) {
+			System::Console::WriteLine("TEM connection initialized!");
+		}
+		else
+		{
+			if (hr0 != RPC_E_CHANGED_MODE)
+			{
+				_com_error error(hr0);
+				MessageBox(NULL, error.ErrorMessage(), L"Error", MB_OK);
+			}
+			else
+			{
+				System::Console::WriteLine("TEM connection initialized!");
+			}
+		}
+
 		ThisInstrumentPtr = new TEMScripting::InstrumentInterfacePtr;
-		ThisInstrumentPtr->CreateInstance(_T("TEMScripting.Instrument.1"));
+		HRESULT hr = ThisInstrumentPtr->CreateInstance(_T("TEMScripting.Instrument.1"));
+		if (FAILED(hr)) {
+			_com_error error(hr);
+			MessageBox(NULL, error.ErrorMessage(), L"Error", MB_OK);
+		}
 	}
 
 	TEMControlWrapper::Microscope::~Microscope()
 	{
-		this->!Microscope();
+		if (ThisInstrumentPtr != nullptr)
+		{
+			delete ThisInstrumentPtr;
+			ThisInstrumentPtr = nullptr;
+		}
 	}
 
 	TEMControlWrapper::Microscope::!Microscope()
 	{
-		delete ThisInstrumentPtr;
+		if (ThisInstrumentPtr != nullptr)
+		{
+			delete ThisInstrumentPtr;
+			ThisInstrumentPtr = nullptr;
+		}
 	}
 
 	// Read current magnification from the microscope

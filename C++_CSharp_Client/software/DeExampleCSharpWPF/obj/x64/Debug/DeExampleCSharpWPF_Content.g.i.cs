@@ -8,6 +8,8 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("aforge.dll")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("aforge.math.dll")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("deinterface.net.dll")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("hdf5dotnet.dll")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("hdf5_hldll.dll")]

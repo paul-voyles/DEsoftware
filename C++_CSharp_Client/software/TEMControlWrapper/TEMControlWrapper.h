@@ -12,7 +12,7 @@ using namespace TEMScripting;
 
 namespace TEMControlWrapper
 {
-	public ref class Microscope
+	public ref class Microscope : System::MarshalByRefObject
 	{
 		TEMScripting::InstrumentInterfacePtr* ThisInstrumentPtr;
 

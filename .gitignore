@@ -38,3 +38,6 @@ C++_CSharp_Client/examples/DeExampleCSharpWPF/.vs/DeExampleCSharpWPF/v15/sqlite3
 *.exe
 *.pdb
 *.cache
+*.tlog
+.vs
+C++_CSharp_Client/software/TEMControlWrapper/x64

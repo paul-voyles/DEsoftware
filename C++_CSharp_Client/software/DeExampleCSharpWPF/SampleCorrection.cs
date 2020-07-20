@@ -7,6 +7,7 @@ using AForge;
 using AForge.Math;
 using TEMControlWrapper;
 using System.Runtime.InteropServices;
+using System.Runtime.Remoting;
 
 namespace SampleCorrection
 {
@@ -32,6 +33,8 @@ namespace SampleCorrection
         // Initialze microscope connection
         public void InitMicroscope()
         {
+            RemotingConfiguration.Configure(@"..\..\app.config", false);
+            Console.WriteLine("Connecting remote server...");
             try
             {
                 TEM = new Microscope();

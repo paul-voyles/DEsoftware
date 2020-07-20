@@ -119,9 +119,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="TEMControlWrapper">
-      <HintPath>x64\Debug\TEMControlWrapper.dll</HintPath>
-    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationFramework" />
   </ItemGroup>
@@ -221,6 +218,12 @@
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\..\lib\x64\Debug\DeInterface.NET.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TEMControlWrapper\TEMControlWrapper.vcxproj">
+      <Project>{0e062130-d31b-49ea-892e-cedfcdeae5b0}</Project>
+      <Name>TEMControlWrapper</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
