@@ -13,7 +13,5 @@ Ultramicroscopy 210 (2020): 112921.  https://doi.org/10.1016/j.ultramic.2019.112
 Acta Materialia 178 (2019): 228-240. https://doi.org/10.1016/j.actamat.2019.08.012
 
 To do list:
-1. Test acquisition cancellation with HAADF acquisition thread interruption.
-2. Move AWG configuration to a separate class.
-3. Save metadata with all the 4D STEM acquisition parameters.
-4. Enable time series acquisition with drift correction.
+1. Save metadata with all the 4D STEM acquisition parameters.
+2. Enable time series acquisition with drift correction.
